@@ -1,1 +1,3 @@
-"# ghetto_botato" 
+# Ghetto_Botato
+
+A Python twitch bot used at twitch.tv/ghetto_spud
