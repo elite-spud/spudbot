@@ -1,9 +1,11 @@
 # ghetto_botato.py
 
-import cfg
-import socket
-import time
+import argparse
+import json
 import re
+import socket
+import sys
+import time
 
 class Bot:
     MAX_SEND_RATE_USER = (20/30) # messages per second
@@ -17,7 +19,7 @@ class Bot:
         """
         Send a chat message to the server.
         """
-        msg = "PRIVMSG #{} :{}".format(self.configuration.CHANNEL, message)
+        msg = "PRIVMSG #{} :{}".format(self.configuration["channel"], message)
         if (msg[-2:] != "\r\n"):
             msg += "\r\n"
         sock.send(msg.encode("utf-8"))
@@ -43,14 +45,18 @@ class Bot:
         return sock
         
     def getChatResponse(self, username, message):
-        if (username == self.configuration.USERNAME):
+        if (username == self.configuration["username"]):
             return ""
 
-        if (message[:6] == "!echo "):
+        command = message.split()[0]
+
+        if (command == "!echo "):
             return message[6:]
         
-        if (message[:5] == "!foo "):
+        if (command == "!foo "):
             return "bar"
+
+        # if (command == )
         
         return ""
 
@@ -76,7 +82,7 @@ class Bot:
         print(response)
 
     def startup(self):
-        sock = Bot.joinChannel(self.configuration.HOST, self.configuration.PORT, self.configuration.CHANNEL, self.configuration.USERNAME, self.configuration.TOKEN)
+        sock = Bot.joinChannel(self.configuration["host"], self.configuration["port"], self.configuration["channel"], self.configuration["username"], self.configuration["token"])
 
         while True:
             response = sock.recv(2040).decode("utf-8")
@@ -84,5 +90,17 @@ class Bot:
             sendRate = (1 / Bot.MAX_SEND_RATE_USER)
             time.sleep(sendRate)
 
-bot = Bot(cfg)
+argParser = argparse.ArgumentParser()
+argParser.add_argument('--config')
+args = argParser.parse_args()
+print(args.config)
+configPath = args.config or "..\config\config.json"
+print("Using configuration file at: " + configPath)
+
+with open(configPath) as configurationFile:
+    config = json.load(configurationFile)
+print("Configuration loaded.")
+print(config)
+
+bot = Bot(config)
 bot.startup()
