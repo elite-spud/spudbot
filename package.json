@@ -1,0 +1,19 @@
+{
+    "name": "ghetto_botato",
+    "version": "1.0.0",
+    "main": "lib/main.js",
+    "typings": "lib/ghetto_botato",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/ghettospud/ghetto_botato"
+    },
+    "scripts": {
+        "build": "tsc ./src/main.ts --outDir ./lib/",
+        "start": "node ./lib/main.js"
+    },
+    "devDependencies": {
+        "@types/node": "^12.12.2",
+        "typescript": "^3.4.3"
+    }
+}

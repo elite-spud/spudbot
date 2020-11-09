@@ -1,6 +1,7 @@
 # ghetto_botato.py
 
 import argparse
+import datetime
 import json
 import re
 import socket
@@ -11,9 +12,11 @@ class Bot:
     MAX_SEND_RATE_USER = (20/30) # messages per second
     MAX_SEND_RATE_MOD = (100/30) # messages per second
     PRIVMSG_MESSAGE_REGEX = re.compile(r"^:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :")
+    DEFAULT_COMMAND_TIMEOUT_SECONDS = 5
     
     def __init__(self, configuration):
         self.configuration = configuration
+        self.commandsByTimeLastUsed = dict()
 
     def chat(self, sock, message):
         """
@@ -42,18 +45,24 @@ class Bot:
         sock.send("PASS {}\r\n".format(_pass).encode("utf-8"))
         sock.send("NICK {}\r\n".format(nick).encode("utf-8"))
         sock.send("JOIN #{}\r\n".format(channel).encode("utf-8"))
-        return sock
+        return sock        
         
     def getChatResponse(self, username, message):
         if (username == self.configuration["username"]):
             return ""
 
-        command = message.split()[0]
+        words = message.split()
+        commandStr = words[0]
+        predicate = message[(len(command) + 1):]
+        print("Parsed command: " + command)
+        print("Parsed predicate: " predicate)
 
-        if (command == "!echo "):
-            return message[6:]
+        command = getCommand(commandStr)
+
+        if (command == "!echo"):
+            return predicate
         
-        if (command == "!foo "):
+        if (command == "!foo"):
             return "bar"
 
         # if (command == )
