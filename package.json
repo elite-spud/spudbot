@@ -9,11 +9,13 @@
         "url": "https://github.com/ghettospud/ghetto_botato"
     },
     "scripts": {
-        "build": "tsc ./src/main.ts --outDir ./lib/",
+        "build": "tsc --outDir ./lib/",
+        "clean": "rimraf lib",
         "start": "node ./lib/main.js"
     },
     "devDependencies": {
         "@types/node": "^12.12.2",
-        "typescript": "^3.4.3"
+        "typescript": "^3.4.3",
+        "rimraf": "^3.0.2"
     }
 }

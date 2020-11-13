@@ -9,42 +9,144 @@ export interface IIrcBotConnectionConfig {
     server: {
         host: string;
         port: number;
-        channels: string[]
+        channels: {
+            name: string;
+            timers: boolean;
+        }[];
     }
 }
 
-export class IIrcBotConfig {
-    connection: IIrcBotConnectionConfig;
-    encoding: "utf8" | "ascii" | string;
+export interface IIrcBotAuxCommandGroupConfig {
+    timerMinutes: number;
+    random: boolean;
+    commands: IIrcBotAuxCommandConfig[];
+}
+
+export interface IIrcBotAuxCommandConfig {
+    names: string[];
+    response: string;
+}
+
+export interface IMessageDetails {
+    username: string;
+    message: string;
+    recipient: string;
+    hostname: string;
+}
+
+export class TimerGroup {
+    public commands: (() => void)[] = [];
+
+    protected _currentIndex: number = 0;
+    protected _intervalId?: NodeJS.Timeout;
+
+    public constructor(protected readonly _delayMinutes: number) {
+    }
+
+    public startTimer(): void {
+        const timeoutMillis = this._delayMinutes * 60 * 1000;
+        this._intervalId = setInterval(() => {
+            if (this._currentIndex > this.commands.length - 1) {
+                this._currentIndex = 0;
+                return;
+            }
+            this.commands[this._currentIndex]();
+            this._currentIndex++;
+        }, timeoutMillis);
+    }
+
+    public stopTimer(): void {
+        clearInterval(this._intervalId);
+    }
 }
 
 export abstract class IrcBot {
-    protected readonly responseHandlers: ((data: string) => void)[] = [];
-    protected readonly socket: net.Socket;
+    /** Hardcoded responses are kept separate from those read from a configuration to allow interactive editing of configured commands */
+    protected readonly _hardcodedResponseHandlers: ((data: string) => void)[] = [];
+    protected readonly _configuredResponseHandlers: ((data: string) => void)[] = [];
+    protected readonly _configuredTimerGroups: TimerGroup[] = [];
+    protected readonly _socket: net.Socket;
 
-    constructor(protected readonly config: IIrcBotConfig) {
-        this.socket = new net.Socket()
-        this.socket.setNoDelay();
+    public constructor(protected readonly config: {
+        connection: IIrcBotConnectionConfig,
+        encoding: "utf8" | "ascii" | string,
+        auxCommandGroups: IIrcBotAuxCommandGroupConfig[],
+    }) {
+        this._socket = new net.Socket();
+        this._socket.setNoDelay();
 
-        this.responseHandlers.push((data) => this.handlePing(data));
+        this._hardcodedResponseHandlers.push((data) => this.handlePing(data));
+
+        const channelsToAddTimers = config.connection.server.channels.filter(channel => !!channel.timers).map(channel => channel.name);
+        const configCommands = this.getCommandsFromConfig(config.auxCommandGroups, channelsToAddTimers);
+
+        this._configuredResponseHandlers = configCommands.chatResponses;
+        this._configuredTimerGroups = configCommands.timerGroups;
+        this._configuredTimerGroups.forEach(timer => timer.startTimer());
+    }
+
+    protected getCommandsFromConfig(commandGroups: IIrcBotAuxCommandGroupConfig[], channelsToAddTimers: string[]) {
+        const chatResponses: ((data: string) => void)[] = [];
+        const timerGroups: TimerGroup[] = [];
+        
+        for (const commandGroup of commandGroups) {
+            const timerGroup = commandGroup.timerMinutes !== null && commandGroup.timerMinutes !== undefined
+                ? new TimerGroup(commandGroup.timerMinutes)
+                : undefined
+            if (timerGroup !== undefined) {
+                timerGroups.push(timerGroup);
+            }
+
+            for (const command of commandGroup.commands) {
+                if (timerGroup !== undefined) {
+                    channelsToAddTimers.forEach(channel => timerGroup.commands.push(() => this.chat(channel, command.response)));
+                }
+
+                for (const name of command.names) {
+                    const func = this.getSimpleChatResponseFunc(name, command.response);
+                    chatResponses.push(func);
+                }
+            }
+
+        }
+
+        return { chatResponses, timerGroups };
+    }
+
+    public getSimpleChatResponseFunc(triggerPhrase: string, response: string): (data: string) => void {
+        const wordsInTriggerPhrase = triggerPhrase.trim().split(" ").length;
+        const func = (data: string) => {
+            const messageDetail = this.parseChatMessage(data);
+            if (messageDetail === undefined) {
+                return;
+            }
+            const messageArr = messageDetail.message.trim().split(" ");
+            const messageSection = messageArr.slice(0, wordsInTriggerPhrase).join(" ");
+            if (messageSection === triggerPhrase) {
+                const messageWasSentToChannel = messageDetail.recipient[0] === "#";
+                const recipient = messageWasSentToChannel ? messageDetail.recipient : messageDetail.username;
+                this.chat(recipient, response);
+            }
+        }
+        return func;
     }
 
     public startup(): void {
-        this.socket.on("connect", () => this.onConnect());
-        this.socket.on("data", (data) => this.onData(data));
+        this._socket.on("connect", () => this.onConnect());
+        this._socket.on("data", (data) => this.onData(data));
 
-        this.socket.connect(this.config.connection.server.port, this.config.connection.server.host);
+        this._socket.connect(this.config.connection.server.port, this.config.connection.server.host);
     }
 
     protected onConnect(): void {
         console.log("Connected successfully");
         setTimeout(() => {
-            this.socket.write(`PASS ${this.config.connection.user.pass}\r\n`);
-            this.socket.write(`NICK ${this.config.connection.user.nick}\r\n`);
+            this._socket.write(`PASS ${this.config.connection.user.pass}\r\n`);
+            this._socket.write(`NICK ${this.config.connection.user.nick}\r\n`);
             for (const channel of this.config.connection.server.channels) {
-                this.socket.write(`JOIN #${channel}\r\n`);
+                this._socket.write(`JOIN ${channel.name}\r\n`);
             }
-        }, 2000);
+        }, 1000);
     }
 
     protected onData(data: Buffer): void {
@@ -57,7 +159,8 @@ export abstract class IrcBot {
     }
 
     protected handleResponse(data: string) {
-        const handlers = this.responseHandlers;
+        const handlers = this._configuredResponseHandlers.concat(this._hardcodedResponseHandlers);
+
         for (const handler of handlers) {
             try {
                 handler(data);
@@ -82,13 +185,13 @@ export abstract class IrcBot {
         if (!data.endsWith("\r\n")) {
             data += "\r\n";
         }
-        this.socket.write(data);
+        this._socket.write(data);
         console.log("Sent Data")
         const printStr = data.split("\r\n").join("\r\n  ").trimEnd();
         console.log(`  ${printStr}\n`);
     }
 
-    protected parseChatMessage(privMessage: string): { username: string, message: string, recipient: string, hostname: string } | undefined{
+    protected parseChatMessage(privMessage: string): IMessageDetails | undefined {
         const pattern = /^:(\w+)!(\w+@[\w.]+) PRIVMSG ([#\w]+) :(.+)\r?\n?/;
         const regexArray = pattern.exec(privMessage);
         if (regexArray === undefined || regexArray === null) {
