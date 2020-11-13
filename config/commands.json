@@ -1,0 +1,59 @@
+[
+	{
+		"timerMinutes": 80,
+		"random": true,
+		"commands": [
+			{
+				"names": ["!2020"],
+				"response": "For the year of 2020, I'll be playing through 50-ish games I've never beaten before. With over 1000 hours of gameplay expected across 9 platforms and 5 decades, I tried to mix in a wide variety of genres to keep things fresh throughout the year. Check the list to see if I'll be playing your favorite game! https://docs.google.com/spreadsheets/d/1JsdDfmdjaL3d-oGsuq38z_jhrvkhePF1LLz4W1dpzI4/edit?usp=sharing"
+			},
+			{
+				"names": ["!twitter", "!tweets"],
+				"response": "Tweets go here when I'm live and sometimes when I'm not: https://twitter.com/ghetto_spud"
+			},
+			{
+				"names": ["!youtube", "!vods", "!vod"],
+				"response": "VODs get posted here (3x a week usually): https://www.youtube.com/channel/UCQZvvzMogGYW6oIBJKX1bxA"
+			}
+		]
+	},
+	{
+		"timerMinutes": 80,
+		"timerMinutesOffset": 40,
+		"random": true,
+		"commands": [
+			{
+				"names": ["!music", "!lastfm", "!songs"],
+				"response": "I collect CDs and keep track of what I listen to as a hobby. You can judge my poor music taste here: https://www.last.fm/user/ghetto_spud"
+			},
+			{
+				"names": ["!av", "!setup", "!hardware"],
+				"response": "Wanna know what my AV setup looks like? Check the diagram here: https://gist.github.com/ghettospud/6f82f3da9d586df553757fa134278845 and the real life™ images here: https://twitter.com/ghetto_spud/status/1306375006008610817. Feel free to ask me questions about any specific components!"
+			},
+			{
+				"names": ["!games", "!history", "!opinions", "!pastebin"],
+				"response": "I maintain a list of all the games I've streamed here: https://pastebin.com/bGjDvFDx and a tier list of my blind playthroughs here: https://pastebin.com/fRPKHM7D. You can also find a collection of all my substantial opinions on my profile: https://pastebin.com/u/ghetto_spud"
+			}
+		]
+	},
+	{
+		"commands": [
+			{
+				"names": ["!foo"],
+				"response": "bar"
+			},
+			{
+				"names": ["!tomato"],
+				"response": "tomahto"
+			},
+			{
+				"names": ["!potato"],
+				"response": "potahto"
+			},
+			{
+				"names": ["!blind", "!hints", "!nohints", "!help", "!mints"],
+				"response": "Blind means that I know nothing about the game I'm playing and want to keep it that way. Assume all questions about the game are rhetorical, and don't hint/spoil/suggest/backseat/tip/advise/guide/recommend/remind/warn me in any way, please. I can learn how to walk on my own. Go play the game yourself if you can't keep it in your pants."
+			}
+		]
+	}
+]

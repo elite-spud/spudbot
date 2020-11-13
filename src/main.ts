@@ -1,13 +1,12 @@
 import * as fs from "fs";
 import { GbTwitchBot } from "./GhettoBotato";
-import { IIrcBotAuxCommandConfig, IIrcBotAuxCommandGroupConfig, IIrcBotConnectionConfig } from "./IrcBot";
+import { IIrcBotAuxCommandGroupConfig, IIrcBotConnectionConfig } from "./IrcBot";
 
 const connectionConfigPath = fs.realpathSync("./config/config.json");
 const commandConfigPath = fs.realpathSync("./config/commands.json");
 
 const connectionConfig = loadJsonFile<IIrcBotConnectionConfig>(connectionConfigPath);
 const commands = loadJsonFile<IIrcBotAuxCommandGroupConfig[]>(commandConfigPath);
-console.log(commands);
 
 const bot = new GbTwitchBot(connectionConfig, commands);
 bot.startup();

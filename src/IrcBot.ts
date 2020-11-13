@@ -1,4 +1,5 @@
 
+import { randomInt } from "crypto";
 import * as net from "net";
 
 export interface IIrcBotConnectionConfig {
@@ -18,6 +19,7 @@ export interface IIrcBotConnectionConfig {
 
 export interface IIrcBotAuxCommandGroupConfig {
     timerMinutes: number;
+    timerMinutesOffset?: number;
     random: boolean;
     commands: IIrcBotAuxCommandConfig[];
 }
@@ -35,24 +37,44 @@ export interface IMessageDetails {
 }
 
 export class TimerGroup {
-    public commands: (() => void)[] = [];
-
-    protected _currentIndex: number = 0;
     protected _intervalId?: NodeJS.Timeout;
 
-    public constructor(protected readonly _delayMinutes: number) {
+    public constructor(
+        protected _commands: (() => void)[],
+        protected readonly _delayMinutes: number,
+        protected readonly _offsetMinutes: number = 0,
+        protected readonly _randomizeCommands: boolean = false) {
     }
 
     public startTimer(): void {
-        const timeoutMillis = this._delayMinutes * 60 * 1000;
-        this._intervalId = setInterval(() => {
-            if (this._currentIndex > this.commands.length - 1) {
-                this._currentIndex = 0;
-                return;
+        if (this._commands.length === 0) {
+            return;
+        }
+        
+        let currentIndex = 0;
+        let intervalCommands = this._commands;
+        if (!!this._randomizeCommands) {
+            const orderedCommands = this._commands;
+            const shuffledCommands = [];
+            while (orderedCommands.length > 0) {
+                const index = randomInt(orderedCommands.length);
+                shuffledCommands.push(orderedCommands[index]);
+                orderedCommands.splice(index, 1);
             }
-            this.commands[this._currentIndex]();
-            this._currentIndex++;
-        }, timeoutMillis);
+            intervalCommands = shuffledCommands;
+        }
+        
+        const delayMillis = this._offsetMinutes * 60 * 1000;
+        setTimeout(() => {
+            const intervalMillis = this._delayMinutes * 60 * 1000;
+            this._intervalId = setInterval(() => {
+                console.log(currentIndex);
+                intervalCommands[currentIndex]();
+                currentIndex = currentIndex === intervalCommands.length - 1
+                    ? 0
+                    : currentIndex + 1;
+            }, intervalMillis);
+        }, delayMillis);
     }
 
     public stopTimer(): void {
@@ -90,17 +112,9 @@ export abstract class IrcBot {
         const timerGroups: TimerGroup[] = [];
         
         for (const commandGroup of commandGroups) {
-            const timerGroup = commandGroup.timerMinutes !== null && commandGroup.timerMinutes !== undefined
-                ? new TimerGroup(commandGroup.timerMinutes)
-                : undefined
-            if (timerGroup !== undefined) {
-                timerGroups.push(timerGroup);
-            }
-
+            const timerCommands = [];
             for (const command of commandGroup.commands) {
-                if (timerGroup !== undefined) {
-                    channelsToAddTimers.forEach(channel => timerGroup.commands.push(() => this.chat(channel, command.response)));
-                }
+                channelsToAddTimers.forEach(channel => timerCommands.push(() => this.chat(channel, command.response)));
 
                 for (const name of command.names) {
                     const func = this.getSimpleChatResponseFunc(name, command.response);
@@ -108,6 +122,10 @@ export abstract class IrcBot {
                 }
             }
 
+            if (commandGroup.timerMinutes !== null && commandGroup.timerMinutes !== undefined) {
+                const timerGroup = new TimerGroup(timerCommands, commandGroup.timerMinutes, commandGroup.timerMinutesOffset, commandGroup.random);
+                timerGroups.push(timerGroup);
+            }
         }
 
         return { chatResponses, timerGroups };
