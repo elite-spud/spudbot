@@ -53,6 +53,14 @@
 			{
 				"names": ["!blind", "!hints", "!nohints", "!help", "!mints"],
 				"response": "Blind means that I know nothing about the game I'm playing and want to keep it that way. Assume all questions about the game are rhetorical, and don't hint/spoil/suggest/backseat/tip/advise/guide/recommend/remind/warn me in any way, please. I can learn how to walk on my own. Go play the game yourself if you can't keep it in your pants."
+			},
+			{
+				"names": ["!bot", "!chatbot", "!github", "!code"],
+				"response": "I (Spud) wrote this chatbot myself because I'm a big dork. You can find all the source code on GitHub here if you fancy yourself a dork too: https://github.com/ghettospud/ghetto_botato"
+			},
+			{
+				"names": ["!commands"],
+				"response": "Available commands include: !commands"
 			}
 		]
 	}
