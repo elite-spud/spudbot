@@ -1,3 +1,13 @@
 {
-    
+	"user": {
+		"nick": "<username goes here>",
+		"pass": "oauth:------------------------------"
+	},
+	"server": {
+		"host": "irc.twitch.tv",
+		"port": 6667,
+		"channels": [
+			{ "name": "#<channel name goes here>", "timers": false }
+		]
+	}
 }

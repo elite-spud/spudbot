@@ -1,3 +1,28 @@
-{
-    
-}
+[
+	{
+		"timerMinutes": 0.5,
+		"random": true,
+		"commands": [
+			{
+				"names": ["!timertest"],
+				"response": "This command is part of a timer group"
+			}
+		]
+	},
+	{
+		"commands": [
+			{
+				"names": ["!foo"],
+				"response": "bar"
+			},
+			{
+				"names": ["!tomato"],
+				"response": "tomahto"
+			},
+			{
+				"names": ["!potato"],
+				"response": "potahto"
+			}
+		]
+	}
+]
