@@ -5,7 +5,7 @@ import { ITwitchBotConnectionConfig } from "./TwitchBot";
 
 const connectionConfigPath = fs.realpathSync("./config/config.json");
 const commandConfigPath = fs.realpathSync("./config/commands.json");
-const userDetailsPath = fs.realpathSync("./config/users.json");
+const userDetailsPath = fs.realpathSync("./config/twitchUsers.json");
 
 const connectionConfig = loadJsonFile<ITwitchBotConnectionConfig>(connectionConfigPath);
 const commands = loadJsonFile<IIrcBotAuxCommandGroupConfig[]>(commandConfigPath);

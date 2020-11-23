@@ -77,6 +77,12 @@ export interface IPrivMessageDetail {
     respondTo: string;
 }
 
+export enum UserChatStatus {
+    Disconnected = 0,
+    BeingAdded = 1,
+    Connected = 2,
+}
+
 export abstract class IrcBot<TUserDetail extends IUserDetail> {
     /** Hardcoded responses are kept separate from those read from a configuration to allow interactive editing of configured commands */
     protected readonly _hardcodedResponseHandlers: ((message: IPrivMessageDetail) => void)[] = [];
@@ -86,7 +92,7 @@ export abstract class IrcBot<TUserDetail extends IUserDetail> {
     protected readonly _privMessageDetailCache: { [key: string]: IPrivMessageDetail } = {};
 
     protected readonly _userDetails: IUserDetails<TUserDetail>;
-    protected readonly _usersInChat: { [key: string]: boolean } = {};
+    protected readonly _usersInChat: { [key: string]: UserChatStatus } = {};
 
     public constructor(protected readonly _config: IIrcBotConfig<TUserDetail>) {
         this._socket = new net.Socket();
@@ -98,6 +104,15 @@ export abstract class IrcBot<TUserDetail extends IUserDetail> {
         this._configuredTimerGroups.forEach(timer => timer.startTimer());
         
         this._userDetails = _config.userDetails;
+
+        setInterval(() => this.trackUsersInChat(), 1000 * 30);
+    }
+
+    protected trackUsersInChat(): void {
+        console.log("Users in chat:");
+        console.log(this._usersInChat);
+        console.log((this as any)._twitchIdByUsername);
+        // TODO: merge records for users with both username and twitch id (in TwitchBot)
     }
 
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
@@ -223,19 +238,24 @@ export abstract class IrcBot<TUserDetail extends IUserDetail> {
 
     protected handleJoin(messageDetail: IJoinMessageDetail): void {
         console.log(`${ConsoleColors.FgRed}${messageDetail.username} joined ${messageDetail.channel}${ConsoleColors.Reset}`);
-        this.addUserToChat(messageDetail.username);
+        this.addUserToChat(messageDetail.username).catch((err) => {
+            console.log(`error adding user to chat: ${err}`);
+        });
     }
 
-    protected addUserToChat(username: string): void {
-        this._usersInChat[username] = true;
+    protected async addUserToChat(username: string): Promise<void> {
+        this._usersInChat[username] = UserChatStatus.Connected;
     }
 
     protected handlePart(messageDetail: IPartMessageDetail): void {
         console.log(`${ConsoleColors.FgRed}${messageDetail.username} departed ${messageDetail.channel}${ConsoleColors.Reset}`);
+        this.removeUserFromChat(messageDetail.username).catch((err) => {
+            console.log(`error removing user from chat: ${err}`);
+        });
     }
 
-    protected removeUserFromChat(username: string): void {
-        delete this._usersInChat[username];
+    protected async removeUserFromChat(username: string): Promise<void> {
+        this._usersInChat[username] = UserChatStatus.Disconnected;
     }
 
     protected handlePrivMessageResponse(messageDetail: IPrivMessageDetail): void {
