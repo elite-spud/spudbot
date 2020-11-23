@@ -1,14 +1,17 @@
 import * as fs from "fs";
-import { GbTwitchBot } from "./GhettoBotato";
-import { IIrcBotAuxCommandGroupConfig, IIrcBotConnectionConfig } from "./IrcBot";
+import { GhettoBotatoTwitchBot, IChatWarriorUserDetail } from "./GhettoBotato";
+import { IIrcBotAuxCommandGroupConfig, IUserDetails } from "./IrcBot";
+import { ITwitchBotConnectionConfig } from "./TwitchBot";
 
 const connectionConfigPath = fs.realpathSync("./config/config.json");
 const commandConfigPath = fs.realpathSync("./config/commands.json");
+const userDetailsPath = fs.realpathSync("./config/users.json");
 
-const connectionConfig = loadJsonFile<IIrcBotConnectionConfig>(connectionConfigPath);
+const connectionConfig = loadJsonFile<ITwitchBotConnectionConfig>(connectionConfigPath);
 const commands = loadJsonFile<IIrcBotAuxCommandGroupConfig[]>(commandConfigPath);
+const userDetails = loadJsonFile<IUserDetails<IChatWarriorUserDetail>>(userDetailsPath);
 
-const bot = new GbTwitchBot(connectionConfig, commands);
+const bot = new GhettoBotatoTwitchBot(connectionConfig, commands, userDetails);
 bot.startup();
 
 export function loadJsonFile<T>(filePath: string): T {
