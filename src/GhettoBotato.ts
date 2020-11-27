@@ -65,7 +65,7 @@ export class GhettoBotatoTwitchBot extends TwitchBotBase<IChatWarriorUserDetail>
             return;
         }
 
-        const roll = randomInt(6);
+        const roll = randomInt(3);
         const timeoutSeconds = randomInt(31) + 60;
         if (roll === 0) {
             this.chat(messageDetails.respondTo, "💥 BANG!!");
@@ -84,13 +84,15 @@ export class GhettoBotatoTwitchBot extends TwitchBotBase<IChatWarriorUserDetail>
             return;
         }
 
-        const roll = randomInt(6);
+        const roll = randomInt(8);
         const timeoutSeconds = randomInt(31) + 60;
         const text = roll === 0 ? "You asked for it..." 
-            : roll === 1 ? "Taken down on the word Go!"
+            : roll === 1 ? 'Taken down on the word "Go"!'
             : roll === 2 ? "Critical Hit!"
             : roll === 3 ? "You will be remembered..."
             : roll === 4 ? "You're welcome"
+            : roll === 5 ? "Super Effective!"
+            : roll === 6 ? "Please come again"
             : "In memoriam.";
         
         this.chat(messageDetails.respondTo, text);
@@ -109,8 +111,8 @@ export class GhettoBotatoTwitchBot extends TwitchBotBase<IChatWarriorUserDetail>
 
         const roll = randomInt(5);
         const timeoutSeconds = 60 * 3;
-        const text = roll === 0 ? "Enjoy your vacation!" 
-            : roll === 1 ? "Thank you for flying with 'Tater Airlines, enjoy your trip!"
+        const text = roll === 0 ? "You've won a fabulous vacation, courtesy of 'Tater Airlines, enjoy your trip!"
+            : roll === 1 ? "Congratulations! You won an all-expenses paid trip to the gulag, enjoy your stay!"
             : roll === 2 ? "You're a winner! Thanks for playing!"
             : roll === 3 ? "Jackpot!!"
             : "DING DING DING!!";
