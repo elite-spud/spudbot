@@ -9,6 +9,7 @@ export interface IIrcBotConfig {
     encoding: "utf8" | "ascii" | string,
     auxCommandGroups: IIrcBotAuxCommandGroupConfig[],
     userDetailFilePath: string,
+    chatHistoryFilePath: string,
 }
 
 export interface IIrcBotConnectionConfig {

@@ -15,8 +15,8 @@ export interface IChatWarriorUserDetail extends ITwitchUserDetail {
 export function compareStrings(left: string, right: string): number { return left === right ? 0 : (left < right ? -1 : 1); }
 
 export class GhettoBotatoTwitchBot extends TwitchBotBase<IChatWarriorUserDetail> {
-    public constructor(connection: ITwitchBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], userDetailFilePath: string ) {
-        super(connection, auxCommandGroups, userDetailFilePath);
+    public constructor(connection: ITwitchBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], userDetailFilePath: string, chatHistoryFilePath: string) {
+        super(connection, auxCommandGroups, userDetailFilePath, chatHistoryFilePath);
         this._hardcodedPrivMessageResponseHandlers.push((detail) => this.handleEcho(detail));
         this._hardcodedPrivMessageResponseHandlers.push((detail) => this.handleSlot(detail));
         this._hardcodedPrivMessageResponseHandlers.push((detail) => this.handleTimeout(detail));

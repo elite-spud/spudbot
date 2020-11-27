@@ -5,12 +5,13 @@ import { ITwitchBotConnectionConfig } from "./TwitchBot";
 
 const connectionConfigPath = fs.realpathSync("./config/config.json");
 const commandConfigPath = fs.realpathSync("./config/commands.json");
-const userDetailsPath = fs.realpathSync("./config/twitchUsers.json");
+const userDetailsPath = fs.realpathSync("./config/users/twitchUserDetails.json");
+const chatHistoryPath = ""; // fs.realpathSync("./config/users/twitchChatHistory.csv");
 
 const connectionConfig = loadJsonFile<ITwitchBotConnectionConfig>(connectionConfigPath);
 const commands = loadJsonFile<IIrcBotAuxCommandGroupConfig[]>(commandConfigPath);
 
-const bot = new GhettoBotatoTwitchBot(connectionConfig, commands, userDetailsPath);
+const bot = new GhettoBotatoTwitchBot(connectionConfig, commands, userDetailsPath, chatHistoryPath);
 bot.startup();
 
 export function loadJsonFile<T>(filePath: string): T {

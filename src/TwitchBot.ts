@@ -66,10 +66,10 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         expires_in: number;
     } | undefined = undefined;
 
-    public constructor(connection: ITwitchBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], userDetailFilePath: string) {
+    public constructor(connection: ITwitchBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], userDetailFilePath: string, chatHistoryFilePath: string) {
         super(Object.assign(
             TwitchBotBase._knownConfig,
-            { connection, auxCommandGroups, userDetailFilePath }
+            { connection, auxCommandGroups, userDetailFilePath, chatHistoryFilePath }
         ));
         
         console.log("Performing Request...")
@@ -112,7 +112,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         const twitchChannelName = this._config.connection.server.channel.slice(1, this._config.connection.server.channel.length); // strip the leading # from the IRC channel name
         const isChannelLive = await this.isChannelLive(twitchChannelName);
         if (!isChannelLive) {
-            // return;
+            return;
         }
 
         super.trackUsersInChat(secondsToAdd);
