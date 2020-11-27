@@ -109,8 +109,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
 
     /** @override */
     protected async trackUsersInChat(secondsToAdd: number): Promise<void> {
-        const twitchChannelName = this._config.connection.server.channel.slice(1, this._config.connection.server.channel.length); // strip the leading # from the IRC channel name
-        const isChannelLive = await this.isChannelLive(twitchChannelName);
+        const isChannelLive = await this.isChannelLive(this.twitchChannelName);
         if (!isChannelLive) {
             return;
         }
@@ -128,8 +127,29 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         delete this._twitchIdByUsername[messageDetail.username];
     }
 
-    protected isChannelLive(channelName: string): Promise<boolean> {
-        return new Promise<boolean>((resolve, reject) => {
+    protected get twitchChannelName(): string {
+        const twitchChannelName = this._config.connection.server.channel.slice(1, this._config.connection.server.channel.length); // strip the leading # from the IRC channel name
+        return twitchChannelName;
+    }
+
+    protected async isChannelLive(channelName: string): Promise<boolean> {
+        try {
+            const channelInfoResponse = await this.getStreamDetails(channelName);
+            if (channelInfoResponse.data.length === 0) {
+                return false;
+            }
+            const channelStatus = channelInfoResponse.data[0].type;
+            if (channelStatus === "live") {
+                return true;
+            }
+            return false;
+        } catch (err) {
+            return false;
+        }
+    }
+
+    protected async getStreamDetails(channelName: string): Promise<TwitchChannelInfoResponse> {
+        return new Promise<TwitchChannelInfoResponse>((resolve, reject) => {
             if (!this._twitchApiToken) {
                 reject("Cannot retrieve user id from twitch without authorization!");
                 return;
@@ -151,17 +171,8 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
                         }
 
                         const channelInfoResponse = responseJson as TwitchChannelInfoResponse;
-                        if (channelInfoResponse.data.length === 0) {
-                            resolve(false);
-                            return;
-                        }
-
-                        const channelStatus = channelInfoResponse.data[0].type;
-                        if (channelStatus === "live") {
-                            resolve(true);
-                            return;
-                        }
-                        resolve(false);
+                        resolve(channelInfoResponse);
+                        return;
                     });
                 });
             request.on("error", (err) => {

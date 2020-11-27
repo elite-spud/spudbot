@@ -17,10 +17,11 @@ export function compareStrings(left: string, right: string): number { return lef
 export class GhettoBotatoTwitchBot extends TwitchBotBase<IChatWarriorUserDetail> {
     public constructor(connection: ITwitchBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], userDetailFilePath: string, chatHistoryFilePath: string) {
         super(connection, auxCommandGroups, userDetailFilePath, chatHistoryFilePath);
-        this._hardcodedPrivMessageResponseHandlers.push((detail) => this.handleEcho(detail));
-        this._hardcodedPrivMessageResponseHandlers.push((detail) => this.handleSlot(detail));
-        this._hardcodedPrivMessageResponseHandlers.push((detail) => this.handleTimeout(detail));
-        this._hardcodedPrivMessageResponseHandlers.push((detail) => this.handleGiveaway(detail));
+        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleEcho(detail));
+        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleSlot(detail));
+        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleTimeout(detail));
+        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleGiveaway(detail));
+        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleUptime(detail));
     }
 
     protected async createUserDetail(userId: string): Promise<IChatWarriorUserDetail> {
@@ -43,12 +44,12 @@ export class GhettoBotatoTwitchBot extends TwitchBotBase<IChatWarriorUserDetail>
             return;
         }
 
-        if (!messageDetails.message || !messageDetails.recipient) {
+        if (!messageDetails.message || !messageDetails.respondTo) {
             return;
         }
 
         const response = messageDetails.message.split(" ").slice(1).join(" ");
-        this.chat(messageDetails.recipient, response);
+        this.chat(messageDetails.respondTo, response);
     }
 
     // TODO: implement this
@@ -60,17 +61,17 @@ export class GhettoBotatoTwitchBot extends TwitchBotBase<IChatWarriorUserDetail>
             return;
         }
 
-        if (!messageDetails.recipient || !messageDetails.username) {
+        if (!messageDetails.respondTo || !messageDetails.username) {
             return;
         }
 
         const roll = randomInt(6);
         const timeoutSeconds = randomInt(31) + 60;
         if (roll === 0) {
-            this.chat(messageDetails.recipient, "💥 BANG!!");
-            this.timeout(messageDetails.recipient, messageDetails.username, timeoutSeconds);
+            this.chat(messageDetails.respondTo, "💥 BANG!!");
+            this.timeout(messageDetails.respondTo, messageDetails.username, timeoutSeconds);
         } else {
-            this.chat(messageDetails.recipient, "Click...");
+            this.chat(messageDetails.respondTo, "Click...");
         }
     }
 
@@ -79,7 +80,7 @@ export class GhettoBotatoTwitchBot extends TwitchBotBase<IChatWarriorUserDetail>
             return;
         }
 
-        if (!messageDetails.recipient || !messageDetails.username) {
+        if (!messageDetails.respondTo || !messageDetails.username) {
             return;
         }
 
@@ -92,17 +93,17 @@ export class GhettoBotatoTwitchBot extends TwitchBotBase<IChatWarriorUserDetail>
             : roll === 4 ? "You're welcome"
             : "In memoriam.";
         
-        this.chat(messageDetails.recipient, text);
-        this.timeout(messageDetails.recipient, messageDetails.username, timeoutSeconds);
+        this.chat(messageDetails.respondTo, text);
+        this.timeout(messageDetails.respondTo, messageDetails.username, timeoutSeconds);
     }
 
     protected async handleGiveaway(messageDetails: IPrivMessageDetail): Promise<void> {
         if (!this.doesTriggerMatch(messageDetails, "!giveaway", false)
-            || !this.doesTriggerMatch(messageDetails, "!vacation", false)) {
+            && !this.doesTriggerMatch(messageDetails, "!vacation", false)) {
             return;
         }
 
-        if (!messageDetails.recipient || !messageDetails.username) {
+        if (!messageDetails.respondTo || !messageDetails.username) {
             return;
         }
 
@@ -114,13 +115,43 @@ export class GhettoBotatoTwitchBot extends TwitchBotBase<IChatWarriorUserDetail>
             : roll === 3 ? "Jackpot!!"
             : "DING DING DING!!";
         
-        this.chat(messageDetails.recipient, text);
-        this.timeout(messageDetails.recipient, messageDetails.username, timeoutSeconds);
+        this.chat(messageDetails.respondTo, text);
+        this.timeout(messageDetails.respondTo, messageDetails.username, timeoutSeconds);
+    }
+
+    protected async handleUptime(messageDetails: IPrivMessageDetail): Promise<void> {
+        if (!this.doesTriggerMatch(messageDetails, "git status", true)
+            && !this.doesTriggerMatch(messageDetails, "!uptime", false)
+            && !this.doesTriggerMatch(messageDetails, "!status", false)
+            && !this.doesTriggerMatch(messageDetails, "!duration", false)) {
+            return;
+        }
+
+        try {
+            const streamDetails = await this.getStreamDetails(this.twitchChannelName);
+            const dateNowMillis = Date.now();
+            const dateStarted = new Date(streamDetails.data[0].started_at);
+            const dateStartedMillis = dateStarted.getTime();
+            let dateDiff = dateStartedMillis - dateNowMillis;
+            const days = Math.floor(dateDiff / (1000 * 60 * 60 * 24));
+            dateDiff -=  days * (1000 * 60 * 60 * 24);
+            const hours = Math.floor(dateDiff / (1000 * 60 * 60));
+            dateDiff -= hours * (1000 * 60 * 60);
+            const mins = Math.floor(dateDiff / (1000 * 60));
+            dateDiff -= mins * (1000 * 60);
+            const seconds = Math.floor(dateDiff / (1000));
+            dateDiff -= seconds * (1000);
+            const timeLiveStr = `${days ? `${days} day${days > 1 ? `s` : ``}` : ``} ${hours ? `${hours} hour${days > 1 ? `s` : ""}` : ``} ${mins ? `${mins} minute${mins > 1 ? `s` : ""}` : ``} ${seconds ? `${seconds} second${seconds > 1 ? `s` : ``}` : ``}`;
+
+            this.chat(messageDetails.respondTo, `This stream has been live for ${timeLiveStr}`);
+        } catch (err) {
+            this.chat(messageDetails.respondTo, `This stream is currently offline.`);
+        }
     }
 
     // protected handleStatus(messageDetails: IPrivMessageDetail): void {
     //     if (!this.doesTriggerMatch(messageDetails, "!status", false)
-    //         || !this.doesTriggerMatch(messageDetails, "git status", false)) {
+    //         && !this.doesTriggerMatch(messageDetails, "git status", false)) {
     //         return;
     //     }
 

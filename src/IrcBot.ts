@@ -96,7 +96,7 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
     protected readonly _socket: net.Socket;
     protected readonly _privMessageDetailCache: { [key: string]: IPrivMessageDetail } = {};
 
-    protected readonly _pendingUserDetailByUserId: { [key: string]: Promise<TUserDetail> };
+    protected readonly _pendingUserDetailByUserId: { [key: string]: Promise<TUserDetail> } = {};
     protected readonly _userDetailByUserId: IUserDetailCollection<TUserDetail>;
     protected readonly _userIdsInChat: { [key: string]: UserChatStatus } = {};
 
@@ -134,9 +134,10 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
         try {
             // TODO: Add a timeout of some sort (as a promise?)
             await Promise.all(userUpdatePromises);
-            const dateNow = new Date();
-            const dateSuffix = dateNow.toISOString().split(":").join("_").split(".").join("_");
-            fs.renameSync(this._config.userDetailFilePath, `${this._config.userDetailFilePath}_${dateSuffix}`);
+            // TODO: put a limit on how many user detail files are backed up
+            // const dateNow = new Date();
+            // const dateSuffix = dateNow.toISOString().split(":").join("_").split(".").join("_");
+            // fs.renameSync(this._config.userDetailFilePath, `${this._config.userDetailFilePath}_${dateSuffix}`);
             fs.writeFileSync(this._config.userDetailFilePath, JSON.stringify(this._userDetailByUserId));
             console.log(`Successfully wrote userDetail to file: ${this._config.userDetailFilePath}`);
         } catch (err) {

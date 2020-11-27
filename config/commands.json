@@ -13,14 +13,15 @@
 				"names": ["!twitter", "!tweets"],
 				"responses": [
 					"Tweets go here when I'm live and sometimes when I'm not: https://twitter.com/ghetto_spud",
-					"I'm a twit: https://twitter.com/ghetto_spud"
+					"I'm a twit (sometimes): https://twitter.com/ghetto_spud"
 				]
 			},
 			{
 				"names": ["!youtube", "!vods", "!vod"],
 				"responses": [
 					"VODs get posted here (3x a week usually): https://www.youtube.com/channel/UCQZvvzMogGYW6oIBJKX1bxA",
-					"Blind playthroughs and other interesting streams get archived on YouTube here: https://www.youtube.com/channel/UCQZvvzMogGYW6oIBJKX1bxA"
+					"Blind playthroughs and other interesting streams get archived on YouTube here: https://www.youtube.com/channel/UCQZvvzMogGYW6oIBJKX1bxA",
+					"I archive all my streams locally and post the good ones here: https://www.youtube.com/channel/UCQZvvzMogGYW6oIBJKX1bxA"
 				]
 			}
 		]
@@ -33,13 +34,15 @@
 			{
 				"names": ["!music", "!lastfm", "!songs"],
 				"responses": [
-					"I collect CDs and keep track of what I listen to as a hobby. You can judge my poor music taste here: https://www.last.fm/user/ghetto_spud"
+					"I collect CDs and keep track of what I listen to as a hobby. You can judge my poor music taste here: https://www.last.fm/user/ghetto_spud",
+					"I have multiple hobbies, one of which includes maintaining a small collection of CD's. You can see what I have and what I've been listening to here: https://www.last.fm/user/ghetto_spud"
 				]
 			},
 			{
 				"names": ["!av", "!setup", "!hardware"],
 				"responses": [
-					"Wanna know how many wires are in my AV setup? Or how many splitters I bought to play GameBoy games on a monitor? Check the diagram here: https://gist.github.com/ghettospud/6f82f3da9d586df553757fa134278845 and the real life™ images here: https://twitter.com/ghetto_spud/status/1306375006008610817. Feel free to ask me questions about any specific components!"
+					"Wanna know how many wires are in my AV setup? Or how many splitters it takes to play GameBoy games on a PC monitor? Check the diagram here: https://gist.github.com/ghettospud/6f82f3da9d586df553757fa134278845 and the real life™ images here: https://twitter.com/ghetto_spud/status/1306375006008610817. Feel free to ask me questions about any specific components!",
+					"Wondering what kind of hardware I use to play and stream my games? Take a look at the diagram here: https://gist.github.com/ghettospud/6f82f3da9d586df553757fa134278845 to see the layout of my setup. You can also find images of everything as it situ here: https://twitter.com/ghetto_spud/status/1306375006008610817. Don't be afraid to ask questions about how everything works!"
 				]
 			},
 			{
@@ -77,10 +80,10 @@
 				]
 			},
 			{
-				"names": ["!bot", "!chatbot", "!github", "!code"],
+				"names": ["!bot", "!chatbot", "!github", "!code", "!sourcecode"],
 				"responses": [
-					"I (Spud) wrote this chatbot myself because I'm a big dork. You can find all the source code on GitHub here if you fancy yourself a dork too: https://github.com/ghettospud/ghetto_botato",
-					"This chatbot is © Spud Inc., but you can see how it works here: https://github.com/ghettospud/ghetto_botato"
+					"I (Spud) wrote this chatbot myself because I'm a big dork. If you fancy yourself a dork too, you can peruse the source code on GitHub here: https://github.com/ghettospud/ghetto_botato",
+					"This chatbot is © Spud Inc., which maintains an open policy of showcasing all the programming mistakes of the chatbot author here for all to see: https://github.com/ghettospud/ghetto_botato"
 				]
 			},
 			{
@@ -100,9 +103,9 @@
 				]
 			},
 			{
-				"names": ["git help"],
+				"names": ["git --help"],
 				"responses": [
-					"usage: git [--help] <command> [<args>]     These are common Git commands used in various situations: add, google, panic, pull, push, reset, status"
+					"usage: git [--help] <command> [<args>]     These are common Git commands used in various situations: add, google, pull, push, reset, status"
 				]
 			},
 			{
@@ -110,35 +113,30 @@
 				"strict": true,
 				"responses": [
 					"Thank you for adding your name to the list. The FBI is now en route to your location.",
-					"Your feedback has been recorded. Would you like a complimentary club soda?",
 					"2+2=4",
-					"Nothing specified, nothing added. hint: Maybe you wanted to say 'git add .'?",
-					"Adding has been deprecated. We instead encourage you to negate your values and subtract them from now on."
+					"One of the four basic operations of arithmetic, adding was first invented on November 10, 1969 when the educational children's television series, Sesame Street, premiered on the American television station, PBS.",
+					"Adding has been deprecated. We instead recommended to subtract negative values from now on.",
+					"Nothing specified, nothing added.    hint: Maybe you wanted to say 'git add .'?"
 				]
 			},
 			{
 				"names": ["git add ."],
 				"strict": true,
 				"responses": [
-					"'.' received. We appreciate your generosity in these trying times."
+					"Your '.' has been received. We appreciate such generosity in these trying times."
 				]
 			},
 			{
 				"names": ["git google"],
 				"responses": [
-					"Step 1 of using git is to google how to use git"
-				]
-			},
-			{
-				"names": ["git panic"],
-				"responses": [
-					"Don't even try to fix it. Just delete, pull, and start from scratch"
+					"Step 1 of using git: ask google how to use git"
 				]
 			},
 			{
 				"names": ["git pull"],
 				"responses": [
-					"The gravity of Earth, denoted by g, is the net acceleration imparted to objects due to the combined effect of gravitational pull (from mass distribution within Earth) and the centrifugal force (from the Earth's rotation). Near Earth's surface, the pull is approximately 9.81 meters per second per second."
+					"The gravity of Earth, denoted by g, is the net acceleration imparted to objects due to the combined effect of gravitational pull (from mass distribution within Earth) and the centrifugal force (from the Earth's rotation). Near Earth's surface, the pull is approximately 9.81 meters per second per second.",
+					"pull (ˈpu̇l) v. 1: To exert force upon so as to cause or tend to cause motion toward the force 2: To extract 3: To draw the support or attraction of [Middle English, from Old English pullian]"
 				]
 			},
 			{
@@ -150,8 +148,7 @@
 			{
 				"names": ["git reset"],
 				"responses": [
-					"Your file has been deleted.",
-					"Your progress has been reset.",
+					"Your progress has been reset, and your save file has been erased.",
 					"Manual override detected, Rebooting..."
 				]
 			}
