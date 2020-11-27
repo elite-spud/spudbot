@@ -1,7 +1,7 @@
 import { randomInt } from "crypto";
 import { IChatWarriorState } from "./ChatWarrior";
-import { IIrcBotAuxCommandGroupConfig, IPrivMessageDetail, IUserDetails } from "./IrcBot";
-import { ITwitchBotConnectionConfig, ITwitchUserDetail, TwitchBot } from "./TwitchBot";
+import { IIrcBotAuxCommandGroupConfig, IPrivMessageDetail } from "./IrcBot";
+import { ITwitchBotConnectionConfig, ITwitchUserDetail, TwitchBotBase } from "./TwitchBot";
 
 export interface UserCommand {
     username: string,
@@ -14,16 +14,31 @@ export interface IChatWarriorUserDetail extends ITwitchUserDetail {
 
 export function compareStrings(left: string, right: string): number { return left === right ? 0 : (left < right ? -1 : 1); }
 
-export class GhettoBotatoTwitchBot extends TwitchBot<IChatWarriorUserDetail> {
-    public constructor(connection: ITwitchBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], userDetails: IUserDetails<IChatWarriorUserDetail> ) {
-        super(connection, auxCommandGroups, userDetails);
-        this._hardcodedResponseHandlers.push((detail) => this.handleEcho(detail));
-        this._hardcodedResponseHandlers.push((detail) => this.handleSlot(detail));
-        this._hardcodedResponseHandlers.push((detail) => this.handleTimeout(detail));
-        this._hardcodedResponseHandlers.push((detail) => this.handleGiveaway(detail));
+export class GhettoBotatoTwitchBot extends TwitchBotBase<IChatWarriorUserDetail> {
+    public constructor(connection: ITwitchBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], userDetailFilePath: string ) {
+        super(connection, auxCommandGroups, userDetailFilePath);
+        this._hardcodedPrivMessageResponseHandlers.push((detail) => this.handleEcho(detail));
+        this._hardcodedPrivMessageResponseHandlers.push((detail) => this.handleSlot(detail));
+        this._hardcodedPrivMessageResponseHandlers.push((detail) => this.handleTimeout(detail));
+        this._hardcodedPrivMessageResponseHandlers.push((detail) => this.handleGiveaway(detail));
     }
 
-    protected handleEcho(messageDetails: IPrivMessageDetail): void {
+    protected async createUserDetail(userId: string): Promise<IChatWarriorUserDetail> {
+        const username = this._usernameByTwitchId[userId];
+        if (!username) {
+            throw new Error(`Cannot create a user detail for userId: ${userId} with unknown username`);
+        }
+
+        const twitchUserDetail: ITwitchUserDetail = {
+            id: userId,
+            username: username,
+            secondsInChat: 0,
+            numChatMessages: 0,
+        };
+        return twitchUserDetail;
+    }
+
+    protected async handleEcho(messageDetails: IPrivMessageDetail): Promise<void> {
         if (!this.doesTriggerMatch(messageDetails, "!echo", false)) {
             return;
         }
@@ -40,7 +55,7 @@ export class GhettoBotatoTwitchBot extends TwitchBot<IChatWarriorUserDetail> {
     // protected handleEditCom(messageDetails: IPrivMessageDetail): void {
     // }
 
-    protected handleSlot(messageDetails: IPrivMessageDetail): void {
+    protected async handleSlot(messageDetails: IPrivMessageDetail): Promise<void> {
         if (!this.doesTriggerMatch(messageDetails, "!slot", false)) {
             return;
         }
@@ -59,7 +74,7 @@ export class GhettoBotatoTwitchBot extends TwitchBot<IChatWarriorUserDetail> {
         }
     }
 
-    protected handleTimeout(messageDetails: IPrivMessageDetail): void {
+    protected async handleTimeout(messageDetails: IPrivMessageDetail): Promise<void> {
         if (!this.doesTriggerMatch(messageDetails, "!timeout", false)) {
             return;
         }
@@ -81,7 +96,7 @@ export class GhettoBotatoTwitchBot extends TwitchBot<IChatWarriorUserDetail> {
         this.timeout(messageDetails.recipient, messageDetails.username, timeoutSeconds);
     }
 
-    protected handleGiveaway(messageDetails: IPrivMessageDetail): void {
+    protected async handleGiveaway(messageDetails: IPrivMessageDetail): Promise<void> {
         if (!this.doesTriggerMatch(messageDetails, "!giveaway", false)
             || !this.doesTriggerMatch(messageDetails, "!vacation", false)) {
             return;

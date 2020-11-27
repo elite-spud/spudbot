@@ -1,13 +1,14 @@
 import { randomInt } from "crypto";
+import * as fs from "fs";
 import * as net from "net";
 import { ConsoleColors } from "./ConsoleColors";
 import { TimerGroup } from "./TimerGroup";
 
-export interface IIrcBotConfig<TUserDetail extends IUserDetail> {
+export interface IIrcBotConfig {
     connection: IIrcBotConnectionConfig,
     encoding: "utf8" | "ascii" | string,
     auxCommandGroups: IIrcBotAuxCommandGroupConfig[],
-    userDetails: IUserDetails<TUserDetail>,
+    userDetailFilePath: string,
 }
 
 export interface IIrcBotConnectionConfig {
@@ -29,13 +30,14 @@ export interface IIrcBotAuxCommandGroupConfig {
     commands: IIrcBotAuxCommandConfig[];
 }
 
-export interface IUserDetails<TUserDetail extends IUserDetail> {
+export interface IUserDetailCollection<TUserDetail extends IUserDetail> {
     [key: string]: TUserDetail;
 }
 
 export interface IUserDetail {
     username: string;
-    secondsInChat: string;
+    secondsInChat: number;
+    numChatMessages: number;
 }
 
 export interface IIrcBotAuxCommandConfig {
@@ -83,41 +85,91 @@ export enum UserChatStatus {
     Connected = 2,
 }
 
-export abstract class IrcBot<TUserDetail extends IUserDetail> {
+export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
+    public static readonly userDetailEncoding = "utf8";
+
     /** Hardcoded responses are kept separate from those read from a configuration to allow interactive editing of configured commands */
-    protected readonly _hardcodedResponseHandlers: ((message: IPrivMessageDetail) => void)[] = [];
-    protected readonly _configuredResponseHandlers: ((message: IPrivMessageDetail) => void)[] = [];
+    protected readonly _hardcodedPrivMessageResponseHandlers: ((message: IPrivMessageDetail) => Promise<void>)[] = [];
+    protected readonly _configuredPrivMessageResponseHandlers: ((message: IPrivMessageDetail) => Promise<void>)[] = [];
     protected readonly _configuredTimerGroups: TimerGroup[] = [];
     protected readonly _socket: net.Socket;
     protected readonly _privMessageDetailCache: { [key: string]: IPrivMessageDetail } = {};
 
-    protected readonly _userDetails: IUserDetails<TUserDetail>;
-    protected readonly _usersInChat: { [key: string]: UserChatStatus } = {};
+    protected readonly _pendingUserDetailByUserId: { [key: string]: Promise<TUserDetail> };
+    protected readonly _userDetailByUserId: IUserDetailCollection<TUserDetail>;
+    protected readonly _userIdsInChat: { [key: string]: UserChatStatus } = {};
 
-    public constructor(protected readonly _config: IIrcBotConfig<TUserDetail>) {
+    public constructor(protected readonly _config: IIrcBotConfig) {
         this._socket = new net.Socket();
         this._socket.setNoDelay();
 
         const configCommands = this.getCommandsFromConfig(_config.auxCommandGroups, _config.connection.server.channel);
-        this._configuredResponseHandlers = configCommands.chatResponses;
+        this._configuredPrivMessageResponseHandlers = configCommands.chatResponses;
         this._configuredTimerGroups = configCommands.timerGroups;
         this._configuredTimerGroups.forEach(timer => timer.startTimer());
+
+        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleChatMessageCount(detail));
         
-        this._userDetails = _config.userDetails;
+        const userDetailJson: string = fs.readFileSync(_config.userDetailFilePath, { encoding: IrcBotBase.userDetailEncoding });        
+        this._userDetailByUserId = JSON.parse(userDetailJson); // TODO: Add error checking of some sort
+        console.log(`Successfully loaded userDetail from file: ${_config.userDetailFilePath}`);
+        console.log(this._userDetailByUserId);
 
-        setInterval(() => this.trackUsersInChat(), 1000 * 30);
+        const userTrackingIntervalSeconds = 30;
+        setInterval(() => this.trackUsersInChat(userTrackingIntervalSeconds), 1000 * userTrackingIntervalSeconds);
     }
 
-    protected trackUsersInChat(): void {
-        console.log("Users in chat:");
-        console.log(this._usersInChat);
-        console.log((this as any)._twitchIdByUsername);
-        // TODO: merge records for users with both username and twitch id (in TwitchBot)
+    protected async trackUsersInChat(secondsToAdd: number): Promise<void> {
+        const userUpdatePromises: Promise<void>[] = [];
+        for (const userId of Object.keys(this._userIdsInChat)) {
+            const userUpdatedPromise = this.getUserDetailWithCache(userId).then((userDetail) => {
+                this.addTimeSpentInChatToUser(userDetail, secondsToAdd);
+            }).catch((err) => {
+                console.log(`Error adding time to user detail with userId ${userId}: ${err}`);
+            });
+            userUpdatePromises.push(userUpdatedPromise);
+        }
+        
+        try {
+            // TODO: Add a timeout of some sort (as a promise?)
+            await Promise.all(userUpdatePromises);
+            const dateNow = new Date();
+            const dateSuffix = dateNow.toISOString().split(":").join("_").split(".").join("_");
+            fs.renameSync(this._config.userDetailFilePath, `${this._config.userDetailFilePath}_${dateSuffix}`);
+            fs.writeFileSync(this._config.userDetailFilePath, JSON.stringify(this._userDetailByUserId));
+            console.log(`Successfully wrote userDetail to file: ${this._config.userDetailFilePath}`);
+        } catch (err) {
+            console.log(`Error writing userDetail status to file: ${err}`);
+        }
     }
+
+    protected async getUserDetailWithCache(userId: string): Promise<TUserDetail> {
+        if (this._userDetailByUserId[userId]) {
+            return this._userDetailByUserId[userId];
+        }
+
+        if (this._pendingUserDetailByUserId[userId]) {
+            return this._pendingUserDetailByUserId[userId];
+        }
+
+        const promise = this.createUserDetail(userId).then((userDetail) => {
+            this._userDetailByUserId[userId] = userDetail;
+            delete this._pendingUserDetailByUserId[userId];
+            return userDetail;
+        });
+        this._pendingUserDetailByUserId[userId] = promise;
+        return promise;
+    }
+
+    protected addTimeSpentInChatToUser(userDetail: TUserDetail, secondsToAdd: number): void {
+        userDetail.secondsInChat += secondsToAdd;
+    }
+
+    protected abstract async createUserDetail(userId: string): Promise<TUserDetail>;
 
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
     protected getCommandsFromConfig(commandGroups: IIrcBotAuxCommandGroupConfig[], channelToAddTimers: string | undefined) {
-        const chatResponses: ((messageDetail: IPrivMessageDetail) => void)[] = [];
+        const chatResponses: ((messageDetail: IPrivMessageDetail) => Promise<void>)[] = [];
         const timerGroups: TimerGroup[] = [];
         
         for (const commandGroup of commandGroups) {
@@ -149,8 +201,8 @@ export abstract class IrcBot<TUserDetail extends IUserDetail> {
         return { chatResponses, timerGroups };
     }
 
-    public getSimpleChatResponseFunc(triggerPhrase: string, responses: string[], strictMatch: boolean): (message: IPrivMessageDetail) => void {
-        const func = (messageDetail: IPrivMessageDetail) => {
+    public getSimpleChatResponseFunc(triggerPhrase: string, responses: string[], strictMatch: boolean): (message: IPrivMessageDetail) => Promise<void> {
+        const func = async (messageDetail: IPrivMessageDetail): Promise<void> => {
             if (!this.doesTriggerMatch(messageDetail, triggerPhrase, strictMatch)) {
                 return;
             }
@@ -236,40 +288,49 @@ export abstract class IrcBot<TUserDetail extends IUserDetail> {
         console.log("");
     }
 
-    protected handleJoin(messageDetail: IJoinMessageDetail): void {
-        console.log(`${ConsoleColors.FgRed}${messageDetail.username} joined ${messageDetail.channel}${ConsoleColors.Reset}`);
-        this.addUserToChat(messageDetail.username).catch((err) => {
+    protected async getUserIdForUsername(username: string): Promise<string> {
+        return username;
+    }
+
+    protected async handleJoin(messageDetail: IJoinMessageDetail): Promise<void> {
+        console.log(  `${ConsoleColors.FgRed}${messageDetail.username} joined ${messageDetail.channel}${ConsoleColors.Reset}`);
+        try {
+            const userId = await this.getUserIdForUsername(messageDetail.username);
+            this._userIdsInChat[userId] = UserChatStatus.Connected;
+        } catch (err) {
             console.log(`error adding user to chat: ${err}`);
-        });
+        }
     }
 
-    protected async addUserToChat(username: string): Promise<void> {
-        this._usersInChat[username] = UserChatStatus.Connected;
-    }
-
-    protected handlePart(messageDetail: IPartMessageDetail): void {
-        console.log(`${ConsoleColors.FgRed}${messageDetail.username} departed ${messageDetail.channel}${ConsoleColors.Reset}`);
-        this.removeUserFromChat(messageDetail.username).catch((err) => {
+    protected async handlePart(messageDetail: IPartMessageDetail): Promise<void> {
+        console.log(  `${ConsoleColors.FgRed}${messageDetail.username} departed ${messageDetail.channel}${ConsoleColors.Reset}`);
+        try {
+            const userId = await this.getUserIdForUsername(messageDetail.username);
+            delete this._userIdsInChat[userId];
+        } catch (err) {
             console.log(`error removing user from chat: ${err}`);
-        });
+        }
     }
 
-    protected async removeUserFromChat(username: string): Promise<void> {
-        this._usersInChat[username] = UserChatStatus.Disconnected;
+    protected async handleChatMessageCount(messageDetail: IPrivMessageDetail): Promise<void> {
+        const userId = await this.getUserIdForUsername(messageDetail.username);
+        const userDetail = await this.getUserDetailWithCache(userId);
+        if (!userDetail.numChatMessages) {
+            userDetail.numChatMessages = 0;
+        }
+        userDetail.numChatMessages++;
     }
 
     protected handlePrivMessageResponse(messageDetail: IPrivMessageDetail): void {
-        const handlers = this._configuredResponseHandlers.concat(this._hardcodedResponseHandlers);
+        const handlers = this._configuredPrivMessageResponseHandlers.concat(this._hardcodedPrivMessageResponseHandlers);
 
         for (const handler of handlers) {
-            try {
-                handler(messageDetail);
-            } catch (err) {
-                console.log("Error processing response: ")
+            handler(messageDetail).catch((err) => {
+                console.log("Error processing privMessage response: ");
                 console.log(err);
-                console.error("Error processing response: ") // TODO: verify this is actually visible
+                console.error("Error processing privMessage response: "); // TODO: actually use this output stream
                 console.error(err);
-            }
+            });
         }
     }
 
