@@ -6,8 +6,13 @@
 	"server": {
 		"host": "irc.twitch.tv",
 		"port": 6667,
-		"channels": [
-			{ "name": "#<channel name goes here>", "timers": false }
-		]
+		"channel": "#<channel name goes here>"
+	},
+	"twitch": {
+		"oauth": {
+			"clientId": "------------------------------",
+			"clientSecret": "------------------------------",
+			"scope": "user:read:email"
+		}
 	}
 }
