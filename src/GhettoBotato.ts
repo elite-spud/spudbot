@@ -46,11 +46,11 @@ export class GhettoBotatoTwitchBot extends TwitchBotBase<IChatWarriorUserDetail>
         }
         const func = this.getChatResponseFunc({
             subFunc,
-            triggerPhrases: ["!slot"],
+            triggerPhrases: ["!echo"],
             strictMatch: true,
-            commandKey: "!slot",
-            globalTimeoutSeconds: 60,
-            userTimeoutSeconds: 60,
+            commandKey: "!echo",
+            globalTimeoutSeconds: 0,
+            userTimeoutSeconds: 0,
         });
         await func(messageDetail);
     }
@@ -76,7 +76,7 @@ export class GhettoBotatoTwitchBot extends TwitchBotBase<IChatWarriorUserDetail>
             strictMatch: true,
             commandKey: "!slot",
             globalTimeoutSeconds: 0,
-            userTimeoutSeconds: 15,
+            userTimeoutSeconds: 0,
         });
         await func(messageDetail);
     }
