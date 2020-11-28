@@ -55,7 +55,7 @@ export class GhettoBotatoTwitchBot extends TwitchBotBase<IChatWarriorUserDetail>
         await func(messageDetail);
     }
 
-    // TODO: implement this
+    // TODO: implement this 
     // protected handleEditCom(messageDetails: IPrivMessageDetail): void {
     // }
 
