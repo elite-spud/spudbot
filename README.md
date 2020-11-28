@@ -3,7 +3,8 @@
 A Node.js Typescript twitch bot used at [twitch.tv/ghetto_spud](twitch.tv/ghetto_spud)
 
 **After pulling**
-- Install Node.js + NPM
+- [Install Node.js + NPM](https://nodejs.org/en/)
+- navigate a command line to repo root folder on file system
 - `npm install`
 
 **To build**
