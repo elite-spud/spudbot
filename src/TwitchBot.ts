@@ -1,5 +1,5 @@
 import * as https from "https";
-import { IIrcBotAuxCommandGroupConfig, IIrcBotConfig, IIrcBotConnectionConfig, IPartMessageDetail, IrcBotBase, IUserDetail } from "./IrcBot";
+import { IIrcBotAuxCommandGroupConfig, IIrcBotConfig, IIrcBotConnectionConfig, IPartMessageDetail, IPrivMessageDetail, IrcBotBase, IUserDetail } from "./IrcBot";
 
 export interface ITwitchUserDetail extends IUserDetail {
     /** globally unique id for a twitch user (persists between username changes) */
@@ -54,6 +54,9 @@ export interface TwitchErrorResponse {
     status: number, // HTTP status code
     message: string,
 }
+
+export type TwitchPrivMessageTagKeys = "badge-info" | "badges" | "client-nonce" | "color" | "display-name" | "emotes" | "flags" | "id" | "mod" | "room-id" | "subscriber" | "tmi-sent-ts" | "turbo" | "user-id" | "user-type" | string;
+export type TwitchBadgeTagKeys = "admin" | "bits" | "broadcaster" | "global_mod" | "moderator" | "subscriber" | "staff" | "turbo" | string;
 
 export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwitchUserDetail> extends IrcBotBase<TUserDetail> {
     protected static _knownConfig = { encoding: "utf8" };
@@ -235,6 +238,59 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
                 reject(err);
             });
         });
+    }
+
+    protected shouldIgnoreTimeoutRestrictions(messageDetail: IPrivMessageDetail): boolean {
+        const tags = this.parseTwitchTags(messageDetail.tags);
+        const badgeVersionsByBadgeName = this.parseTwitchBadges(tags.badges);
+        if (badgeVersionsByBadgeName.broadcaster || badgeVersionsByBadgeName.moderator) {
+            return true;
+        }
+        return false;
+    }
+
+    protected parseTwitchBadges(badges?: string): { [badgeName in TwitchBadgeTagKeys]: string } {
+        if (!badges) {
+            return {};
+        }
+
+        const badgeVersionsByBadgeName: { [badgeName in TwitchBadgeTagKeys]: string } = {};
+        const badgesSplit = badges.split(",");
+        for (const badge of badgesSplit) {
+            const badgeSplit = badge.split("/");
+            if (badgeSplit.length !== 2) {
+                console.log(`Failed to parse a twitch badge tag: ${badge}. Expected only 2 parts after splitting on '/'`);
+                continue;
+            }
+            const badgeName = badgeSplit[0];
+            const badgeVersion = badgeSplit[1];
+            badgeVersionsByBadgeName[badgeName] = badgeVersion;
+        }
+        return badgeVersionsByBadgeName;
+    }
+
+    protected parseTwitchTags(tags?: string): { [key in TwitchPrivMessageTagKeys]: string } {
+        if (!tags) {
+            return {};
+        }
+
+        const parsedTags: { [key in TwitchPrivMessageTagKeys]: string } = {};
+        const tagsCleaned = tags.startsWith("@")
+            ? tags.slice(1, tags.length)
+            : tags;
+        const tagsStrArr = tagsCleaned.split(";");
+        for (const tag of tagsStrArr) {
+            const splitTag = tag.split("=");
+            if (splitTag.length !== 2) {
+                console.log(`Failed to parse a twitch tag: ${tag}. Expected only 2 parts after splitting on '='`);
+                continue;
+            }
+            const key = splitTag[0];
+            const value = splitTag[1];
+            parsedTags[key] = value;
+        }
+
+        return parsedTags;
     }
 
     public startup(): void {

@@ -4,20 +4,22 @@
 		"random": true,
 		"commands": [
 			{
-				"names": ["!2020"],
+				"name": "!2020",
 				"responses": [
 					"For the year of 2020, I'll be playing through 50(ish) games I've never beaten before. With over 1000 hours of gameplay expected across 9 platforms and 5 decades, I tried to mix in a wide variety of genres to keep things fresh throughout the year. Check the list to see if I'll be playing your favorite game! https://docs.google.com/spreadsheets/d/1JsdDfmdjaL3d-oGsuq38z_jhrvkhePF1LLz4W1dpzI4/edit?usp=sharing"
 				]
 			},
 			{
-				"names": ["!twitter", "!tweets"],
+				"name": "!twitter",
+				"aliases": ["!tweets", "!twit"],
 				"responses": [
 					"Tweets go here when I'm live and sometimes when I'm not: https://twitter.com/ghetto_spud",
 					"I'm a twit (sometimes): https://twitter.com/ghetto_spud"
 				]
 			},
 			{
-				"names": ["!youtube", "!vods", "!vod"],
+				"name": "!youtube",
+				"aliases": ["!vods", "!vod"],
 				"responses": [
 					"VODs get posted here (3x a week usually): https://www.youtube.com/channel/UCQZvvzMogGYW6oIBJKX1bxA",
 					"Blind playthroughs and other interesting streams get archived on YouTube here: https://www.youtube.com/channel/UCQZvvzMogGYW6oIBJKX1bxA",
@@ -32,21 +34,24 @@
 		"random": true,
 		"commands": [
 			{
-				"names": ["!music", "!lastfm", "!songs"],
+				"name": "!music",
+				"aliases": ["!lastfm", "!songs"],
 				"responses": [
 					"I collect CDs and keep track of what I listen to as a hobby. You can judge my poor music taste here: https://www.last.fm/user/ghetto_spud",
 					"I have multiple hobbies, one of which includes maintaining a small collection of CD's. You can see what I have and what I've been listening to here: https://www.last.fm/user/ghetto_spud"
 				]
 			},
 			{
-				"names": ["!av", "!setup", "!hardware"],
+				"name": "!av",
+				"aliases": ["!setup", "!hardware"],
 				"responses": [
 					"Wanna know how many wires are in my AV setup? Or how many splitters it takes to play GameBoy games on a PC monitor? Check the diagram here: https://gist.github.com/ghettospud/6f82f3da9d586df553757fa134278845 and the real life™ images here: https://twitter.com/ghetto_spud/status/1306375006008610817. Feel free to ask me questions about any specific components!",
 					"Wondering what kind of hardware I use to play and stream my games? Take a look at the diagram here: https://gist.github.com/ghettospud/6f82f3da9d586df553757fa134278845 to see the layout of my setup. You can also find images of everything as it situ here: https://twitter.com/ghetto_spud/status/1306375006008610817. Don't be afraid to ask questions about how everything works!"
 				]
 			},
 			{
-				"names": ["!games", "!history", "!opinions", "!pastebin"],
+				"name": "!games",
+				"aliases": ["!history", "!opinions", "!pastebin"],
 				"responses": [
 					"I maintain a list of all the games I've streamed here: https://pastebin.com/bGjDvFDx and a tier list of my blind playthroughs here: https://pastebin.com/fRPKHM7D. You can also find a collection of all my substantial opinions on my profile: https://pastebin.com/u/ghetto_spud"
 				]
@@ -56,38 +61,41 @@
 	{
 		"commands": [
 			{
-				"names": ["!foo"],
+				"name": "!foo",
 				"responses": [
 					"bar"
 				]
 			},
 			{
-				"names": ["!tomato"],
+				"name": "!tomato",
 				"responses": [
 					"tomahto"
 				]
 			},
 			{
-				"names": ["!potato"],
+				"name": "!potato",
 				"responses": [
 					"potahto"
 				]
 			},
 			{
-				"names": ["!blind", "!hints", "!nohints", "!help", "!mints"],
+				"name": "!blind",
+				"aliases": ["!hints", "!nohints", "!help", "!mints"],
 				"responses": [
-					"Blind means that I know nothing about the game I'm playing and want to keep it that way. Assume all questions about the game are rhetorical, and don't hint/spoil/suggest/backseat/tip/advise/guide/recommend/remind/warn me in any way, please. I can learn how to walk on my own. Go play the game yourself if you can't keep it in your pants."
+					"Blind means that I know nothing about the game I'm playing and want to keep it that way. Assume all questions about the game are rhetorical, and don't hint/spoil/suggest/backseat/tip/advise/guide/recommend/remind/warn me in any way, please. I can learn how to walk on my own. Go play the game yourself if you can't keep it in your pants.",
+					"Wait! Before you send that comment, consider if it might inform me about something I don't know or understand yet, hint that I'm doing something inefficiently, or otherwise imply that I've missed something in the game you think to be obvious, crucial, or both. Maybe you feel bad for me, or frustrated that I'm not doing something the way you'd like, but please refrain from typing any messages that might include any of the above qualities. I'm playing this game for my own enjoyment, so try not to spoil anything. I assure you I’m still having fun, and I am very much still interested in figuring things out on my own."
 				]
 			},
 			{
-				"names": ["!bot", "!chatbot", "!github", "!code", "!sourcecode"],
+				"name": "!github",
+				"aliases": ["!bot", "!chatbot", "!code", "!sourcecode"],
 				"responses": [
 					"I (Spud) wrote this chatbot myself because I'm a big dork. If you fancy yourself a dork too, you can peruse the source code on GitHub here: https://github.com/ghettospud/ghetto_botato",
 					"This chatbot is © Spud Inc., which maintains an open policy of showcasing all the programming mistakes of the chatbot author here for all to see: https://github.com/ghettospud/ghetto_botato"
 				]
 			},
 			{
-				"names": ["!commands"],
+				"name": "!commands",
 				"responses": [
 					"Available commands include: !commands"
 				]
@@ -97,19 +105,19 @@
 	{
 		"commands": [
 			{
-				"names": ["git gud"],
+				"name": "git gud",
 				"responses": [
 					"git: 'gud' is not a git command. See 'git --help'"
 				]
 			},
 			{
-				"names": ["git --help"],
+				"name": "git --help",
 				"responses": [
 					"usage: git [--help] <command> [<args>]     These are common Git commands used in various situations: add, google, pull, push, reset, status"
 				]
 			},
 			{
-				"names": ["git add"],
+				"name": "git add",
 				"strict": true,
 				"responses": [
 					"Thank you for adding your name to the list. The FBI is now en route to your location.",
@@ -120,33 +128,33 @@
 				]
 			},
 			{
-				"names": ["git add ."],
+				"name": "git add .",
 				"strict": true,
 				"responses": [
 					"Your '.' has been received. We appreciate such generosity in these trying times."
 				]
 			},
 			{
-				"names": ["git google"],
+				"name": "git google",
 				"responses": [
 					"Step 1 of using git: ask google how to use git"
 				]
 			},
 			{
-				"names": ["git pull"],
+				"name": "git pull",
 				"responses": [
 					"The gravity of Earth, denoted by g, is the net acceleration imparted to objects due to the combined effect of gravitational pull (from mass distribution within Earth) and the centrifugal force (from the Earth's rotation). Near Earth's surface, the pull is approximately 9.81 meters per second per second.",
 					"pull (ˈpu̇l) v. 1: To exert force upon so as to cause or tend to cause motion toward the force 2: To extract 3: To draw the support or attraction of [Middle English, from Old English pullian]"
 				]
 			},
 			{
-				"names": ["git push"],
+				"name": "git push",
 				"responses": [
 					"Hey! Don't shove me!"
 				]
 			},
 			{
-				"names": ["git reset"],
+				"name": "git reset",
 				"responses": [
 					"Your progress has been reset, and your save file has been erased.",
 					"Manual override detected, Rebooting..."

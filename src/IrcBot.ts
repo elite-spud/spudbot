@@ -42,9 +42,15 @@ export interface IUserDetail {
 }
 
 export interface IIrcBotAuxCommandConfig {
-    names: string[];
-    strict?: boolean; // Matches names exactly (ignoring whitespace)
+    name: string;
+    aliases?: string[];
+    /** Matches names exactly (ignoring whitespace) */
+    strict?: boolean; // TODO: allow specifying strict match for each name/alias, not all.
     responses: string[];
+    /** Delay until this command can be triggered again by a particular user (defaults to 30 seconds) */
+    userTimeoutSeconds?: number;
+    /** Delay until this command can be triggered again by any user (defaults to 0 seconds) */
+    globalTimeoutSeconds?: number;
 }
 
 export interface IMessageDetail {
@@ -95,6 +101,10 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
     protected readonly _configuredTimerGroups: TimerGroup[] = [];
     protected readonly _socket: net.Socket;
     protected readonly _privMessageDetailCache: { [key: string]: IPrivMessageDetail } = {};
+
+    // TODO: Implement this
+    protected readonly _userTimeoutByCommandUserId: { [key: string]: number } = {};
+    protected readonly _globalTimeoutByCommand: { [key: string]: number } = {};
 
     protected readonly _pendingUserDetailByUserId: { [key: string]: Promise<TUserDetail> } = {};
     protected readonly _userDetailByUserId: IUserDetailCollection<TUserDetail>;
@@ -188,10 +198,14 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
                     });
                 }
 
-                for (const name of command.names) {
-                    const func = this.getSimpleChatResponseFunc(name, command.responses, command.strict ?? false);
-                    chatResponses.push(func);
+                if (!command.name) {
+                    continue;
                 }
+                const commandNames = Array.isArray(command.aliases)
+                    ? [command.name].concat(command.aliases)
+                    : [command.name];
+                const func = this.getSimpleChatResponseFunc(commandNames, command.responses, command.strict ?? false, command.name, command.globalTimeoutSeconds ?? 0, command.userTimeoutSeconds ?? 30);
+                chatResponses.push(func);
             }
 
             if (commandGroup.timerMinutes !== null && commandGroup.timerMinutes !== undefined) {
@@ -203,16 +217,77 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
         return { chatResponses, timerGroups };
     }
 
-    public getSimpleChatResponseFunc(triggerPhrase: string, responses: string[], strictMatch: boolean): (message: IPrivMessageDetail) => Promise<void> {
-        const func = async (messageDetail: IPrivMessageDetail): Promise<void> => {
-            if (!this.doesTriggerMatch(messageDetail, triggerPhrase, strictMatch)) {
-                return;
+    public getSimpleChatResponseFunc(triggerPhrases: string[], responses: string[], strictMatch: boolean, commandKey: string, globalTimeoutSeconds: number, userTimeoutSeconds: number): (message: IPrivMessageDetail) => Promise<void> {
+        const subFunc = async (messageDetail: IPrivMessageDetail): Promise<void> => {
+            const response = responses[randomInt(responses.length)];
+            this.chat(messageDetail.respondTo, response);            
+        }
+        return this.getChatResponseFunc({
+            subFunc,
+            triggerPhrases,
+            strictMatch,
+            commandKey,
+            globalTimeoutSeconds,
+            userTimeoutSeconds,
+        });
+    }
+
+    public getChatResponseFunc(args: { subFunc: (messageDetail: IPrivMessageDetail) => Promise<void>, triggerPhrases: string[], strictMatch: boolean, commandKey: string, globalTimeoutSeconds: number, userTimeoutSeconds: number }): (messageDetail: IPrivMessageDetail) => Promise<void> {
+        const wrappedFunc = async (messageDetail: IPrivMessageDetail): Promise<void> => {
+            for (const triggerPhrase of args.triggerPhrases) {
+                if (!this.doesTriggerMatch(messageDetail, triggerPhrase, args.strictMatch)) {
+                    return;
+                }
             }
 
-            const response = responses[randomInt(responses.length)];
-            this.chat(messageDetail.respondTo, response);
+            const userId = await this.getUserIdForUsername(messageDetail.username);
+            if (!this.shouldIgnoreTimeoutRestrictions(messageDetail)) {
+                if (this.isCommandTimedOut(args.commandKey, userId)) {
+                    return;
+                }
+            }
+
+            await args.subFunc(messageDetail);
+
+            this.addCommandTimeoutDelays(args.commandKey, args.globalTimeoutSeconds, { userTimeoutSeconds: args.userTimeoutSeconds, userId });
         }
-        return func;
+        return wrappedFunc;
+    }
+
+    protected abstract shouldIgnoreTimeoutRestrictions(messageDetail: IPrivMessageDetail): boolean;
+
+    protected addCommandTimeoutDelays(commandKey: string, globalTimeoutSeconds: number, userTimeout?: { userTimeoutSeconds: number, userId: string }): void {
+        if (userTimeout && userTimeout.userTimeoutSeconds > 0) {
+            const userCantUseCommandForMillis = userTimeout.userTimeoutSeconds * 1000;
+            const canUseCommandAgainAt = Date.now() + userCantUseCommandForMillis;
+            const userTimeoutCompositeKey = `${commandKey}_${userTimeout.userId}`;
+            this._userTimeoutByCommandUserId[userTimeoutCompositeKey] = canUseCommandAgainAt;
+            setTimeout(() => { delete this._userTimeoutByCommandUserId[userTimeoutCompositeKey]; }, userCantUseCommandForMillis);
+        }
+
+        if (globalTimeoutSeconds > 0) {
+            const noneCanUseCommandForMillis = globalTimeoutSeconds * 1000;
+            const canUseCommandAgainAt = Date.now() + noneCanUseCommandForMillis;
+            this._globalTimeoutByCommand[commandKey] = canUseCommandAgainAt;
+            setTimeout(() => { delete this._globalTimeoutByCommand[commandKey]; }, noneCanUseCommandForMillis);
+        }
+    }
+
+    protected isCommandTimedOut(commandKey: string, userId?: string): boolean {
+        const globalTimeoutAt = this._globalTimeoutByCommand[commandKey] ?? 0;
+        if (globalTimeoutAt > Date.now()) {
+            return true;
+        }
+
+        if (userId) {
+            const userTimeoutCompositeKey = `${commandKey}_${userId}`;
+            const userTimeoutAt = this._userTimeoutByCommandUserId[userTimeoutCompositeKey] ?? 0;
+            if (userTimeoutAt > Date.now()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     protected doesTriggerMatch(messageDetails: IPrivMessageDetail, triggerPhrase: string, strictMatch: boolean): boolean {
