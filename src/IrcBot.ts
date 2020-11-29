@@ -148,7 +148,9 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
             // const dateNow = new Date();
             // const dateSuffix = dateNow.toISOString().split(":").join("_").split(".").join("_");
             // fs.renameSync(this._config.userDetailFilePath, `${this._config.userDetailFilePath}_${dateSuffix}`);
-            fs.writeFileSync(this._config.userDetailFilePath, JSON.stringify(this._userDetailByUserId));
+            const tempFilePath = `${this._config.userDetailFilePath}_temp`;
+            fs.writeFileSync(tempFilePath, JSON.stringify(this._userDetailByUserId));
+            fs.renameSync(tempFilePath, this._config.userDetailFilePath);
             console.log(`Successfully wrote userDetail to file: ${this._config.userDetailFilePath}`);
         } catch (err) {
             console.log(`Error writing userDetail status to file: ${err}`);
