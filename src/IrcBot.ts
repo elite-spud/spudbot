@@ -236,10 +236,11 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
 
     public getChatResponseFunc(args: { subFunc: (messageDetail: IPrivMessageDetail) => Promise<void>, triggerPhrases: string[], strictMatch: boolean, commandKey: string, globalTimeoutSeconds: number, userTimeoutSeconds: number }): (messageDetail: IPrivMessageDetail) => Promise<void> {
         const wrappedFunc = async (messageDetail: IPrivMessageDetail): Promise<void> => {
-            for (const triggerPhrase of args.triggerPhrases) {
-                if (!this.doesTriggerMatch(messageDetail, triggerPhrase, args.strictMatch)) {
-                    return;
-                }
+            const hasMatch = args.triggerPhrases.some((triggerPhrase) => {
+                return this.doesTriggerMatch(messageDetail, triggerPhrase, args.strictMatch);
+            });
+            if (!hasMatch) {
+                return;
             }
 
             const userId = await this.getUserIdForUsername(messageDetail.username);
@@ -248,7 +249,7 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
                     return;
                 }
             }
-
+            
             await args.subFunc(messageDetail);
 
             this.addCommandTimeoutDelays(args.commandKey, args.globalTimeoutSeconds, { userTimeoutSeconds: args.userTimeoutSeconds, userId });
@@ -502,7 +503,7 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
             this._privMessageDetailCache[message] = messageDetails;
             setTimeout(() => {
                 delete this._privMessageDetailCache[message];
-            }, 1000)
+            }, 2000)
         }
 
         return messageDetails

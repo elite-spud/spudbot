@@ -2,6 +2,7 @@ import { randomInt } from "crypto";
 import { IChatWarriorState } from "./ChatWarrior";
 import { IIrcBotAuxCommandGroupConfig, IPrivMessageDetail } from "./IrcBot";
 import { ITwitchBotConnectionConfig, ITwitchUserDetail, TwitchBotBase } from "./TwitchBot";
+import { Utils } from "./Utils";
 
 export interface UserCommand {
     username: string,
@@ -11,8 +12,6 @@ export interface UserCommand {
 export interface IChatWarriorUserDetail extends ITwitchUserDetail {
     chatWarriorState?: IChatWarriorState;
 }
-
-export function compareStrings(left: string, right: string): number { return left === right ? 0 : (left < right ? -1 : 1); }
 
 export class GhettoBotatoTwitchBot extends TwitchBotBase<IChatWarriorUserDetail> {
     public constructor(connection: ITwitchBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], userDetailFilePath: string, chatHistoryFilePath: string) {
@@ -83,16 +82,17 @@ export class GhettoBotatoTwitchBot extends TwitchBotBase<IChatWarriorUserDetail>
 
     protected async handleTimeout(messageDetail: IPrivMessageDetail): Promise<void> {
         const subFunc = async (messageDetail: IPrivMessageDetail): Promise<void> => {
-            const roll = randomInt(8);
             const timeoutSeconds = randomInt(31) + 60;
-            const text = roll === 0 ? "You asked for it..." 
-                : roll === 1 ? 'Taken down on the word "Go"!'
-                : roll === 2 ? "Critical Hit!"
-                : roll === 3 ? "You will be remembered..."
-                : roll === 4 ? "You're welcome"
-                : roll === 5 ? "Super Effective!"
-                : roll === 6 ? "Please come again"
-                : "In memoriam.";
+            const text = Utils.pickOne([
+                "You asked for it..." ,
+                'Taken down on the word "Go"!',
+                "Critical Hit!",
+                "You will be remembered...",
+                "You're welcome",
+                "Super Effective!",
+                "Please come again",
+                "In memoriam.",
+            ]);
             
             this.chat(messageDetail.respondTo, text);
             this.timeout(messageDetail.respondTo, messageDetail.username, timeoutSeconds);
@@ -110,13 +110,15 @@ export class GhettoBotatoTwitchBot extends TwitchBotBase<IChatWarriorUserDetail>
 
     protected async handleGiveaway(messageDetail: IPrivMessageDetail): Promise<void> {
         const subFunc = async (messageDetail: IPrivMessageDetail): Promise<void> => {
-            const roll = randomInt(5);
             const timeoutSeconds = 60 * 3;
-            const text = roll === 0 ? "You've won a fabulous vacation, courtesy of 'Tater Airlines, enjoy your trip!"
-                : roll === 1 ? "Congratulations! You won an all-expenses paid trip to the gulag, enjoy your stay!"
-                : roll === 2 ? "You're a winner! Thanks for playing!"
-                : roll === 3 ? "Jackpot!!"
-                : "DING DING DING!!";
+            const text = Utils.pickOne([
+                "You've won a fabulous vacation, courtesy of 'Tater Airlines, enjoy your trip!",
+                "Congratulations! You won an all-expenses paid trip to the gulag, enjoy your stay!",
+                "You're a winner! Thanks for playing!",
+                "Jackpot!!",
+                "You're entitled to one (1) complimentary vacation. Enjoy the time off.",
+                "DING DING DING!!",
+            ]);
             
             this.chat(messageDetail.respondTo, text);
             this.timeout(messageDetail.respondTo, messageDetail.username, timeoutSeconds);
