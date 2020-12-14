@@ -80,7 +80,7 @@
 			},
 			{
 				"name": "!blind",
-				"aliases": ["!hints", "!nohints", "!help", "!mints"],
+				"aliases": ["!hints", "!nohints", "!help", "!mints", "!backseating", "!backseat", "!rhetorical"],
 				"responses": [
 					"Blind means that I know nothing about the game I'm playing and want to keep it that way. Assume all questions about the game are rhetorical, and don't hint/spoil/suggest/backseat/tip/advise/guide/recommend/remind/warn me in any way, please. I can learn how to walk on my own. Go play the game yourself if you can't keep it in your pants.",
 					"Wait! Before you send that comment, consider if it might inform me about something I don't know or understand yet, hint that I'm doing something inefficiently, or otherwise imply that I've missed something in the game you think to be obvious, crucial, or both. Maybe you feel bad for me, or frustrated that I'm not doing something the way you'd like, but please refrain from typing any messages that might include any of the above qualities. I'm playing this game for my own enjoyment, so try not to spoil anything. I assure you I’m still having fun, and I am very much still interested in figuring things out on my own."

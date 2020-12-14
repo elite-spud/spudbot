@@ -33,7 +33,6 @@ export class TimerGroup {
         setTimeout(() => {
             const intervalMillis = this._delayMinutes * 60 * 1000;
             this._intervalId = setInterval(() => {
-                console.log(currentIndex);
                 intervalCommands[currentIndex]();
                 currentIndex = currentIndex === intervalCommands.length - 1
                     ? 0
