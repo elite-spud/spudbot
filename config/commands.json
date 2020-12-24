@@ -1,6 +1,6 @@
 [
 	{
-		"timerMinutes": 90,
+		"timerMinutes": 100,
 		"random": true,
 		"commands": [
 			{
@@ -14,7 +14,7 @@
 				"aliases": ["!tweets", "!twit"],
 				"responses": [
 					"Tweets go here when I'm live and sometimes when I'm not: https://twitter.com/ghetto_spud",
-					"I'm a twit (sometimes): https://twitter.com/ghetto_spud"
+					"I'm a twit sometimes: https://twitter.com/ghetto_spud"
 				]
 			},
 			{
@@ -23,14 +23,14 @@
 				"responses": [
 					"VODs get posted here (3x a week usually): https://www.youtube.com/channel/UCQZvvzMogGYW6oIBJKX1bxA",
 					"Blind playthroughs and other interesting streams get archived on YouTube here: https://www.youtube.com/channel/UCQZvvzMogGYW6oIBJKX1bxA",
-					"I archive all my streams locally and post the good ones here: https://www.youtube.com/channel/UCQZvvzMogGYW6oIBJKX1bxA"
+					"I archive most of my streams locally and post the good ones here: https://www.youtube.com/channel/UCQZvvzMogGYW6oIBJKX1bxA"
 				]
 			}
 		]
 	},
 	{
-		"timerMinutes": 90,
-		"timerMinutesOffset": 45,
+		"timerMinutes": 100,
+		"timerMinutesOffset": 50,
 		"random": true,
 		"commands": [
 			{
@@ -38,22 +38,22 @@
 				"aliases": ["!lastfm", "!songs"],
 				"responses": [
 					"I collect music CDs and keep track of what I listen to as a hobby. You can judge my poor music taste here: https://www.last.fm/user/ghetto_spud",
-					"Other than playing games I also maintain a small collection of music CDs. You can see what I have and what I've been listening to here: https://www.last.fm/user/ghetto_spud"
+					"I've been building up a small collection of music CDs for a few years. You can see what I have and what I've been listening to here: https://www.last.fm/user/ghetto_spud"
 				]
 			},
 			{
 				"name": "!av",
 				"aliases": ["!setup", "!hardware"],
 				"responses": [
-					"Wanna know how many wires are in my AV setup? Or how many splitters it takes to play GameBoy games on a PC monitor? Check the diagram here: https://gist.github.com/ghettospud/6f82f3da9d586df553757fa134278845 and the real life™ images here: https://twitter.com/ghetto_spud/status/1306375006008610817. Feel free to ask me questions about any specific components!",
-					"Wondering what kind of hardware I use to play and stream my games? Take a look at the diagram here: https://gist.github.com/ghettospud/6f82f3da9d586df553757fa134278845 to see the layout of my setup. You can also find images of everything as it situ here: https://twitter.com/ghetto_spud/status/1306375006008610817. Don't be afraid to ask questions about how everything works!"
+					"Wanna know how many wires are in my AV setup? Or how many steps it takes to play GameBoy games on a PC monitor? Check the diagram here: https://gist.github.com/ghettospud/6f82f3da9d586df553757fa134278845 and the real life™ images here: https://twitter.com/ghetto_spud/status/1306375006008610817 Feel free to ask me questions about any specific components!",
+					"Wondering what kind of hardware I use to stream/play these games? Take a look at the layout diagram: https://gist.github.com/ghettospud/6f82f3da9d586df553757fa134278845 to see how everything hooks together. You can also find images of everything in situ here: https://twitter.com/ghetto_spud/status/1306375006008610817 Don't be afraid to ask questions about how everything works!"
 				]
 			},
 			{
 				"name": "!games",
 				"aliases": ["!history", "!opinions", "!pastebin"],
 				"responses": [
-					"I maintain a list of all the games I've streamed here: https://pastebin.com/bGjDvFDx and a tier list of my blind playthroughs here: https://pastebin.com/fRPKHM7D. You can also find a collection of all my substantial opinions on my profile: https://pastebin.com/u/ghetto_spud"
+					"I maintain a list of all the games I've streamed here: https://pastebin.com/bGjDvFDx and a tier list of my blind playthroughs here: https://pastebin.com/fRPKHM7D"
 				]
 			}
 		]
@@ -82,8 +82,8 @@
 				"name": "!blind",
 				"aliases": ["!hints", "!nohints", "!help", "!mints", "!backseating", "!backseat", "!rhetorical"],
 				"responses": [
-					"Blind means that I know nothing about the game I'm playing and want to keep it that way. Assume all questions about the game are rhetorical, and don't hint/spoil/suggest/backseat/tip/advise/guide/recommend/remind/warn me in any way, please. I can learn how to walk on my own. Go play the game yourself if you can't keep it in your pants.",
-					"Wait! Before you send that comment, consider if it might inform me about something I don't know or understand yet, hint that I'm doing something inefficiently, or otherwise imply that I've missed something in the game you think to be obvious, crucial, or both. Maybe you feel bad for me, or frustrated that I'm not doing something the way you'd like, but please refrain from typing any messages that might include any of the above qualities. I'm playing this game for my own enjoyment, so try not to spoil anything. I assure you I’m still having fun, and I am very much still interested in figuring things out on my own."
+					"Blind means that I know nothing about the game I'm playing and want to keep it that way. Assume all questions about the game are rhetorical, and don't hint/spoil/suggest/backseat/tip/advise/guide/recommend/remind/warn me in any way, please. I've played a lot of games, and I can learn how to walk on my own. Go play the game yourself if you can't keep it in your pants.",
+					"Wait! Before you send that comment, consider if it might inform me about something I don't know or understand yet, hint that I'm doing something inefficiently, or otherwise imply that I've missed something in the game you think to be obvious, crucial, or both. Maybe you feel bad for me, or frustrated that I'm not doing something the way you'd like, but please refrain from typing any messages that might include any of the above qualities. I'm playing this game for my own enjoyment, and spoiling stuff works to prevent that. I assure you I’m still having fun, and I am very much still interested in figuring things out on my own regardless of my percieved tone."
 				]
 			},
 			{
@@ -91,13 +91,13 @@
 				"aliases": ["!bot", "!chatbot", "!code", "!sourcecode"],
 				"responses": [
 					"I (Spud) wrote this chatbot myself because I'm a big dork. If you fancy yourself a dork too, you can peruse the source code on GitHub here: https://github.com/ghettospud/ghetto_botato",
-					"This chatbot is © Spud Inc., which maintains an open policy of showcasing all the programming mistakes of the chatbot author here for all to see: https://github.com/ghettospud/ghetto_botato"
+					"This chatbot is © Spud Inc., which maintains an open policy of showcasing all the programming mistakes of the chatbot author for all to see here: https://github.com/ghettospud/ghetto_botato"
 				]
 			},
 			{
 				"name": "!commands",
 				"responses": [
-					"Available commands include: !commands"
+					"Available commands include: !commands    (note: list may be incomplete)"
 				]
 			}
 		]
@@ -120,10 +120,10 @@
 				"name": "git add",
 				"strict": true,
 				"responses": [
-					"Thank you for adding your name to the list. The FBI is now en route to your location.",
+					"Your name has been added to the list. The FBI is now en route to your location.",
 					"2+2=4",
 					"One of the four basic operations of arithmetic, adding was first invented on November 10, 1969 when the educational children's television series, Sesame Street, premiered on the American television station, PBS.",
-					"Adding has been deprecated. We instead recommended to subtract negative values from now on.",
+					"Adding has been deprecated. We instead recommended subtracting negative values from now on.",
 					"Nothing specified, nothing added.    hint: Maybe you wanted to say 'git add .'?"
 				]
 			},
@@ -143,8 +143,8 @@
 			{
 				"name": "git pull",
 				"responses": [
-					"The gravity of Earth, denoted by g, is the net acceleration imparted to objects due to the combined effect of gravitational pull (from mass distribution within Earth) and the centrifugal force (from the Earth's rotation). Near Earth's surface, the pull is approximately 9.81 meters per second per second.",
-					"pull (ˈpu̇l) v. 1: To exert force upon so as to cause or tend to cause motion toward the force 2: To extract 3: To draw the support or attraction of [Middle English, from Old English pullian]"
+					"The gravity of Earth, denoted by g, is the net acceleration imparted to objects due to the combined effect of gravitational pull (from mass distribution within Earth) and the centrifugal force (from the Earth's rotation). Near the surface, the pull of Earth's gravity is approximately 9.81 meters per second per second.",
+					"pull (ˈpu̇l) v. 1: To exert force upon so as to cause or tend to cause motion toward the force    2: To extract    3: To draw the support or attraction of [Middle English, from Old English pullian]"
 				]
 			},
 			{

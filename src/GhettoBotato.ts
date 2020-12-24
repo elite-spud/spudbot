@@ -61,8 +61,8 @@ export class GhettoBotatoTwitchBot extends TwitchBotBase<IChatWarriorUserDetail>
     protected async handleSlot(messageDetail: IPrivMessageDetail): Promise<void> {
         const subFunc = async (messageDetail: IPrivMessageDetail): Promise<void> => {
             const roll = randomInt(3);
-            const timeoutSeconds = randomInt(31) + 60;
-            if (roll === 0) {
+            const timeoutSeconds = (randomInt(10) + 1) * 20 + 60;
+            if (roll !== 0) {
                 this.chat(messageDetail.respondTo, "💥 BANG!!");
                 this.timeout(messageDetail.respondTo, messageDetail.username, timeoutSeconds);
             } else {
@@ -82,7 +82,7 @@ export class GhettoBotatoTwitchBot extends TwitchBotBase<IChatWarriorUserDetail>
 
     protected async handleTimeout(messageDetail: IPrivMessageDetail): Promise<void> {
         const subFunc = async (messageDetail: IPrivMessageDetail): Promise<void> => {
-            const timeoutSeconds = randomInt(31) + 60;
+            const timeoutSeconds = randomInt(120) + 240;
             const text = Utils.pickOne([
                 "You asked for it..." ,
                 'Taken down on the word "Go"!',
@@ -92,6 +92,7 @@ export class GhettoBotatoTwitchBot extends TwitchBotBase<IChatWarriorUserDetail>
                 "Super Effective!",
                 "Please come again",
                 "In memoriam.",
+                "This one's on the house.",
             ]);
             
             this.chat(messageDetail.respondTo, text);
@@ -110,7 +111,7 @@ export class GhettoBotatoTwitchBot extends TwitchBotBase<IChatWarriorUserDetail>
 
     protected async handleGiveaway(messageDetail: IPrivMessageDetail): Promise<void> {
         const subFunc = async (messageDetail: IPrivMessageDetail): Promise<void> => {
-            const timeoutSeconds = 60 * 3;
+            const timeoutSeconds = (randomInt(5) + 1) * 60 + 60;
             const text = Utils.pickOne([
                 "You've won a fabulous vacation, courtesy of 'Tater Airlines, enjoy your trip!",
                 "Congratulations! You won an all-expenses paid trip to the gulag, enjoy your stay!",
