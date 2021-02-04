@@ -59,7 +59,8 @@ export type TwitchPrivMessageTagKeys = "badge-info" | "badges" | "client-nonce" 
 export type TwitchBadgeTagKeys = "admin" | "bits" | "broadcaster" | "global_mod" | "moderator" | "subscriber" | "staff" | "turbo" | string;
 
 export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwitchUserDetail> extends IrcBotBase<TUserDetail> {
-    protected static _knownConfig = { encoding: "utf8" };
+    public static readonly maxChatMessageLength = 500
+    protected static readonly _knownConfig = { encoding: "utf8" };
 
     public readonly _config: ITwitchBotConfig;
     protected _twitchIdByUsername: { [key: string]: string } = {}
@@ -306,6 +307,15 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
 
     public clearTimeout(channel: string, username: string): void {
         this.timeout(channel, username, 1);
+    }
+
+    /** @override */
+    public chat(recipient: string, message: string): void {
+        let actualMessage = message;
+        if (message.length > TwitchBotBase.maxChatMessageLength) {
+            actualMessage = "<Message was too long. Please file a bug report with the owner :)>"
+        }
+        super.chat(recipient, actualMessage);
     }
 }
 

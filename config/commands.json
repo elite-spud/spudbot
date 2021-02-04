@@ -1,20 +1,15 @@
 [
 	{
-		"timerMinutes": 100,
+		"timerMinutes": 90,
 		"random": true,
 		"commands": [
-			{
-				"name": "!2020",
-				"responses": [
-					"For the year of 2020, I'll be playing through 50(ish) games I've never beaten before. With over 1000 hours of gameplay expected across 9 platforms and 5 decades, I tried to mix in a wide variety of genres to keep things fresh throughout the year. Check the list to see if I'll be playing your favorite game! https://docs.google.com/spreadsheets/d/1JsdDfmdjaL3d-oGsuq38z_jhrvkhePF1LLz4W1dpzI4/edit?usp=sharing"
-				]
-			},
 			{
 				"name": "!twitter",
 				"aliases": ["!tweets", "!twit"],
 				"responses": [
 					"Tweets go here when I'm live and sometimes when I'm not: https://twitter.com/ghetto_spud",
-					"I'm a twit sometimes: https://twitter.com/ghetto_spud"
+					"I'm a twit sometimes: https://twitter.com/ghetto_spud",
+					"I tweet: https://twitter.com/ghetto_spud"
 				]
 			},
 			{
@@ -29,8 +24,8 @@
 		]
 	},
 	{
-		"timerMinutes": 100,
-		"timerMinutesOffset": 50,
+		"timerMinutes": 90,
+		"timerMinutesOffset": 45,
 		"random": true,
 		"commands": [
 			{
@@ -46,14 +41,14 @@
 				"aliases": ["!setup", "!hardware"],
 				"responses": [
 					"Wanna know how many wires are in my AV setup? Or how many steps it takes to play GameBoy games on a PC monitor? Check the diagram here: https://gist.github.com/ghettospud/6f82f3da9d586df553757fa134278845 and the real life™ images here: https://twitter.com/ghetto_spud/status/1306375006008610817 Feel free to ask me questions about any specific components!",
-					"Wondering what kind of hardware I use to stream/play these games? Take a look at the layout diagram: https://gist.github.com/ghettospud/6f82f3da9d586df553757fa134278845 to see how everything hooks together. You can also find images of everything in situ here: https://twitter.com/ghetto_spud/status/1306375006008610817 Don't be afraid to ask questions about how everything works!"
+					"Wondering what kind of hardware I use to stream/play console games? Take a look at this layout diagram: https://gist.github.com/ghettospud/6f82f3da9d586df553757fa134278845 to see how everything hooks together. You can also find images of everything in situ here: https://twitter.com/ghetto_spud/status/1306375006008610817 Don't be afraid to ask questions about how everything works!"
 				]
 			},
 			{
 				"name": "!games",
-				"aliases": ["!history", "!opinions", "!pastebin"],
+				"aliases": ["!history", "!opinions"],
 				"responses": [
-					"I maintain a list of all the games I've streamed here: https://pastebin.com/bGjDvFDx and a tier list of my blind playthroughs here: https://pastebin.com/fRPKHM7D"
+					"I maintain a list of all the games I've streamed (and might stream) here: https://docs.google.com/spreadsheets/d/1JsdDfmdjaL3d-oGsuq38z_jhrvkhePF1LLz4W1dpzI4/edit?usp=sharing and a tier list of my blind playthroughs here: https://pastebin.com/fRPKHM7D You can check my pastebin profile for a list of my more substantial opinions: https://pastebin.com/u/ghetto_spud"
 				]
 			}
 		]
@@ -82,8 +77,8 @@
 				"name": "!blind",
 				"aliases": ["!hints", "!nohints", "!help", "!mints", "!backseating", "!backseat", "!rhetorical"],
 				"responses": [
-					"Blind means that I know nothing about the game I'm playing and want to keep it that way. Assume all questions about the game are rhetorical, and don't hint/spoil/suggest/backseat/tip/advise/guide/recommend/remind/warn me in any way, please. I've played a lot of games, and I can learn how to walk on my own. Go play the game yourself if you can't keep it in your pants.",
-					"Wait! Before you send that comment, consider if it might inform me about something I don't know or understand yet, hint that I'm doing something inefficiently, or otherwise imply that I've missed something in the game you think to be obvious, crucial, or both. Maybe you feel bad for me, or frustrated that I'm not doing something the way you'd like, but please refrain from typing any messages that might include any of the above qualities. I'm playing this game for my own enjoyment, and spoiling stuff works to prevent that. I assure you I’m still having fun, and I am very much still interested in figuring things out on my own regardless of my percieved tone."
+					"Blind means that I know nothing about the game I'm playing and want to keep it that way. Assume all questions about the game are rhetorical, and don't hint/spoil/suggest/backseat/tip/advise/guide/recommend/remind/warn me in any way, please. I've played a lot of games, and I can learn how to walk on my own. You can always go play the game yourself if you can't keep it in your pants.",
+					"Before you send a comment, consider if it might inform me about something I don't know or understand yet, hint that I'm doing something inefficiently, or otherwise imply that I've missed something in the game you think to be obvious, crucial, or interesting. I'm playing this game for my own enjoyment, and not knowing all the things is part of that experience. Let me be dumb, laugh with me when I fail, and rest assured that I'm not having less fun by skipping stuff."
 				]
 			},
 			{
@@ -98,6 +93,12 @@
 				"name": "!commands",
 				"responses": [
 					"Available commands include: !commands    (note: list may be incomplete)"
+				]
+			},
+			{
+				"name": "!ta",
+				"responses": [
+					"To play Total Annihilation on Windows 10, I use a program called DXWND to run the game in a window that tricks the game into thinking it's fullscreen. My method for doing that is detailed here: https://pastebin.com/2jBtcvqt"
 				]
 			}
 		]
@@ -150,14 +151,15 @@
 			{
 				"name": "git push",
 				"responses": [
-					"Hey! Don't shove me!"
+					"Hey, don't shove me!"
 				]
 			},
 			{
 				"name": "git reset",
 				"responses": [
 					"Your progress has been reset, and your save file has been erased.",
-					"Manual override detected, Rebooting..."
+					"Manual override detected, Rebooting...",
+					"Resetting is impossible. There is no way out."
 				]
 			}
 		]

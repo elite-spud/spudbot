@@ -124,7 +124,6 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
         const userDetailJson: string = fs.readFileSync(_config.userDetailFilePath, { encoding: IrcBotBase.userDetailEncoding });        
         this._userDetailByUserId = JSON.parse(userDetailJson); // TODO: Add error checking of some sort
         console.log(`Successfully loaded userDetail from file: ${_config.userDetailFilePath}`);
-        console.log(this._userDetailByUserId);
 
         const userTrackingIntervalSeconds = 30;
         setInterval(() => this.trackUsersInChat(userTrackingIntervalSeconds), 1000 * userTrackingIntervalSeconds);
@@ -179,7 +178,7 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
         userDetail.secondsInChat += secondsToAdd;
     }
 
-    protected abstract async createUserDetail(userId: string): Promise<TUserDetail>;
+    protected abstract createUserDetail(userId: string): Promise<TUserDetail>;
 
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
     protected getCommandsFromConfig(commandGroups: IIrcBotAuxCommandGroupConfig[], channelToAddTimers: string | undefined) {
