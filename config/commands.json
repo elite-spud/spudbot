@@ -1,6 +1,6 @@
 [
 	{
-		"timerMinutes": 90,
+		"timerMinutes": 120,
 		"random": true,
 		"commands": [
 			{
@@ -24,8 +24,8 @@
 		]
 	},
 	{
-		"timerMinutes": 90,
-		"timerMinutesOffset": 45,
+		"timerMinutes": 120,
+		"timerMinutesOffset": 60,
 		"random": true,
 		"commands": [
 			{
@@ -33,7 +33,7 @@
 				"aliases": ["!lastfm", "!songs"],
 				"responses": [
 					"I collect music CDs and keep track of what I listen to as a hobby. You can judge my poor music taste here: https://www.last.fm/user/ghetto_spud",
-					"I've been building up a small collection of music CDs for a few years. You can see what I have and what I've been listening to here: https://www.last.fm/user/ghetto_spud"
+					"I've been building up a small collection of music CDs for a few years. You can see what I have and what I've been listening to recently here: https://www.last.fm/user/ghetto_spud"
 				]
 			},
 			{
@@ -48,13 +48,26 @@
 				"name": "!games",
 				"aliases": ["!history", "!opinions"],
 				"responses": [
-					"I maintain a list of all the games I've streamed (and might stream) here: https://docs.google.com/spreadsheets/d/1JsdDfmdjaL3d-oGsuq38z_jhrvkhePF1LLz4W1dpzI4/edit?usp=sharing and a tier list of my blind playthroughs here: https://pastebin.com/fRPKHM7D You can check my pastebin profile for a list of my more substantial opinions: https://pastebin.com/u/ghetto_spud"
+					"I maintain a list of all the games I've streamed (and might stream) here: https://docs.google.com/spreadsheets/d/1JsdDfmdjaL3d-oGsuq38z_jhrvkhePF1LLz4W1dpzI4/edit?usp=sharing and keep a tier list of my blind playthroughs here: https://pastebin.com/fRPKHM7D You can also check my pastebin profile for some of my more substantial opinions on certain games: https://pastebin.com/u/ghetto_spud"
+				]
+			},
+			{
+				"name": "!affiliate",
+				"aliases": ["!luigi"],
+				"responses": [
+					"My incentive for reaching Twitch affiliate status is to beat Luigi's Mansion blindfolded. If that sounds like a disaster you'd like to spectate, you're in the right place!"
 				]
 			}
 		]
 	},
 	{
 		"commands": [
+			{
+				"name": "!pronouns",
+				"responses": [
+					"My preferred pronouns are they/she."
+				]
+			},
 			{
 				"name": "!foo",
 				"responses": [
@@ -85,7 +98,7 @@
 				"name": "!github",
 				"aliases": ["!bot", "!chatbot", "!code", "!sourcecode"],
 				"responses": [
-					"I (Spud) wrote this chatbot myself because I'm a big dork. If you fancy yourself a dork too, you can peruse the source code on GitHub here: https://github.com/ghettospud/ghetto_botato",
+					"I (Spud) wrote this chatbot myself because I'm a big nerd. If you fancy yourself a nerd too, you can peruse the source code on GitHub here: https://github.com/ghettospud/ghetto_botato",
 					"This chatbot is © Spud Inc., which maintains an open policy of showcasing all the programming mistakes of the chatbot author for all to see here: https://github.com/ghettospud/ghetto_botato"
 				]
 			},
@@ -124,7 +137,7 @@
 					"Your name has been added to the list. The FBI is now en route to your location.",
 					"2+2=4",
 					"One of the four basic operations of arithmetic, adding was first invented on November 10, 1969 when the educational children's television series, Sesame Street, premiered on the American television station, PBS.",
-					"Adding has been deprecated. We instead recommended subtracting negative values from now on.",
+					"Adding has been deprecated. From now on, we recommend subtracting negative values instead",
 					"Nothing specified, nothing added.    hint: Maybe you wanted to say 'git add .'?"
 				]
 			},
@@ -138,7 +151,7 @@
 			{
 				"name": "git google",
 				"responses": [
-					"Step 1 of using git: ask google how to use git"
+					"Step 1 of using git: google how to use git"
 				]
 			},
 			{
@@ -151,7 +164,8 @@
 			{
 				"name": "git push",
 				"responses": [
-					"Hey, don't shove me!"
+					"Hey, don't shove me!",
+					"You extert as much force as you can, but nothing budges. It appears the chatbot is immovable"
 				]
 			},
 			{
