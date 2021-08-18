@@ -1,15 +1,15 @@
 [
 	{
-		"timerMinutes": 120,
+		"timerMinutes": 100,
 		"random": true,
 		"commands": [
 			{
 				"name": "!twitter",
 				"aliases": ["!tweets", "!twit"],
 				"responses": [
-					"Tweets go here when I'm live and sometimes when I'm not: https://twitter.com/ghetto_spud",
-					"I'm a twit sometimes: https://twitter.com/ghetto_spud",
-					"I tweet: https://twitter.com/ghetto_spud"
+					"Tweets go here when I'm live and sometimes when I'm not: https://twitter.com/elite_spud",
+					"I'm a twit sometimes: https://twitter.com/elite_spud",
+					"I tweet: https://twitter.com/elite_spud"
 				]
 			},
 			{
@@ -24,24 +24,31 @@
 		]
 	},
 	{
-		"timerMinutes": 120,
-		"timerMinutesOffset": 60,
+		"timerMinutes": 100,
+		"timerMinutesOffset": 50,
 		"random": true,
 		"commands": [
 			{
 				"name": "!music",
 				"aliases": ["!lastfm", "!songs"],
 				"responses": [
-					"I collect music CDs and keep track of what I listen to as a hobby. You can judge my poor music taste here: https://www.last.fm/user/ghetto_spud",
-					"I've been building up a small collection of music CDs for a few years. You can see what I have and what I've been listening to recently here: https://www.last.fm/user/ghetto_spud"
+					"I collect music CDs and keep track of what I listen to as a hobby. You can judge my poor music taste here: https://www.last.fm/user/elite_spud",
+					"I've been building up a small collection of music CDs for a few years. You can see what I have and what I've been listening to recently here: https://www.last.fm/user/elite_spud"
 				]
 			},
 			{
 				"name": "!av",
-				"aliases": ["!setup", "!hardware"],
+				"aliases": ["!diagram"],
 				"responses": [
-					"Wanna know how many wires are in my AV setup? Or how many steps it takes to play GameBoy games on a PC monitor? Check the diagram here: https://gist.github.com/ghettospud/6f82f3da9d586df553757fa134278845 and the real life™ images here: https://twitter.com/ghetto_spud/status/1306375006008610817 Feel free to ask me questions about any specific components!",
-					"Wondering what kind of hardware I use to stream/play console games? Take a look at this layout diagram: https://gist.github.com/ghettospud/6f82f3da9d586df553757fa134278845 to see how everything hooks together. You can also find images of everything in situ here: https://twitter.com/ghetto_spud/status/1306375006008610817 Don't be afraid to ask questions about how everything works!"
+					"Wanna know how many wires are in my AV setup? Or how many steps it takes to play GameBoy games on a PC monitor? Check the diagram here: https://gist.github.com/elite-spud/6f82f3da9d586df553757fa134278845 and the real life™ images here: https://twitter.com/elite_spud/status/1306375006008610817 Feel free to ask me questions about any specific components!",
+					"Wondering what kind of hardware I use to stream/play console games? Take a look at this layout diagram: https://gist.github.com/elite-spud/6f82f3da9d586df553757fa134278845 to see how everything hooks together. You can also find images of everything in situ here: https://twitter.com/elite_spud/status/1306375006008610817 Don't be afraid to ask questions about how everything works!"
+				]
+			},
+			{
+				"name": "!hardware",
+				"aliases": ["!pc", "!equipment"],
+				"responses": [
+					"You can find a list of all the parts in my PC / stream setup here: https://pcpartpicker.com/user/ghetto_spud/saved/djj7RB"
 				]
 			},
 			{
@@ -52,8 +59,8 @@
 				]
 			},
 			{
-				"name": "!affiliate",
-				"aliases": ["!luigi"],
+				"name": "!incentive",
+				"aliases": ["!luigi", "!affiliate"],
 				"responses": [
 					"My incentive for reaching Twitch affiliate status is to beat Luigi's Mansion blindfolded. If that sounds like a disaster you'd like to spectate, you're in the right place!"
 				]
@@ -88,18 +95,31 @@
 			},
 			{
 				"name": "!blind",
-				"aliases": ["!hints", "!nohints", "!help", "!mints", "!backseating", "!backseat", "!rhetorical"],
+				"aliases": [],
 				"responses": [
-					"Blind means that I know nothing about the game I'm playing and want to keep it that way. Assume all questions about the game are rhetorical, and don't hint/spoil/suggest/backseat/tip/advise/guide/recommend/remind/warn me in any way, please. I've played a lot of games, and I can learn how to walk on my own. You can always go play the game yourself if you can't keep it in your pants.",
-					"Before you send a comment, consider if it might inform me about something I don't know or understand yet, hint that I'm doing something inefficiently, or otherwise imply that I've missed something in the game you think to be obvious, crucial, or interesting. I'm playing this game for my own enjoyment, and not knowing all the things is part of that experience. Let me be dumb, laugh with me when I fail, and rest assured that I'm not having less fun by skipping stuff."
+					"Blind means that I know nothing about the game I'm playing and want to keep it that way. "
+				]
+			},
+			{
+				"name": "!rhetorical",
+				"aliases": ["!blind", "!spoilers", "spoils", "!spoil", "!hint", "!hints", "!nohints", "!help", "!mints"],
+				"responses": [
+					"Do not tell me how to play the game. Do not spoil. Do not fake spoil. Do not hint, suggest, backseat, advise, guide, remind, or warn me in any way, please. Consider all questions to be rhetorical. Revel in my ignorance, and enjoy my suffering."
+				]
+			},
+			{
+				"name": "!backseating",
+				"aliases": ["!backseat"],
+				"responses": [
+					"What is backseating?: https://pastebin.com/nBB1B3bD"
 				]
 			},
 			{
 				"name": "!github",
 				"aliases": ["!bot", "!chatbot", "!code", "!sourcecode"],
 				"responses": [
-					"I (Spud) wrote this chatbot myself because I'm a big nerd. If you fancy yourself a nerd too, you can peruse the source code on GitHub here: https://github.com/ghettospud/ghetto_botato",
-					"This chatbot is © Spud Inc., which maintains an open policy of showcasing all the programming mistakes of the chatbot author for all to see here: https://github.com/ghettospud/ghetto_botato"
+					"I (Spud) wrote this chatbot myself because I'm a big nerd. If you fancy yourself a nerd too, you can peruse the source code on GitHub here: https://github.com/elite-spud/ghetto_botato",
+					"This chatbot is © Spud Inc., which maintains an open policy of showcasing all the programming mistakes of the chatbot author for all to see here: https://github.com/elite-spud/ghetto_botato"
 				]
 			},
 			{
