@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import { GhettoBotatoTwitchBot } from "./GhettoBotato";
+import { SpudBotTwitch } from "./SpudBot";
 import { IIrcBotAuxCommandGroupConfig } from "./IrcBot";
 import { ITwitchBotConnectionConfig } from "./TwitchBot";
 
@@ -11,7 +11,7 @@ const chatHistoryPath = ""; // fs.realpathSync("./config/users/twitchChatHistory
 const connectionConfig = loadJsonFile<ITwitchBotConnectionConfig>(connectionConfigPath);
 const commands = loadJsonFile<IIrcBotAuxCommandGroupConfig[]>(commandConfigPath);
 
-const bot = new GhettoBotatoTwitchBot(connectionConfig, commands, userDetailsPath, chatHistoryPath);
+const bot = new SpudBotTwitch(connectionConfig, commands, userDetailsPath, chatHistoryPath);
 bot.startup();
 
 export function loadJsonFile<T>(filePath: string): T {

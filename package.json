@@ -1,12 +1,12 @@
 {
-    "name": "ghetto_botato",
+    "name": "spudbot",
     "version": "1.0.0",
     "main": "lib/main.js",
-    "typings": "lib/ghetto_botato",
+    "typings": "lib/spudbot",
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "https://github.com/ghettospud/ghetto_botato"
+        "url": "https://github.com/elite-spud/spudbot"
     },
     "scripts": {
         "build": "tsc --outDir ./lib/",

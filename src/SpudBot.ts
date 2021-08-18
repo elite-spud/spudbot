@@ -13,7 +13,7 @@ export interface IChatWarriorUserDetail extends ITwitchUserDetail {
     chatWarriorState?: IChatWarriorState;
 }
 
-export class GhettoBotatoTwitchBot extends TwitchBotBase<IChatWarriorUserDetail> {
+export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
     public constructor(connection: ITwitchBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], userDetailFilePath: string, chatHistoryFilePath: string) {
         super(connection, auxCommandGroups, userDetailFilePath, chatHistoryFilePath);
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleEcho(detail));

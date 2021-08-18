@@ -1,5 +1,5 @@
 import { ChanceTime } from "./ChanceTime";
-import { IChatWarriorUserDetail } from "./GhettoBotato";
+import { IChatWarriorUserDetail } from "./SpudBot";
 import { Utils } from "./Utils";
 
 export class ChatWarriorAttribute {
