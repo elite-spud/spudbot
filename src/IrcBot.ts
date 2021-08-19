@@ -318,6 +318,7 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
 
     public startup(): void {
         this._socket.on("connect", () => this.onConnect());
+        this._socket.on("error", (err) => this.onError(err));
         this._socket.on("data", (data) => this.onData(data));
 
         this._socket.connect(this._config.connection.server.port, this._config.connection.server.host);
@@ -330,6 +331,11 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
             this._socket.write(`NICK ${this._config.connection.user.nick}\r\n`);
             this._socket.write(`JOIN ${this._config.connection.server.channel}\r\n`);
         }, 1000);
+    }
+
+    protected onError(err: Error): void {
+        console.log("CAUGHT SOCKET ERROR");
+        console.log(err.stack);
     }
 
     protected onData(data: Buffer): void {

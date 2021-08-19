@@ -62,7 +62,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
     public static readonly maxChatMessageLength = 500
     protected static readonly _knownConfig = { encoding: "utf8" };
 
-    public readonly _config: ITwitchBotConfig;
+    public override readonly _config: ITwitchBotConfig;
     protected _twitchIdByUsername: { [key: string]: string } = {}
     protected _usernameByTwitchId: { [key: string]: string } = {}
     protected _twitchApiToken: {
@@ -101,8 +101,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         // TODO: Setup token refresh
     }
 
-    /** @override */
-    protected async getUserIdForUsername(username: string): Promise<string> {
+    protected override async getUserIdForUsername(username: string): Promise<string> {
         try {
             const userId = await this.getTwitchIdWithCache(username);
             return userId;
@@ -111,8 +110,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         }
     }
 
-    /** @override */
-    protected async trackUsersInChat(secondsToAdd: number): Promise<void> {
+    protected override async trackUsersInChat(secondsToAdd: number): Promise<void> {
         const isChannelLive = await this.isChannelLive(this.twitchChannelName);
         if (!isChannelLive) {
             return;
@@ -121,8 +119,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         super.trackUsersInChat(secondsToAdd);
     }
 
-    /** @override */
-    protected async handlePart(messageDetail: IPartMessageDetail): Promise<void> {
+    protected override async handlePart(messageDetail: IPartMessageDetail): Promise<void> {
         super.handlePart(messageDetail);
         
         // Ensure we refresh the username-twitchId map every time someone joins 
@@ -294,7 +291,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         return parsedTags;
     }
 
-    public startup(): void {
+    public override startup(): void {
         super.startup();
         this.sendRaw("CAP REQ :twitch.tv/membership"); // Request capability to receive JOIN and PART events from users connecting to channels)
         this.sendRaw("CAP REQ :twitch.tv/commands"); // Request capability to receive twitch-specific commands (Timeouts, chat clears, host notifications, subscriptions, etc.)
@@ -309,8 +306,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         this.timeout(channel, username, 1);
     }
 
-    /** @override */
-    public chat(recipient: string, message: string): void {
+    public override chat(recipient: string, message: string): void {
         let actualMessage = message;
         if (message.length > TwitchBotBase.maxChatMessageLength) {
             actualMessage = "<Message was too long. Please file a bug report with the owner :)>"
