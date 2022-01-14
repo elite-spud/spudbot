@@ -40,8 +40,8 @@
 				"name": "!av",
 				"aliases": ["!diagram"],
 				"responses": [
-					"Wanna know how many wires are in my AV setup? Or how many steps it takes to play GameBoy games on a PC monitor? Check the diagram here: https://gist.github.com/elite-spud/6f82f3da9d586df553757fa134278845 and the real life™ images here: https://twitter.com/elite_spud/status/1306375006008610817 Feel free to ask me questions about any specific components!",
-					"Wondering what kind of hardware I use to stream/play console games? Take a look at this layout diagram: https://gist.github.com/elite-spud/6f82f3da9d586df553757fa134278845 to see how everything hooks together. You can also find images of everything in situ here: https://twitter.com/elite_spud/status/1306375006008610817 Don't be afraid to ask questions about how everything works!"
+					"Wanna know how many wires are in my AV setup? Or what it takes to play GameBoy games on a PC monitor? Check the diagram here: https://gist.github.com/elite-spud/6f82f3da9d586df553757fa134278845 and the real life™ images here: https://twitter.com/elite_spud/status/1306375006008610817 Feel free to ask me questions about any specific components!",
+					"Wondering what kind of hardware I use to stream/play console games? Take a look at this layout diagram: https://gist.github.com/elite-spud/6f82f3da9d586df553757fa134278845 to see how everything hooks together. You can also find images of everything here: https://twitter.com/elite_spud/status/1306375006008610817 Don't be afraid to ask questions about how everything works!"
 				]
 			},
 			{
@@ -72,7 +72,7 @@
 			{
 				"name": "!pronouns",
 				"responses": [
-					"My preferred pronouns are they/she."
+					"Spud's pronouns are they/she."
 				]
 			},
 			{
@@ -132,6 +132,12 @@
 				"name": "!ta",
 				"responses": [
 					"To play Total Annihilation on Windows 10, I use a program called DXWND to run the game in a window that tricks the game into thinking it's fullscreen. My method for doing that is detailed here: https://pastebin.com/2jBtcvqt"
+				]
+			},
+			{
+				"name": "!rtx",
+				"responses": [
+					"on"
 				]
 			}
 		]
