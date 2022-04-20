@@ -1,4 +1,5 @@
 import { randomInt } from "crypto";
+import * as fs from "fs";
 import { IChatWarriorState } from "./ChatWarrior";
 import { IIrcBotAuxCommandGroupConfig, IPrivMessageDetail } from "./IrcBot";
 import { ITwitchBotConnectionConfig, ITwitchUserDetail, TwitchBotBase } from "./TwitchBot";
@@ -14,13 +15,50 @@ export interface IChatWarriorUserDetail extends ITwitchUserDetail {
 }
 
 export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
-    public constructor(connection: ITwitchBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], userDetailFilePath: string, chatHistoryFilePath: string) {
-        super(connection, auxCommandGroups, userDetailFilePath, chatHistoryFilePath);
+    protected readonly _bonkCountPath: string;
+
+    public constructor(connection: ITwitchBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], configDir: string) {
+        super(connection, auxCommandGroups, configDir);
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleEcho(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleSlot(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleTimeout(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleGiveaway(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleUptime(detail));
+        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleBonk(detail));
+
+        try {
+            this._bonkCountPath = fs.realpathSync(`${this._config.configDir}/bonkCount.txt`);
+        } catch (err) {
+            // TODO: make sure the error is because the file doesn't exist yet
+            fs.writeFileSync(`${this._config.configDir}/bonkCount.txt`, "0");
+            this._bonkCountPath = fs.realpathSync(`${this._config.configDir}/bonkCount.txt`);
+        }
+    }
+
+    /**
+     * Reads the bonk count value from a file
+     * @returns 
+     */
+    protected readBonkCount(): number {
+        const fileBuffer = fs.readFileSync(this._bonkCountPath);
+        const fileStr = fileBuffer.toString("utf8");
+        return Number.parseInt(fileStr) || 0;
+    }
+
+    protected async getBonkCount(): Promise<number> {
+        return this.readBonkCount();
+    }
+
+    /**
+     * Writes the bonk count value to a file
+     */
+    protected writeBonkCount(value: number): void {
+        fs.writeFileSync(this._bonkCountPath, `${value}`);
+    }
+
+    protected async setBonkCount(value: number): Promise<void> {
+        this.writeBonkCount(value);
+        return;
     }
 
     protected async createUserDetail(userId: string): Promise<IChatWarriorUserDetail> {
@@ -39,15 +77,33 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
     }
 
     protected async handleEcho(messageDetail: IPrivMessageDetail): Promise<void> {
-        const subFunc = async (messageDetail: IPrivMessageDetail): Promise<void> => {
-            const response = messageDetail.message.split(" ").slice(1).join(" ");
+        const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
+            const response = messageDetail.message.split(" ").slice(1).join(" "); // Trim the "!echo" off the front & send the rest along
             this.chat(messageDetail.respondTo, response);
         }
         const func = this.getChatResponseFunc({
-            subFunc,
+            messageHandler: messageHandler,
             triggerPhrases: ["!echo"],
+            strictMatch: false, // echoing requires something after the command itself
+            commandId: "!echo",
+            globalTimeoutSeconds: 0,
+            userTimeoutSeconds: 0,
+        });
+        await func(messageDetail);
+    }
+
+    protected async handleBonk(messageDetail: IPrivMessageDetail): Promise<void> {
+        const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
+            const bonkCount = await this.getBonkCount() + 1;
+            await this.setBonkCount(bonkCount);
+            const response = `${bonkCount} recorded bonks`;
+            this.chat(messageDetail.respondTo, response);
+        };
+        const func = this.getChatResponseFunc({
+            messageHandler: messageHandler,
+            triggerPhrases: ["!bonk"],
             strictMatch: true,
-            commandKey: "!echo",
+            commandId: "!bonk",
             globalTimeoutSeconds: 0,
             userTimeoutSeconds: 0,
         });
@@ -59,7 +115,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
     // }
 
     protected async handleSlot(messageDetail: IPrivMessageDetail): Promise<void> {
-        const subFunc = async (messageDetail: IPrivMessageDetail): Promise<void> => {
+        const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
             const roll = randomInt(3);
             const timeoutSeconds = (randomInt(10) + 1) * 20 + 60;
             if (roll !== 0) {
@@ -70,10 +126,10 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
             }
         }
         const func = this.getChatResponseFunc({
-            subFunc,
+            messageHandler: messageHandler,
             triggerPhrases: ["!slot"],
             strictMatch: true,
-            commandKey: "!slot",
+            commandId: "!slot",
             globalTimeoutSeconds: 0,
             userTimeoutSeconds: 0,
         });
@@ -81,7 +137,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
     }
 
     protected async handleTimeout(messageDetail: IPrivMessageDetail): Promise<void> {
-        const subFunc = async (messageDetail: IPrivMessageDetail): Promise<void> => {
+        const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
             const timeoutSeconds = randomInt(120) + 240;
             const text = Utils.pickOne([
                 "You asked for it..." ,
@@ -99,10 +155,10 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
             this.timeout(messageDetail.respondTo, messageDetail.username, timeoutSeconds);
         }
         const func = this.getChatResponseFunc({
-            subFunc,
+            messageHandler: messageHandler,
             triggerPhrases: ["!timeout"],
             strictMatch: true,
-            commandKey: "!timeout",
+            commandId: "!timeout",
             globalTimeoutSeconds: 0,
             userTimeoutSeconds: 0,
         });
@@ -110,7 +166,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
     }
 
     protected async handleGiveaway(messageDetail: IPrivMessageDetail): Promise<void> {
-        const subFunc = async (messageDetail: IPrivMessageDetail): Promise<void> => {
+        const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
             const timeoutSeconds = (randomInt(5) + 1) * 60 + 60;
             const text = Utils.pickOne([
                 "You've won a fabulous vacation, courtesy of 'Tater Airlines, enjoy your trip!",
@@ -125,10 +181,10 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
             this.timeout(messageDetail.respondTo, messageDetail.username, timeoutSeconds);
         }
         const func = this.getChatResponseFunc({
-            subFunc,
+            messageHandler: messageHandler,
             triggerPhrases: ["!giveaway", "!vacation"],
             strictMatch: false,
-            commandKey: "!giveaway",
+            commandId: "!giveaway",
             globalTimeoutSeconds: 0,
             userTimeoutSeconds: 0,
         });
@@ -136,7 +192,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
     }
 
     protected async handleUptime(messageDetail: IPrivMessageDetail): Promise<void> {
-        const subFunc = async (messageDetail: IPrivMessageDetail): Promise<void> => {
+        const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
             try {
                 const streamDetails = await this.getStreamDetails(this.twitchChannelName);
                 const dateNowMillis = Date.now();
@@ -159,10 +215,10 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
             }           
         }
         const func = this.getChatResponseFunc({
-            subFunc,
+            messageHandler: messageHandler,
             triggerPhrases: ["git status", "!uptime", "!status", "!duration"],
             strictMatch: true,
-            commandKey: "!uptime",
+            commandId: "!uptime",
             globalTimeoutSeconds: 10,
             userTimeoutSeconds: 120,
         });

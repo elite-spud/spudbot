@@ -8,8 +8,7 @@ export interface IIrcBotConfig {
     connection: IIrcBotConnectionConfig,
     encoding: "utf8" | "ascii" | string,
     auxCommandGroups: IIrcBotAuxCommandGroupConfig[],
-    userDetailFilePath: string,
-    chatHistoryFilePath: string,
+    configDir: string,
 }
 
 export interface IIrcBotConnectionConfig {
@@ -86,6 +85,18 @@ export interface IPrivMessageDetail {
     respondTo: string;
 }
 
+export interface GetChatResponseFuncArgs {
+    messageHandler: (messageDetail: IPrivMessageDetail) => Promise<void>,
+    triggerPhrases: string[],
+    strictMatch: boolean,
+    /**
+     * Globally unique identifier for this command
+     */
+    commandId: string,
+    globalTimeoutSeconds: number,
+    userTimeoutSeconds: number
+}
+
 export enum UserChatStatus {
     Disconnected = 0,
     BeingAdded = 1,
@@ -110,6 +121,9 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
     protected readonly _userDetailByUserId: IUserDetailCollection<TUserDetail>;
     protected readonly _userIdsInChat: { [key: string]: UserChatStatus } = {};
 
+    protected readonly userDetailsPath = fs.realpathSync(`${this._config.configDir}/users/twitchUserDetails.json`);
+    protected readonly chatHistoryPath = ``; // fs.realpathSync(`${configDir}/users/twitchChatHistory.csv`);
+
     public constructor(protected readonly _config: IIrcBotConfig) {
         this._socket = new net.Socket();
         this._socket.setNoDelay();
@@ -121,9 +135,9 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
 
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleChatMessageCount(detail));
         
-        const userDetailJson: string = fs.readFileSync(_config.userDetailFilePath, { encoding: IrcBotBase.userDetailEncoding });        
+        const userDetailJson: string = fs.readFileSync(this.userDetailsPath, { encoding: IrcBotBase.userDetailEncoding });        
         this._userDetailByUserId = JSON.parse(userDetailJson); // TODO: Add error checking of some sort
-        console.log(`Successfully loaded userDetail from file: ${_config.userDetailFilePath}`);
+        console.log(`Successfully loaded userDetail from file: ${this.userDetailsPath}`);
 
         const userTrackingIntervalSeconds = 30;
         setInterval(() => this.trackUsersInChat(userTrackingIntervalSeconds), 1000 * userTrackingIntervalSeconds);
@@ -147,10 +161,11 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
             // const dateNow = new Date();
             // const dateSuffix = dateNow.toISOString().split(":").join("_").split(".").join("_");
             // fs.renameSync(this._config.userDetailFilePath, `${this._config.userDetailFilePath}_${dateSuffix}`);
-            const tempFilePath = `${this._config.userDetailFilePath}_temp`;
-            fs.writeFileSync(tempFilePath, JSON.stringify(this._userDetailByUserId));
-            fs.renameSync(tempFilePath, this._config.userDetailFilePath);
-            console.log(`Successfully wrote userDetail to file: ${this._config.userDetailFilePath}`);
+            const tempFilePath = `${this.userDetailsPath}_temp`;
+
+            fs.writeFileSync(tempFilePath, JSON.stringify(this._userDetailByUserId)); // TODO: sort the users by time spent for easy viewing
+            fs.renameSync(tempFilePath, this.userDetailsPath);
+            console.log(`Successfully wrote userDetail to file: ${this.userDetailsPath}`);
         } catch (err) {
             console.log(`Error writing userDetail status to file: ${err}`);
         }
@@ -161,7 +176,7 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
             return this._userDetailByUserId[userId];
         }
 
-        if (this._pendingUserDetailByUserId[userId]) {
+        if (!!this._pendingUserDetailByUserId[userId]) {
             return this._pendingUserDetailByUserId[userId];
         }
 
@@ -218,22 +233,37 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
         return { chatResponses, timerGroups };
     }
 
-    public getSimpleChatResponseFunc(triggerPhrases: string[], responses: string[], strictMatch: boolean, commandKey: string, globalTimeoutSeconds: number, userTimeoutSeconds: number): (message: IPrivMessageDetail) => Promise<void> {
+    /**
+     * Creates a basic response function that responds to a matching message with only simple text strings
+     * @param triggerPhrases 
+     * @param responses 
+     * @param strictMatch 
+     * @param commandKey 
+     * @param globalTimeoutSeconds 
+     * @param userTimeoutSeconds 
+     * @returns 
+     */
+    public getSimpleChatResponseFunc(triggerPhrases: string[], responses: string[], strictMatch: boolean, commandId: string, globalTimeoutSeconds: number, userTimeoutSeconds: number): (message: IPrivMessageDetail) => Promise<void> {
         const subFunc = async (messageDetail: IPrivMessageDetail): Promise<void> => {
             const response = responses[randomInt(responses.length)];
             this.chat(messageDetail.respondTo, response);            
         }
         return this.getChatResponseFunc({
-            subFunc,
+            messageHandler: subFunc,
             triggerPhrases,
             strictMatch,
-            commandKey,
+            commandId,
             globalTimeoutSeconds,
             userTimeoutSeconds,
         });
     }
 
-    public getChatResponseFunc(args: { subFunc: (messageDetail: IPrivMessageDetail) => Promise<void>, triggerPhrases: string[], strictMatch: boolean, commandKey: string, globalTimeoutSeconds: number, userTimeoutSeconds: number }): (messageDetail: IPrivMessageDetail) => Promise<void> {
+    /**
+     * Creates a chat response function that wraps an arbitrary handle function
+     * @param args 
+     * @returns 
+     */
+    public getChatResponseFunc(args: GetChatResponseFuncArgs): (messageDetail: IPrivMessageDetail) => Promise<void> {
         const wrappedFunc = async (messageDetail: IPrivMessageDetail): Promise<void> => {
             const hasMatch = args.triggerPhrases.some((triggerPhrase) => {
                 return this.doesTriggerMatch(messageDetail, triggerPhrase, args.strictMatch);
@@ -244,25 +274,25 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
 
             const userId = await this.getUserIdForUsername(messageDetail.username);
             if (!this.shouldIgnoreTimeoutRestrictions(messageDetail)) {
-                if (this.isCommandTimedOut(args.commandKey, userId)) {
+                if (this.isCommandTimedOut(args.commandId, userId)) {
                     return;
                 }
             }
             
-            await args.subFunc(messageDetail);
+            await args.messageHandler(messageDetail);
 
-            this.addCommandTimeoutDelays(args.commandKey, args.globalTimeoutSeconds, { userTimeoutSeconds: args.userTimeoutSeconds, userId });
+            this.addCommandTimeoutDelays(args.commandId, args.globalTimeoutSeconds, { userTimeoutSeconds: args.userTimeoutSeconds, userId });
         }
         return wrappedFunc;
     }
 
     protected abstract shouldIgnoreTimeoutRestrictions(messageDetail: IPrivMessageDetail): boolean;
 
-    protected addCommandTimeoutDelays(commandKey: string, globalTimeoutSeconds: number, userTimeout?: { userTimeoutSeconds: number, userId: string }): void {
+    protected addCommandTimeoutDelays(commandId: string, globalTimeoutSeconds: number, userTimeout?: { userTimeoutSeconds: number, userId: string }): void {
         if (userTimeout && userTimeout.userTimeoutSeconds > 0) {
             const userCantUseCommandForMillis = userTimeout.userTimeoutSeconds * 1000;
             const canUseCommandAgainAt = Date.now() + userCantUseCommandForMillis;
-            const userTimeoutCompositeKey = `${commandKey}_${userTimeout.userId}`;
+            const userTimeoutCompositeKey = `${commandId}_${userTimeout.userId}`;
             this._userTimeoutByCommandUserId[userTimeoutCompositeKey] = canUseCommandAgainAt;
             setTimeout(() => { delete this._userTimeoutByCommandUserId[userTimeoutCompositeKey]; }, userCantUseCommandForMillis);
         }
@@ -270,19 +300,19 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
         if (globalTimeoutSeconds > 0) {
             const noneCanUseCommandForMillis = globalTimeoutSeconds * 1000;
             const canUseCommandAgainAt = Date.now() + noneCanUseCommandForMillis;
-            this._globalTimeoutByCommand[commandKey] = canUseCommandAgainAt;
-            setTimeout(() => { delete this._globalTimeoutByCommand[commandKey]; }, noneCanUseCommandForMillis);
+            this._globalTimeoutByCommand[commandId] = canUseCommandAgainAt;
+            setTimeout(() => { delete this._globalTimeoutByCommand[commandId]; }, noneCanUseCommandForMillis);
         }
     }
 
-    protected isCommandTimedOut(commandKey: string, userId?: string): boolean {
-        const globalTimeoutAt = this._globalTimeoutByCommand[commandKey] ?? 0;
+    protected isCommandTimedOut(commandId: string, userId?: string): boolean {
+        const globalTimeoutAt = this._globalTimeoutByCommand[commandId] ?? 0;
         if (globalTimeoutAt > Date.now()) {
             return true;
         }
 
         if (userId) {
-            const userTimeoutCompositeKey = `${commandKey}_${userId}`;
+            const userTimeoutCompositeKey = `${commandId}_${userId}`;
             const userTimeoutAt = this._userTimeoutByCommandUserId[userTimeoutCompositeKey] ?? 0;
             if (userTimeoutAt > Date.now()) {
                 return true;
@@ -365,7 +395,7 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
 
             const partMessageDetail = this.parsePartMessage(message);
             if (partMessageDetail) {
-                this.handlePart(partMessageDetail);
+                this.handlePartMessage(partMessageDetail);
                 continue;
             }
         }
@@ -387,7 +417,7 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
         }
     }
 
-    protected async handlePart(messageDetail: IPartMessageDetail): Promise<void> {
+    protected async handlePartMessage(messageDetail: IPartMessageDetail): Promise<void> {
         console.log(  `${ConsoleColors.FgRed}${messageDetail.username} departed ${messageDetail.channel}${ConsoleColors.Reset}`);
         try {
             const userId = await this.getUserIdForUsername(messageDetail.username);

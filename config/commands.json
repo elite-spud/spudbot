@@ -16,7 +16,7 @@
 				"name": "!youtube",
 				"aliases": ["!vods", "!vod"],
 				"responses": [
-					"VODs get posted here (3x a week usually): https://www.youtube.com/channel/UCQZvvzMogGYW6oIBJKX1bxA",
+					"VODs get posted here: https://www.youtube.com/channel/UCQZvvzMogGYW6oIBJKX1bxA",
 					"Blind playthroughs and other interesting streams get archived on YouTube here: https://www.youtube.com/channel/UCQZvvzMogGYW6oIBJKX1bxA",
 					"I archive most of my streams locally and post the good ones here: https://www.youtube.com/channel/UCQZvvzMogGYW6oIBJKX1bxA"
 				]
@@ -38,7 +38,7 @@
 			},
 			{
 				"name": "!av",
-				"aliases": ["!diagram"],
+				"aliases": [],
 				"responses": [
 					"Wanna know how many wires are in my AV setup? Or what it takes to play GameBoy games on a PC monitor? Check the diagram here: https://gist.github.com/elite-spud/6f82f3da9d586df553757fa134278845 and the real life™ images here: https://twitter.com/elite_spud/status/1306375006008610817 Feel free to ask me questions about any specific components!",
 					"Wondering what kind of hardware I use to stream/play console games? Take a look at this layout diagram: https://gist.github.com/elite-spud/6f82f3da9d586df553757fa134278845 to see how everything hooks together. You can also find images of everything here: https://twitter.com/elite_spud/status/1306375006008610817 Don't be afraid to ask questions about how everything works!"
@@ -94,6 +94,12 @@
 				]
 			},
 			{
+				"name": "!lurk",
+				"responses": [
+					"https://www.frankerfacez.com/emoticon/586064-jrLurk"
+				]
+			},
+			{
 				"name": "!blind",
 				"aliases": [],
 				"responses": [
@@ -137,7 +143,7 @@
 			{
 				"name": "!rtx",
 				"responses": [
-					"on"
+					"on https://twitter.com/elite_spud/status/1481396091853496320"
 				]
 			}
 		]
@@ -160,7 +166,7 @@
 				"name": "git add",
 				"strict": true,
 				"responses": [
-					"Your name has been added to the list. The FBI is now en route to your location.",
+					"Your name has been added to the list. The FBI will be in contact with you shortly.",
 					"2+2=4",
 					"One of the four basic operations of arithmetic, adding was first invented on November 10, 1969 when the educational children's television series, Sesame Street, premiered on the American television station, PBS.",
 					"Adding has been deprecated. From now on, we recommend subtracting negative values instead",
@@ -184,14 +190,13 @@
 				"name": "git pull",
 				"responses": [
 					"The gravity of Earth, denoted by g, is the net acceleration imparted to objects due to the combined effect of gravitational pull (from mass distribution within Earth) and the centrifugal force (from the Earth's rotation). Near the surface, the pull of Earth's gravity is approximately 9.81 meters per second per second.",
-					"pull (ˈpu̇l) v. 1: To exert force upon so as to cause or tend to cause motion toward the force    2: To extract    3: To draw the support or attraction of [Middle English, from Old English pullian]"
+					"pull (ˈpu̇l) v. 1: To exert force upon so as to cause or tend to cause motion toward the force    2: To extract    3: To draw the support or attraction of    [Middle English, from Old English pullian]"
 				]
 			},
 			{
 				"name": "git push",
 				"responses": [
-					"Hey, don't shove me!",
-					"You extert as much force as you can, but nothing budges. It appears the chatbot is immovable"
+					"You extert as much force as you can, but nothing budges. It appears the chatbot is immovable."
 				]
 			},
 			{

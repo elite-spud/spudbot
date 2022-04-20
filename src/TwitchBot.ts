@@ -70,10 +70,10 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         expires_in: number;
     } | undefined = undefined;
 
-    public constructor(connection: ITwitchBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], userDetailFilePath: string, chatHistoryFilePath: string) {
+    public constructor(connection: ITwitchBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], configDir: string) {
         super(Object.assign(
             TwitchBotBase._knownConfig,
-            { connection, auxCommandGroups, userDetailFilePath, chatHistoryFilePath }
+            { connection, auxCommandGroups, configDir }
         ));
         
         console.log("Performing Request...")
@@ -119,8 +119,8 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         super.trackUsersInChat(secondsToAdd);
     }
 
-    protected override async handlePart(messageDetail: IPartMessageDetail): Promise<void> {
-        super.handlePart(messageDetail);
+    protected override async handlePartMessage(messageDetail: IPartMessageDetail): Promise<void> {
+        super.handlePartMessage(messageDetail);
         
         // Ensure we refresh the username-twitchId map every time someone joins 
         const twitchId = this._twitchIdByUsername[messageDetail.username];
