@@ -16,10 +16,12 @@ export interface IChatWarriorUserDetail extends ITwitchUserDetail {
 
 export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
     protected readonly _bonkCountPath: string;
+    protected _firstName: string | undefined = undefined;
 
     public constructor(connection: ITwitchBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], configDir: string) {
         super(connection, auxCommandGroups, configDir);
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleEcho(detail));
+        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleFirst(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleSlot(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleTimeout(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleGiveaway(detail));
@@ -86,6 +88,28 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
             triggerPhrases: ["!echo"],
             strictMatch: false, // echoing requires something after the command itself
             commandId: "!echo",
+            globalTimeoutSeconds: 0,
+            userTimeoutSeconds: 0,
+        });
+        await func(messageDetail);
+    }
+
+    protected async handleFirst(messageDetail: IPrivMessageDetail): Promise<void> {
+        const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
+            let response: string;
+            if (this._firstName === undefined) {
+                this._firstName = messageDetail.username;
+                response = `Congrats, ${this._firstName}, you're first today!`;
+            } else {
+                response = `${this._firstName} was first today.`
+            }
+            this.chat(messageDetail.respondTo, response);
+        }
+        const func = this.getChatResponseFunc({
+            messageHandler: messageHandler,
+            triggerPhrases: ["!first"],
+            strictMatch: false,
+            commandId: "!first",
             globalTimeoutSeconds: 0,
             userTimeoutSeconds: 0,
         });
