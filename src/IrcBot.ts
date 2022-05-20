@@ -85,7 +85,10 @@ export interface IPrivMessageDetail {
     respondTo: string;
 }
 
-export interface GetChatResponseFuncArgs {
+/**
+ * Represents a generic message handler that triggers from a set of specific command phrases at the start of a message
+ */
+export interface NewCommandArgs {
     messageHandler: (messageDetail: IPrivMessageDetail) => Promise<void>,
     triggerPhrases: string[],
     strictMatch: boolean,
@@ -220,7 +223,7 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
                 const commandNames = Array.isArray(command.aliases)
                     ? [command.name].concat(command.aliases)
                     : [command.name];
-                const func = this.getSimpleChatResponseFunc(commandNames, command.responses, command.strict ?? false, command.name, command.globalTimeoutSeconds ?? 0, command.userTimeoutSeconds ?? 30);
+                const func = this.getSimpleCommandFunc(commandNames, command.responses, command.strict ?? false, command.name, command.globalTimeoutSeconds ?? 0, command.userTimeoutSeconds ?? 30);
                 chatResponses.push(func);
             }
 
@@ -243,12 +246,12 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
      * @param userTimeoutSeconds 
      * @returns 
      */
-    public getSimpleChatResponseFunc(triggerPhrases: string[], responses: string[], strictMatch: boolean, commandId: string, globalTimeoutSeconds: number, userTimeoutSeconds: number): (message: IPrivMessageDetail) => Promise<void> {
+    public getSimpleCommandFunc(triggerPhrases: string[], responses: string[], strictMatch: boolean, commandId: string, globalTimeoutSeconds: number, userTimeoutSeconds: number): (message: IPrivMessageDetail) => Promise<void> {
         const subFunc = async (messageDetail: IPrivMessageDetail): Promise<void> => {
             const response = responses[randomInt(responses.length)];
             this.chat(messageDetail.respondTo, response);            
         }
-        return this.getChatResponseFunc({
+        return this.getCommandFunc({
             messageHandler: subFunc,
             triggerPhrases,
             strictMatch,
@@ -259,12 +262,12 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
     }
 
     /**
-     * Creates a chat response function that wraps an arbitrary handle function
+     * Creates a handling function triggered by specific keyphrases that wraps an arbitrary handle function
      * @param args 
      * @returns 
      */
-    public getChatResponseFunc(args: GetChatResponseFuncArgs): (messageDetail: IPrivMessageDetail) => Promise<void> {
-        const wrappedFunc = async (messageDetail: IPrivMessageDetail): Promise<void> => {
+    public getCommandFunc(args: NewCommandArgs): (messageDetail: IPrivMessageDetail) => Promise<void> {
+        const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
             const hasMatch = args.triggerPhrases.some((triggerPhrase) => {
                 return this.doesTriggerMatch(messageDetail, triggerPhrase, args.strictMatch);
             });
@@ -278,12 +281,12 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
                     return;
                 }
             }
-            
+
             await args.messageHandler(messageDetail);
 
             this.addCommandTimeoutDelays(args.commandId, args.globalTimeoutSeconds, { userTimeoutSeconds: args.userTimeoutSeconds, userId });
         }
-        return wrappedFunc;
+        return messageHandler;
     }
 
     protected abstract shouldIgnoreTimeoutRestrictions(messageDetail: IPrivMessageDetail): boolean;
@@ -322,8 +325,8 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
         return false;
     }
 
-    protected doesTriggerMatch(messageDetails: IPrivMessageDetail, triggerPhrase: string, strictMatch: boolean): boolean {
-        const messageTrim = messageDetails.message.trim();
+    protected doesTriggerMatch(messageDetail: IPrivMessageDetail, triggerPhrase: string, strictMatch: boolean): boolean {
+        const messageTrim = messageDetail.message.trim();
         const triggerTrim = triggerPhrase.trim();
         if (!messageTrim || !triggerTrim) {
             return false;
@@ -351,7 +354,7 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
         this._socket.on("error", (err) => this.onError(err));
         this._socket.on("data", (data) => this.onData(data));
 
-        this._socket.connect(this._config.connection.server.port, this._config.connection.server.host);
+        this._socket.connect(this._config.connection.server.port, this._config.connection.server.host); // TODO: connect using the SSL URL (IRC or websocket?) https://dev.twitch.tv/docs/irc#twitch-specific-irc-messages
     }
 
     protected onConnect(): void {

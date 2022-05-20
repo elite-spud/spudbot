@@ -75,30 +75,6 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
             TwitchBotBase._knownConfig,
             { connection, auxCommandGroups, configDir }
         ));
-        
-        console.log("Performing Request...")
-        const authRequest = https.request(`https://id.twitch.tv/oauth2/token?client_id=${connection.twitch.oauth.clientId}&client_secret=${connection.twitch.oauth.clientSecret}&grant_type=client_credentials&scope=${connection.twitch.oauth.scope}`, {
-                method: "POST",
-                port: 443,
-            },
-            (response) => {
-                response.on("data", (data: Buffer) => {
-                    const responseJson = JSON.parse(data.toString("utf8"));
-                    if (responseJson.access_token) {
-                        this._twitchApiToken = responseJson;
-                        console.log("Successfully obtained API token from twitch.")
-                    } else {
-                        console.log("Issue retrieving access token from twitch:");
-                        console.log(responseJson);
-                    }
-                });
-            });
-        authRequest.on("error", (err) => {
-            console.log("Error sending auth token request to twitch:");
-            console.log(err);
-        });
-        authRequest.end();
-        // TODO: Setup token refresh
     }
 
     protected override async getUserIdForUsername(username: string): Promise<string> {
@@ -291,10 +267,41 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         return parsedTags;
     }
 
+    protected getAuthToken(): void {
+        console.log("Performing Request...");
+        const authRequest = https.request(`https://id.twitch.tv/oauth2/token?client_id=${this._config.connection.twitch.oauth.clientId}&client_secret=${this._config.connection.twitch.oauth.clientSecret}&grant_type=client_credentials&scope=${this._config.connection.twitch.oauth.scope}`, {
+                method: "POST",
+                port: 443,
+            },
+            (response) => {
+                response.on("data", (data: Buffer) => {
+                    const responseJson = JSON.parse(data.toString("utf8"));
+                    if (responseJson.access_token) {
+                        this._twitchApiToken = responseJson;
+                        console.log("Successfully obtained API token from twitch.")
+                    } else {
+                        console.log("Issue retrieving access token from twitch:");
+                        console.log(responseJson);
+                    }
+                });
+            });
+        authRequest.on("error", (err) => {
+            console.log("Error sending auth token request to twitch:");
+            console.log(err);
+        });
+        authRequest.end();
+        // TODO: Setup token refresh
+    }
+
     public override startup(): void {
         super.startup();
+
+        this.getAuthToken();
+
+        // TODO: listen for channel points redemptions by subscribing to a websocket feed: https://dev.twitch.tv/docs/pubsub#example-channel-points-event-message
+        
         this.sendRaw("CAP REQ :twitch.tv/membership"); // Request capability to receive JOIN and PART events from users connecting to channels)
-        this.sendRaw("CAP REQ :twitch.tv/commands"); // Request capability to receive twitch-specific commands (Timeouts, chat clears, host notifications, subscriptions, etc.)
+        this.sendRaw("CAP REQ :twitch.tv/commands"); // Request capability to send & receive twitch-specific commands (timeouts, chat clears, host notifications, subscriptions, etc.)
         this.sendRaw("CAP REQ :twitch.tv/tags"); // Request capability to augment certain IRC messages with tag metadata
     }
 

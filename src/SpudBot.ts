@@ -17,6 +17,8 @@ export interface IChatWarriorUserDetail extends ITwitchUserDetail {
 export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
     protected readonly _bonkCountPath: string;
     protected _firstName: string | undefined = undefined;
+    protected _recentMessageCapsPercentages: { [userName: string]: number[] } = {};
+    protected _capsMessageWarnings: { [userName: string]: Date | undefined } = {};
 
     public constructor(connection: ITwitchBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], configDir: string) {
         super(connection, auxCommandGroups, configDir);
@@ -27,6 +29,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleGiveaway(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleUptime(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleBonk(detail));
+        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleCapsWarning(detail));
 
         try {
             this._bonkCountPath = fs.realpathSync(`${this._config.configDir}/bonkCount.txt`);
@@ -83,7 +86,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
             const response = messageDetail.message.split(" ").slice(1).join(" "); // Trim the "!echo" off the front & send the rest along
             this.chat(messageDetail.respondTo, response);
         }
-        const func = this.getChatResponseFunc({
+        const func = this.getCommandFunc({
             messageHandler: messageHandler,
             triggerPhrases: ["!echo"],
             strictMatch: false, // echoing requires something after the command itself
@@ -95,17 +98,21 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
     }
 
     protected async handleFirst(messageDetail: IPrivMessageDetail): Promise<void> {
+        const someoneWasAlreadyFirst = !!this._firstName;
+        if (!this._firstName) {
+            this._firstName = messageDetail.username;
+        }
+
         const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
             let response: string;
-            if (this._firstName === undefined) {
-                this._firstName = messageDetail.username;
-                response = `Congrats, ${this._firstName}, you're first today!`;
+            if (this._firstName === messageDetail.username) {
+                response = `Congrats, ${this._firstName}, you${someoneWasAlreadyFirst ? "'re" : " were"} first today!`;
             } else {
                 response = `${this._firstName} was first today.`
             }
             this.chat(messageDetail.respondTo, response);
         }
-        const func = this.getChatResponseFunc({
+        const func = this.getCommandFunc({
             messageHandler: messageHandler,
             triggerPhrases: ["!first"],
             strictMatch: false,
@@ -116,6 +123,49 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
         await func(messageDetail);
     }
 
+    protected async handleCapsWarning(messageDetail: IPrivMessageDetail): Promise<void> {
+        const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
+            let upperCaseCount = 0;
+            for (let i = 0; i < messageDetail.message.length; i++) {
+                const letter = messageDetail.message.charAt(i);
+                if (letter === letter.toUpperCase()) {
+                    upperCaseCount++;
+                }
+            }
+            const upperCasePercentage = upperCaseCount / messageDetail.message.length;
+
+            if (this._recentMessageCapsPercentages[messageDetail.username] === undefined) {
+                this._recentMessageCapsPercentages[messageDetail.username] = [];
+            }
+            const hasWarning = this._capsMessageWarnings[messageDetail.username] !== undefined;
+            const fiveMinutesInMillis = 5 * 60 * 1000;
+            if (hasWarning && Date.now() > this._capsMessageWarnings[messageDetail.username]!.getTime() + fiveMinutesInMillis) {
+                this._capsMessageWarnings[messageDetail.username] = undefined;
+            }
+
+            const maxCount = hasWarning ? 3 : 5;
+            this._recentMessageCapsPercentages[messageDetail.username].push(upperCasePercentage);
+            if (this._recentMessageCapsPercentages[messageDetail.username].length > maxCount) {
+                this._recentMessageCapsPercentages[messageDetail.username].splice(0, 1);
+            }
+            const recentPercentage = this._recentMessageCapsPercentages[messageDetail.username].reduce((prev, value) => prev + value, 0) / maxCount;
+            if (recentPercentage > 0.8) {
+                this._recentMessageCapsPercentages[messageDetail.username] = [];
+                
+                if (hasWarning) {
+                    this._capsMessageWarnings[messageDetail.username] = new Date(Date.now());
+                    this.timeout(messageDetail.respondTo, messageDetail.username, 60 * 2);
+                } else {
+                    this._capsMessageWarnings[messageDetail.username] = new Date(Date.now());
+                    const response = `@${messageDetail.username} please don't use caps lock`;
+                    this.chat(messageDetail.respondTo, response);
+                }
+            }
+        }
+
+        await messageHandler(messageDetail);
+    }
+
     protected async handleBonk(messageDetail: IPrivMessageDetail): Promise<void> {
         const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
             const bonkCount = await this.getBonkCount() + 1;
@@ -123,7 +173,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
             const response = `${bonkCount} recorded bonks`;
             this.chat(messageDetail.respondTo, response);
         };
-        const func = this.getChatResponseFunc({
+        const func = this.getCommandFunc({
             messageHandler: messageHandler,
             triggerPhrases: ["!bonk"],
             strictMatch: true,
@@ -149,7 +199,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
                 this.chat(messageDetail.respondTo, "Click...");
             }
         }
-        const func = this.getChatResponseFunc({
+        const func = this.getCommandFunc({
             messageHandler: messageHandler,
             triggerPhrases: ["!slot"],
             strictMatch: true,
@@ -178,7 +228,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
             this.chat(messageDetail.respondTo, text);
             this.timeout(messageDetail.respondTo, messageDetail.username, timeoutSeconds);
         }
-        const func = this.getChatResponseFunc({
+        const func = this.getCommandFunc({
             messageHandler: messageHandler,
             triggerPhrases: ["!timeout"],
             strictMatch: true,
@@ -204,7 +254,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
             this.chat(messageDetail.respondTo, text);
             this.timeout(messageDetail.respondTo, messageDetail.username, timeoutSeconds);
         }
-        const func = this.getChatResponseFunc({
+        const func = this.getCommandFunc({
             messageHandler: messageHandler,
             triggerPhrases: ["!giveaway", "!vacation"],
             strictMatch: false,
@@ -238,7 +288,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
                 this.chat(messageDetail.respondTo, `This stream is currently offline.`);
             }           
         }
-        const func = this.getChatResponseFunc({
+        const func = this.getCommandFunc({
             messageHandler: messageHandler,
             triggerPhrases: ["git status", "!uptime", "!status", "!duration"],
             strictMatch: true,
