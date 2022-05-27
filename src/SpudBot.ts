@@ -143,7 +143,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
                 this._capsMessageWarnings[messageDetail.username] = undefined;
             }
 
-            const maxCount = hasWarning ? 3 : 5;
+            const maxCount = hasWarning ? 5 : 7;
             this._recentMessageCapsPercentages[messageDetail.username].push(upperCasePercentage);
             if (this._recentMessageCapsPercentages[messageDetail.username].length > maxCount) {
                 this._recentMessageCapsPercentages[messageDetail.username].splice(0, 1);
@@ -152,10 +152,13 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
             if (recentPercentage > 0.8) {
                 this._recentMessageCapsPercentages[messageDetail.username] = [];
                 
+                // TODO: Remove the timeout
                 if (hasWarning) {
                     this._capsMessageWarnings[messageDetail.username] = new Date(Date.now());
                     this.timeout(messageDetail.respondTo, messageDetail.username, 60 * 2);
                 } else {
+                    // Disable after a raid
+                    // Don't send this if the last message wasn't egregious
                     this._capsMessageWarnings[messageDetail.username] = new Date(Date.now());
                     const response = `@${messageDetail.username} please don't use caps lock`;
                     this.chat(messageDetail.respondTo, response);
@@ -272,7 +275,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
                 const dateNowMillis = Date.now();
                 const dateStarted = new Date(streamDetails.data[0].started_at);
                 const dateStartedMillis = dateStarted.getTime();
-                let dateDiff = dateStartedMillis - dateNowMillis;
+                let dateDiff = dateNowMillis - dateStartedMillis;
                 const days = Math.floor(dateDiff / (1000 * 60 * 60 * 24));
                 dateDiff -=  days * (1000 * 60 * 60 * 24);
                 const hours = Math.floor(dateDiff / (1000 * 60 * 60));
