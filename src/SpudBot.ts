@@ -143,26 +143,19 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
                 this._capsMessageWarnings[messageDetail.username] = undefined;
             }
 
-            const maxCount = hasWarning ? 5 : 7;
+            const maxCount = 7;
             this._recentMessageCapsPercentages[messageDetail.username].push(upperCasePercentage);
             if (this._recentMessageCapsPercentages[messageDetail.username].length > maxCount) {
                 this._recentMessageCapsPercentages[messageDetail.username].splice(0, 1);
             }
             const recentPercentage = this._recentMessageCapsPercentages[messageDetail.username].reduce((prev, value) => prev + value, 0) / maxCount;
-            if (recentPercentage > 0.8) {
+            if (recentPercentage > 0.8 && upperCasePercentage > 0.8) {
                 this._recentMessageCapsPercentages[messageDetail.username] = [];
-                
-                // TODO: Remove the timeout
-                if (hasWarning) {
-                    this._capsMessageWarnings[messageDetail.username] = new Date(Date.now());
-                    this.timeout(messageDetail.respondTo, messageDetail.username, 60 * 2);
-                } else {
-                    // Disable after a raid
-                    // Don't send this if the last message wasn't egregious
-                    this._capsMessageWarnings[messageDetail.username] = new Date(Date.now());
-                    const response = `@${messageDetail.username} please don't use caps lock`;
-                    this.chat(messageDetail.respondTo, response);
-                }
+
+                // TODO: Disable after a raid
+                this._capsMessageWarnings[messageDetail.username] = new Date(Date.now());
+                const response = `@${messageDetail.username} please don't use caps lock`;
+                this.chat(messageDetail.respondTo, response);
             }
         }
 
