@@ -37,6 +37,14 @@
 				]
 			},
 			{
+				"name": "!instagram",
+				"aliases": ["!cats"],
+				"responses": [
+					"I have an instagram where I post pictures of my cats and also cool places I travel to https://www.instagram.com/elite.spud/",
+					"Hey, wanna see some cute cats? https://www.instagram.com/elite.spud/"
+				]
+			},
+			{
 				"name": "!av",
 				"aliases": [],
 				"responses": [
@@ -70,9 +78,30 @@
 	{
 		"commands": [
 			{
+				"name": "!rules",
+				"aliases": ["!chatrules"],
+				"responses": [
+					"All of these rules are zero tolerance and you WILL get banned if you break them - No racism, sexism, homophobia, transphobia, intentional misgendering, hate speech, or discrimination - Respect everyone's !pronouns (and be respectful in general too) - No politics or religion - No shortened links - No self-promotion spam - No !backseating (!blind or not) - Don't be a dingus"
+				]
+			},
+			{
 				"name": "!pronouns",
 				"responses": [
-					"Spud's pronouns are they/she."
+					"Spud's pronouns are They/She. See other chatters' pronouns and set your own here: https://pronouns.alejo.io/"
+				]
+			},
+			{
+				"name": "!gender",
+				"aliases": ["!trans", "!nonbinary"],
+				"responses": [
+					"Non-binary transfeminine. They/She pronouns. Sapphic. Hormone therapy since Dec 2020."
+				]
+			},
+			{
+				"name": "!emotes",
+				"aliases": ["!emotelist", "!ffz", "!bttv"],
+				"responses": [
+					"Sub emotes: https://www.twitchemotes.com/channels/47243772 FFZ Emotes: https://www.frankerfacez.com/channel/elite_spud BTTV Emotes: https://betterttv.com/users/5ca587c9fc7c0646cddcd7a4"
 				]
 			},
 			{

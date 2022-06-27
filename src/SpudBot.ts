@@ -29,7 +29,6 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleGiveaway(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleUptime(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleBonk(detail));
-        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleCapsWarning(detail));
 
         try {
             this._bonkCountPath = fs.realpathSync(`${this._config.configDir}/bonkCount.txt`);
