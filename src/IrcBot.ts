@@ -1,5 +1,6 @@
 import { randomInt } from "crypto";
 import * as fs from "fs";
+import { Parser as CsvParser } from "json2csv";
 import * as net from "net";
 import { ConsoleColors } from "./ConsoleColors";
 import { TimerGroup } from "./TimerGroup";
@@ -31,13 +32,15 @@ export interface IIrcBotAuxCommandGroupConfig {
 }
 
 export interface IUserDetailCollection<TUserDetail extends IUserDetail> {
-    [key: string]: TUserDetail;
+    [userId: string]: TUserDetail;
 }
 
 export interface IUserDetail {
     username: string;
     secondsInChat: number;
     numChatMessages: number;
+    lastSeenInChat: Date;
+    lastChatted: Date;
 }
 
 export interface IIrcBotAuxCommandConfig {
@@ -117,14 +120,16 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
     protected readonly _privMessageDetailCache: { [key: string]: IPrivMessageDetail } = {};
 
     // TODO: Implement this
-    protected readonly _userTimeoutByCommandUserId: { [key: string]: number } = {};
+    protected readonly _userTimeoutByCommandUsername: { [key: string]: number } = {};
     protected readonly _globalTimeoutByCommand: { [key: string]: number } = {};
 
-    protected readonly _pendingUserDetailByUserId: { [key: string]: Promise<TUserDetail> } = {};
+    protected readonly _pendingUserDetailByUsername: { [username: string]: Promise<TUserDetail> } = {};
+    /** UserId is a unique identifier that identifies a single user across multiple usernames */
     protected readonly _userDetailByUserId: IUserDetailCollection<TUserDetail>;
-    protected readonly _userIdsInChat: { [key: string]: UserChatStatus } = {};
+    protected readonly _usernamesInChat: { [key: string]: UserChatStatus } = {};
 
-    protected readonly userDetailsPath = fs.realpathSync(`${this._config.configDir}/users/twitchUserDetails.json`);
+    protected readonly userDetailsPath = fs.realpathSync(`${this._config.configDir}/users/twitchUserDetails.json`); // TODO: load this path later or ensure the file exists earlier to prevent errors
+    protected readonly userDetailsPathCsv = fs.realpathSync(`${this._config.configDir}/users/twitchUserDetails.csv`);
     protected readonly chatHistoryPath = ``; // fs.realpathSync(`${configDir}/users/twitchChatHistory.csv`);
 
     public constructor(protected readonly _config: IIrcBotConfig) {
@@ -138,7 +143,7 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
 
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleChatMessageCount(detail));
         
-        const userDetailJson: string = fs.readFileSync(this.userDetailsPath, { encoding: IrcBotBase.userDetailEncoding });        
+        const userDetailJson: string = fs.readFileSync(this.userDetailsPath, { encoding: IrcBotBase.userDetailEncoding });
         this._userDetailByUserId = JSON.parse(userDetailJson); // TODO: Add error checking of some sort
         console.log(`Successfully loaded userDetail from file: ${this.userDetailsPath}`);
 
@@ -148,11 +153,12 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
 
     protected async trackUsersInChat(secondsToAdd: number): Promise<void> {
         const userUpdatePromises: Promise<void>[] = [];
-        for (const userId of Object.keys(this._userIdsInChat)) {
-            const userUpdatedPromise = this.getUserDetailWithCache(userId).then((userDetail) => {
+        for (const username of Object.keys(this._usernamesInChat)) {
+            const userUpdatedPromise = this.getUserDetailWithCache(username).then((userDetail) => {
                 this.addTimeSpentInChatToUser(userDetail, secondsToAdd);
+                userDetail.lastSeenInChat = new Date();
             }).catch((err) => {
-                console.log(`Error adding time to user detail with userId ${userId}: ${err}`);
+                console.log(`Error adding time to user detail with username ${username}: ${err}`);
             });
             userUpdatePromises.push(userUpdatedPromise);
         }
@@ -166,29 +172,54 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
             // fs.renameSync(this._config.userDetailFilePath, `${this._config.userDetailFilePath}_${dateSuffix}`);
             const tempFilePath = `${this.userDetailsPath}_temp`;
 
-            fs.writeFileSync(tempFilePath, JSON.stringify(this._userDetailByUserId)); // TODO: sort the users by time spent for easy viewing
+            const json = JSON.stringify(this._userDetailByUserId);
+            fs.writeFileSync(tempFilePath, json);
             fs.renameSync(tempFilePath, this.userDetailsPath);
             console.log(`Successfully wrote userDetail to file: ${this.userDetailsPath}`);
+
+            const csv = this.getCsvUserDetail(this._userDetailByUserId);
+            fs.writeFileSync(this.userDetailsPathCsv, csv);
+            console.log(`Successfully wrote userDetail to file: ${this.userDetailsPathCsv}`);
+
         } catch (err) {
             console.log(`Error writing userDetail status to file: ${err}`);
         }
     }
 
-    protected async getUserDetailWithCache(userId: string): Promise<TUserDetail> {
-        if (this._userDetailByUserId[userId]) {
-            return this._userDetailByUserId[userId];
+    protected getCsvUserDetail(userDetails: IUserDetailCollection<TUserDetail>): string {
+        const userDetailMap = new Map<string, TUserDetail>();
+        for (const userId in userDetails) {
+            userDetailMap.set(userId, userDetails[userId]);
         }
 
-        if (!!this._pendingUserDetailByUserId[userId]) {
-            return this._pendingUserDetailByUserId[userId];
+        const userDetailArray: TUserDetail[] = Array.from(userDetailMap.values());
+        userDetailArray.sort((a, b) => b.secondsInChat - a.secondsInChat);
+
+        const parser: CsvParser<TUserDetail> = new CsvParser({ header: true });
+        const csv = parser.parse(userDetailArray);
+
+        return csv;
+    }
+
+    protected async getUserDetailWithCache(username: string): Promise<TUserDetail> {
+        if (!!this._pendingUserDetailByUsername[username]) {
+            return this._pendingUserDetailByUsername[username];
         }
 
-        const promise = this.createUserDetail(userId).then((userDetail) => {
+        // We need the userId here to determine which stored userDetail belongs to the given username (the user may have changed their username)
+        const promise = this.getUserIdForUsername(username).then((userId) => {
+            if (this._userDetailByUserId[userId]) {
+                return this._userDetailByUserId[userId];
+            }
+            
+            const userDetail = this.createFreshUserDetail(username, userId);
             this._userDetailByUserId[userId] = userDetail;
-            delete this._pendingUserDetailByUserId[userId];
+
+            delete this._pendingUserDetailByUsername[userId];
             return userDetail;
         });
-        this._pendingUserDetailByUserId[userId] = promise;
+
+        this._pendingUserDetailByUsername[username] = promise;
         return promise;
     }
 
@@ -196,7 +227,7 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
         userDetail.secondsInChat += secondsToAdd;
     }
 
-    protected abstract createUserDetail(userId: string): Promise<TUserDetail>;
+    protected abstract createFreshUserDetail(username: string, userId: string): TUserDetail;
 
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
     protected getCommandsFromConfig(commandGroups: IIrcBotAuxCommandGroupConfig[], channelToAddTimers: string | undefined) {
@@ -275,29 +306,28 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
                 return;
             }
 
-            const userId = await this.getUserIdForUsername(messageDetail.username);
             if (!this.shouldIgnoreTimeoutRestrictions(messageDetail)) {
-                if (this.isCommandTimedOut(args.commandId, userId)) {
+                if (this.isCommandTimedOut(args.commandId, messageDetail.username)) {
                     return;
                 }
             }
 
             await args.messageHandler(messageDetail);
 
-            this.addCommandTimeoutDelays(args.commandId, args.globalTimeoutSeconds, { userTimeoutSeconds: args.userTimeoutSeconds, userId });
+            this.addCommandTimeoutDelays(args.commandId, args.globalTimeoutSeconds, { userTimeoutSeconds: args.userTimeoutSeconds, username: messageDetail.username });
         }
         return messageHandler;
     }
 
     protected abstract shouldIgnoreTimeoutRestrictions(messageDetail: IPrivMessageDetail): boolean;
 
-    protected addCommandTimeoutDelays(commandId: string, globalTimeoutSeconds: number, userTimeout?: { userTimeoutSeconds: number, userId: string }): void {
+    protected addCommandTimeoutDelays(commandId: string, globalTimeoutSeconds: number, userTimeout?: { userTimeoutSeconds: number, username: string }): void {
         if (userTimeout && userTimeout.userTimeoutSeconds > 0) {
             const userCantUseCommandForMillis = userTimeout.userTimeoutSeconds * 1000;
             const canUseCommandAgainAt = Date.now() + userCantUseCommandForMillis;
-            const userTimeoutCompositeKey = `${commandId}_${userTimeout.userId}`;
-            this._userTimeoutByCommandUserId[userTimeoutCompositeKey] = canUseCommandAgainAt;
-            setTimeout(() => { delete this._userTimeoutByCommandUserId[userTimeoutCompositeKey]; }, userCantUseCommandForMillis);
+            const userTimeoutCompositeKey = `${commandId}_${userTimeout.username}`;
+            this._userTimeoutByCommandUsername[userTimeoutCompositeKey] = canUseCommandAgainAt;
+            setTimeout(() => { delete this._userTimeoutByCommandUsername[userTimeoutCompositeKey]; }, userCantUseCommandForMillis);
         }
 
         if (globalTimeoutSeconds > 0) {
@@ -308,15 +338,15 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
         }
     }
 
-    protected isCommandTimedOut(commandId: string, userId?: string): boolean {
+    protected isCommandTimedOut(commandId: string, username?: string): boolean {
         const globalTimeoutAt = this._globalTimeoutByCommand[commandId] ?? 0;
         if (globalTimeoutAt > Date.now()) {
             return true;
         }
 
-        if (userId) {
-            const userTimeoutCompositeKey = `${commandId}_${userId}`;
-            const userTimeoutAt = this._userTimeoutByCommandUserId[userTimeoutCompositeKey] ?? 0;
+        if (username) {
+            const userTimeoutCompositeKey = `${commandId}_${username}`;
+            const userTimeoutAt = this._userTimeoutByCommandUsername[userTimeoutCompositeKey] ?? 0;
             if (userTimeoutAt > Date.now()) {
                 return true;
             }
@@ -392,7 +422,7 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
 
             const joinMessageDetail = this.parseJoinMessage(message);
             if (joinMessageDetail) {
-                this.handleJoin(joinMessageDetail);
+                this.handleJoinMessage(joinMessageDetail);
                 continue;
             }
 
@@ -410,33 +440,33 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
         return username;
     }
 
-    protected async handleJoin(messageDetail: IJoinMessageDetail): Promise<void> {
+    protected async handleJoinMessage(messageDetail: IJoinMessageDetail): Promise<void> {
         console.log(  `${ConsoleColors.FgRed}${messageDetail.username} joined ${messageDetail.channel}${ConsoleColors.Reset}`);
         try {
-            const userId = await this.getUserIdForUsername(messageDetail.username);
-            this._userIdsInChat[userId] = UserChatStatus.Connected;
+            this._usernamesInChat[messageDetail.username] = UserChatStatus.Connected;
         } catch (err) {
             console.log(`error adding user to chat: ${err}`);
         }
     }
 
+    /** Part messages are sent when a user departs a chatroom */
     protected async handlePartMessage(messageDetail: IPartMessageDetail): Promise<void> {
         console.log(  `${ConsoleColors.FgRed}${messageDetail.username} departed ${messageDetail.channel}${ConsoleColors.Reset}`);
         try {
-            const userId = await this.getUserIdForUsername(messageDetail.username);
-            delete this._userIdsInChat[userId];
+            delete this._usernamesInChat[messageDetail.username];
         } catch (err) {
             console.log(`error removing user from chat: ${err}`);
         }
     }
 
     protected async handleChatMessageCount(messageDetail: IPrivMessageDetail): Promise<void> {
-        const userId = await this.getUserIdForUsername(messageDetail.username);
-        const userDetail = await this.getUserDetailWithCache(userId);
+        const userDetail = await this.getUserDetailWithCache(messageDetail.username);
         if (!userDetail.numChatMessages) {
             userDetail.numChatMessages = 0;
         }
+        
         userDetail.numChatMessages++;
+        userDetail.lastChatted = new Date();
     }
 
     protected handlePrivMessageResponse(messageDetail: IPrivMessageDetail): void {
@@ -549,5 +579,16 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
 
     public chat(recipient: string, message: string): void {
         this.sendRaw(`PRIVMSG ${recipient} :${message}\r\n`);
+
+        // // Log chat messages that the bot sends as well
+        // const dummyPrivMessage: IPrivMessageDetail = {
+        //     command: "PRIVMESSAGE",
+        //     username: this._config.connection.user.nick,
+        //     hostname: this._config.connection.server.host,
+        //     recipient: this._config.connection.server.channel,
+        //     message: "",
+        //     respondTo: this._config.connection.server.channel,
+        // };
+        // this.handleChatMessageCount(dummyPrivMessage).catch(() => {});
     }
 }

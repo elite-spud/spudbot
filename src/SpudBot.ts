@@ -65,17 +65,14 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
         return;
     }
 
-    protected async createUserDetail(userId: string): Promise<IChatWarriorUserDetail> {
-        const username = this._usernameByTwitchId[userId];
-        if (!username) {
-            throw new Error(`Cannot create a user detail for userId: ${userId} with unknown username`);
-        }
-
+    protected createFreshUserDetail(username: string, userId: string): IChatWarriorUserDetail {
         const twitchUserDetail: ITwitchUserDetail = {
             id: userId,
             username: username,
             secondsInChat: 0,
             numChatMessages: 0,
+            lastSeenInChat: new Date(),
+            lastChatted: new Date(),
         };
         return twitchUserDetail;
     }

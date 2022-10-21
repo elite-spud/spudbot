@@ -1,5 +1,5 @@
 import * as https from "https";
-import { IIrcBotAuxCommandGroupConfig, IIrcBotConfig, IIrcBotConnectionConfig, IPartMessageDetail, IPrivMessageDetail, IrcBotBase, IUserDetail } from "./IrcBot";
+import { IIrcBotAuxCommandGroupConfig, IIrcBotConfig, IIrcBotConnectionConfig, IJoinMessageDetail, IPartMessageDetail, IPrivMessageDetail, IrcBotBase, IUserDetail } from "./IrcBot";
 
 export interface ITwitchUserDetail extends IUserDetail {
     /** globally unique id for a twitch user (persists between username changes) */
@@ -39,8 +39,7 @@ export interface TwitchChannelInfoResponse {
         type: "live" | string,
         title: string,
         viewer_count: number,
-        /** ISO format date string */
-        started_at: string,
+        started_at: string, /** ISO format date string */
         language: string,
         thumbnail_url: string,
         tag_ids: string[]
@@ -64,7 +63,6 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
 
     public override readonly _config: ITwitchBotConfig;
     protected _twitchIdByUsername: { [key: string]: string } = {}
-    protected _usernameByTwitchId: { [key: string]: string } = {}
     protected _twitchApiToken: {
         access_token: string;
         expires_in: number;
@@ -77,6 +75,11 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         ));
     }
 
+    /**
+     * Twitch uses a separate userId that persists across usernames
+     * @param username 
+     * @returns 
+     */
     protected override async getUserIdForUsername(username: string): Promise<string> {
         try {
             const userId = await this.getTwitchIdWithCache(username);
@@ -95,12 +98,19 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         super.trackUsersInChat(secondsToAdd);
     }
 
+    protected override async handleJoinMessage(messageDetail: IJoinMessageDetail): Promise<void> {
+        super.handleJoinMessage(messageDetail);
+
+        const userDetail = await this.getUserDetailWithCache(messageDetail.username);
+        if (userDetail.username !== messageDetail.username) {
+            userDetail.username = messageDetail.username;
+        }
+    }
+
     protected override async handlePartMessage(messageDetail: IPartMessageDetail): Promise<void> {
         super.handlePartMessage(messageDetail);
         
-        // Ensure we refresh the username-twitchId map every time someone joins 
-        const twitchId = this._twitchIdByUsername[messageDetail.username];
-        delete this._usernameByTwitchId[twitchId];
+        // Delete the username-twitchId pair to ensure it is refreshed every time someone joins again
         delete this._twitchIdByUsername[messageDetail.username];
     }
 
@@ -166,7 +176,6 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
             try {
                 id = await this.getTwitchId(username);
                 this._twitchIdByUsername[username] = id;
-                this._usernameByTwitchId[id] = username;
             } catch (err) {
                 throw new Error(`Error retrieving twitch user id: ${err}`);
             }
@@ -319,22 +328,5 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
             actualMessage = "<Message was too long. Please file a bug report with the owner :)>"
         }
         super.chat(recipient, actualMessage);
-    }
-}
-
-export class TwitchBot extends TwitchBotBase<ITwitchUserDetail> {
-    protected async createUserDetail(userId: string): Promise<ITwitchUserDetail> {
-        const username = this._usernameByTwitchId[userId];
-        if (!username) {
-            throw new Error(`Cannot create a user detail for userId: ${userId} with unknown username`);
-        }
-
-        const twitchUserDetail: ITwitchUserDetail = {
-            id: userId,
-            username: username,
-            secondsInChat: 0,
-            numChatMessages: 0,
-        };
-        return twitchUserDetail;
     }
 }
