@@ -71,8 +71,6 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
             username: username,
             secondsInChat: 0,
             numChatMessages: 0,
-            lastSeenInChat: new Date(),
-            lastChatted: new Date(),
         };
         return twitchUserDetail;
     }

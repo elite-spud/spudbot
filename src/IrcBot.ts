@@ -39,8 +39,9 @@ export interface IUserDetail {
     username: string;
     secondsInChat: number;
     numChatMessages: number;
-    lastSeenInChat: Date;
-    lastChatted: Date;
+    lastSeenInChat?: Date;
+    lastChatted?: Date;
+    oldUsernames?: { username: string, lastSeenInChat: Date }[];
 }
 
 export interface IIrcBotAuxCommandConfig {
@@ -155,7 +156,7 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
         const userUpdatePromises: Promise<void>[] = [];
         for (const username of Object.keys(this._usernamesInChat)) {
             const userUpdatedPromise = this.getUserDetailWithCache(username).then((userDetail) => {
-                this.addTimeSpentInChatToUser(userDetail, secondsToAdd);
+                userDetail.secondsInChat += secondsToAdd;
                 userDetail.lastSeenInChat = new Date();
             }).catch((err) => {
                 console.log(`Error adding time to user detail with username ${username}: ${err}`);
@@ -221,10 +222,6 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
 
         this._pendingUserDetailByUsername[username] = promise;
         return promise;
-    }
-
-    protected addTimeSpentInChatToUser(userDetail: TUserDetail, secondsToAdd: number): void {
-        userDetail.secondsInChat += secondsToAdd;
     }
 
     protected abstract createFreshUserDetail(username: string, userId: string): TUserDetail;

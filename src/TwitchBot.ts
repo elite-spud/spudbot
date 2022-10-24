@@ -102,7 +102,12 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         super.handleJoinMessage(messageDetail);
 
         const userDetail = await this.getUserDetailWithCache(messageDetail.username);
-        if (userDetail.username !== messageDetail.username) {
+        if (userDetail.username !== messageDetail.username) { // Locally stored username may not match because of a username change on Twitch
+            if (userDetail.oldUsernames === undefined) {
+                userDetail.oldUsernames = [];
+            }
+            userDetail.oldUsernames.push({ username: userDetail.username, lastSeenInChat: userDetail.lastSeenInChat ?? new Date() });
+            
             userDetail.username = messageDetail.username;
         }
     }
@@ -325,7 +330,8 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
     public override chat(recipient: string, message: string): void {
         let actualMessage = message;
         if (message.length > TwitchBotBase.maxChatMessageLength) {
-            actualMessage = "<Message was too long. Please file a bug report with the owner :)>"
+            actualMessage = "<Message was too long. Please file a bug report with the owner :)>";
+            console.log(`Message too long for Twitch: ${message}`);
         }
         super.chat(recipient, actualMessage);
     }
