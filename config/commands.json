@@ -68,9 +68,9 @@
 			},
 			{
 				"name": "!incentive",
-				"aliases": ["!luigi", "!affiliate"],
+				"aliases": ["!luigi", "!affiliate", "!blindfold", "!blindfolded"],
 				"responses": [
-					"My incentive for reaching Twitch affiliate status is to beat Luigi's Mansion blindfolded. If that sounds like a disaster you'd like to spectate, you're in the right place!"
+					"I'm playing through Luigi's Mansion blindfolded, with the goal of beating the game under the Any% No OoB ruleset. As an incentive, I'll upgrade my playthrough to an All Boos run at 10 sub points. At 15 sub points, I'll learn the PAL 100% speedrun. Matching all sub gifts until the end of the run!"
 				]
 			}
 		]
@@ -81,7 +81,7 @@
 				"name": "!rules",
 				"aliases": ["!chatrules"],
 				"responses": [
-					"All of these rules are zero tolerance and you WILL get banned if you break them - No racism, sexism, homophobia, transphobia, intentional misgendering, hate speech, or discrimination - Respect everyone's !pronouns (and be respectful in general too) - No politics or religion - No shortened links - No self-promotion spam - No !backseating (!blind or not) - Don't be a dingus"
+					"• No bigotry, harassment, or intolerance of others. Respect other folks or be banned. • Don't spoil anything • Don't tell me how to play the game or you blow up irl • Keep any political and religious discussions civil and infrequent • No shortened hyperlinks • No self-promotion spam • Don't be a dingus"
 				]
 			},
 			{
@@ -137,9 +137,9 @@
 			},
 			{
 				"name": "!rhetorical",
-				"aliases": ["!blind", "!spoilers", "spoils", "!spoil", "!hint", "!hints", "!nohints", "!help", "!mints"],
+				"aliases": ["!blind", "!spoilers", "spoils", "!spoil", "!hint", "!hints", "!nohints", "!help", "!mints", "!nomints"],
 				"responses": [
-					"Do not tell me how to play the game. Do not spoil. Do not fake spoil. Do not hint, suggest, backseat, advise, guide, remind, or warn me in any way, please. Consider all questions to be rhetorical. Revel in my ignorance, and enjoy my suffering."
+					"Do not tell me how to play the game. Do not spoil. Do not fake spoil. Do not hint, backseat, advise, guide, remind, or warn me in any way, please. Consider all questions to be rhetorical. Revel in my ignorance, and enjoy my suffering."
 				]
 			},
 			{
@@ -173,6 +173,26 @@
 				"name": "!rtx",
 				"responses": [
 					"on https://twitter.com/elite_spud/status/1481396091853496320"
+				]
+			},
+			{
+				"name": "!angie",
+				"responses": [
+					"Angie the RNG mouse: https://imgur.com/YqBJbJX"
+				]
+			},
+			{
+				"name": "!split",
+				"aliases": ["!splits"],
+				"responses": [
+					"Don't forget to split, ya dingus!"
+				]
+			},
+			{
+				"name": "!captions",
+				"aliases": ["!caption"],
+				"responses": [
+					"I use Web Captioner for my on-screen captions https://webcaptioner.com/ and the Stylish browser extension to force a custom font https://userstyles.org/styles/251887/web-captioner-undertale-font"
 				]
 			}
 		]
