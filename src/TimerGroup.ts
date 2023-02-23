@@ -5,7 +5,7 @@ export class TimerGroup {
     protected _intervalId?: NodeJS.Timeout;
 
     public constructor(
-        protected _commands: (() => void)[],
+        protected _commands: (() => Promise<boolean>)[],
         protected readonly _delayMinutes: number,
         protected readonly _offsetMinutes: number = 0,
         protected readonly _randomizeCommands: boolean = false) {
@@ -32,12 +32,22 @@ export class TimerGroup {
         const delayMillis = this._offsetMinutes * 60 * 1000;
         setTimeout(() => {
             const intervalMillis = this._delayMinutes * 60 * 1000;
-            this._intervalId = setInterval(() => {
-                intervalCommands[currentIndex]();
+
+            const startIndex = currentIndex;
+            const callNextCommand = () => {
+                const commandWasSuccessfulPromise = intervalCommands[currentIndex]();
                 currentIndex = currentIndex === intervalCommands.length - 1
                     ? 0
                     : currentIndex + 1;
-            }, intervalMillis);
+
+                commandWasSuccessfulPromise.then((result) => {
+                    if (!result && currentIndex !== startIndex) {
+                        callNextCommand();
+                    }
+                });
+            };
+
+            this._intervalId = setInterval(callNextCommand, intervalMillis);
         }, delayMillis);
     }
 

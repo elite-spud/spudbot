@@ -260,7 +260,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
             try {
                 const streamDetails = await this.getStreamDetails(this.twitchChannelName);
                 const dateNowMillis = Date.now();
-                const dateStarted = new Date(streamDetails.data[0].started_at);
+                const dateStarted = new Date(streamDetails.started_at);
                 const dateStartedMillis = dateStarted.getTime();
                 let dateDiff = dateNowMillis - dateStartedMillis;
                 const days = Math.floor(dateDiff / (1000 * 60 * 60 * 24));

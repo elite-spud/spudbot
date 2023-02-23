@@ -1,5 +1,5 @@
 import * as https from "https";
-import { IIrcBotAuxCommandGroupConfig, IIrcBotConfig, IIrcBotConnectionConfig, IJoinMessageDetail, IPartMessageDetail, IPrivMessageDetail, IrcBotBase, IUserDetail } from "./IrcBot";
+import { IIrcBotAuxCommandConfig, IIrcBotAuxCommandGroupConfig, IIrcBotConfig, IIrcBotConnectionConfig, IJoinMessageDetail, IPartMessageDetail, IPrivMessageDetail, IrcBotBase, IUserDetail } from "./IrcBot";
 
 export interface ITwitchUserDetail extends IUserDetail {
     /** globally unique id for a twitch user (persists between username changes) */
@@ -29,29 +29,73 @@ export interface TwitchUserInfoResponse {
     }[],
 }
 
-export interface TwitchChannelInfoResponse {
-    data: {
-        id: string, // Stream Id
-        user_id: string,
-        user_name: string,
-        game_id: string,
-        game_name: string,
-        type: "live" | string,
-        title: string,
-        viewer_count: number,
-        started_at: string, /** ISO format date string */
-        language: string,
-        thumbnail_url: string,
-        tag_ids: string[]
-    }[],
+export interface TwitchGetChannelInfo {
+    broadcaster_id: string;
+    broadcaster_login: string;
+    broadcaster_name: string;
+    broadcaster_language: string;
+    game_name: string;
+    game_id: string;
+    title: string;
+    delay: number;
+    tags: string[];
+}
+
+export interface TwitchGetChannelInfoResponse {
+    data: TwitchGetChannelInfo[];
+}
+
+export interface TwitchSearchChannelInfo {
+    broadcaster_language: string;
+    broadcaster_login: string;
+    display_name: string;
+    game_id: string;
+    game_name: string;
+    id: string;
+    is_live: boolean;
+    tags: string[];
+    thumbnail_url: string;
+    title: string;
+    started_at: string;
+}
+
+export interface TwitchSearchChannelsResponse {
+    data: TwitchSearchChannelInfo[],
     pagination: {
-    }
+    },
+}
+
+export interface TwitchGetStreamInfo {
+    id: string; // Stream Id
+    user_id: string;
+    user_name: string;
+    game_id: string;
+    game_name: string;
+    type: "live" | string;
+    title: string;
+    viewer_count: number;
+    /** ISO format date string */
+    started_at: string;
+    language: string;
+    thumbnail_url: string;
+    tag_ids: string[];
+}
+
+export interface TwitchGetStreamsResponse {
+    data: TwitchGetStreamInfo[],
+    pagination: {
+    },
 }
 
 export interface TwitchErrorResponse {
     error: string,
     status: number, // HTTP status code
     message: string,
+}
+
+export interface ITwitchBotAuxCommandConfig extends IIrcBotAuxCommandConfig {
+    /** Only post automatically (as part of a timer) when these categories are being streamed */
+    autoPostGameWhitelist?: string[];
 }
 
 export type TwitchPrivMessageTagKeys = "badge-info" | "badges" | "client-nonce" | "color" | "display-name" | "emotes" | "flags" | "id" | "mod" | "room-id" | "subscriber" | "tmi-sent-ts" | "turbo" | "user-id" | "user-type" | string;
@@ -87,6 +131,31 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         } catch (err) {
             throw new Error("Error receiving user id from twitch");
         }
+    }
+
+    protected override async callCommandFunctionFromConfig(command: ITwitchBotAuxCommandConfig, channel: string): Promise<boolean> {
+        try {
+            const streamDetails = await this.getChannelDetails(this.twitchChannelName); // TODO: parameterize this
+        
+            if (command.autoPostGameWhitelist) {
+                let gameInWhitelist = false;
+                for (const gameName of command.autoPostGameWhitelist) {
+                    if (streamDetails.game_name === gameName) {
+                        gameInWhitelist = true;
+                        break;
+                    }
+                }
+
+                if (!gameInWhitelist) {
+                    return false;
+                }
+            }
+        } catch (err) {
+            this.onError(err);
+            return false;
+        }
+
+        return await super.callCommandFunctionFromConfig(command, channel);
     }
 
     protected override async trackUsersInChat(secondsToAdd: number): Promise<void> {
@@ -127,21 +196,60 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
     protected async isChannelLive(channelName: string): Promise<boolean> {
         try {
             const channelInfoResponse = await this.getStreamDetails(channelName);
-            if (channelInfoResponse.data.length === 0) {
-                return false;
-            }
-            const channelStatus = channelInfoResponse.data[0].type;
-            if (channelStatus === "live") {
-                return true;
-            }
-            return false;
+            const channelIsLive = channelInfoResponse.type === "live";
+            return channelIsLive;
         } catch (err) {
             return false;
         }
     }
 
-    protected async getStreamDetails(channelName: string): Promise<TwitchChannelInfoResponse> {
-        return new Promise<TwitchChannelInfoResponse>((resolve, reject) => {
+    protected async getChannelDetails(channelName: string): Promise<TwitchGetChannelInfo> {
+        const broadcasterId = await this.getTwitchIdWithCache(channelName);
+
+        return new Promise<TwitchGetChannelInfo>((resolve, reject) => {
+            if (!this._twitchApiToken) {
+                reject("Cannot retrieve user id from twitch without authorization!");
+                return;
+            }
+    
+            const options = {
+                headers: {
+                    Authorization: `Bearer ${this._twitchApiToken.access_token}`,
+                    "client-id": `${this._config.connection.twitch.oauth.clientId}`,
+                },
+            };
+            const request = https.get(`https://api.twitch.tv/helix/channels?broadcaster_id=${broadcasterId}`, options, (response) => {
+                    response.on("data", (data) => {
+                        const responseJson: TwitchGetChannelInfoResponse | TwitchErrorResponse = JSON.parse(data.toString("utf8"));
+                        const errorResponse = responseJson as TwitchErrorResponse;
+                        if (errorResponse.error) {
+                            reject(`Error retrieving channel info from twitch API: ${errorResponse.status} ${errorResponse.error}: ${errorResponse.message}`);
+                            return;
+                        }
+
+                        const channelInfoResponse = responseJson as TwitchGetChannelInfoResponse;
+                        if (channelInfoResponse.data.length > 1) {
+                            reject("More than one channel info received, expected only one.");
+                            return;
+                        }
+                        if (channelInfoResponse.data.length === 0) {
+                            reject("No channel info received in response, expected one.");
+                            return;
+                        }
+                        resolve(channelInfoResponse.data[0]);
+                        return;
+                    });
+                });
+            request.on("error", (err) => {
+                console.log("Error sending auth token request to twitch:");
+                console.log(err);
+                reject(err);
+            });
+        });
+    }
+
+    protected async getStreamDetails(channelName: string): Promise<TwitchGetStreamInfo> {
+        return new Promise<TwitchGetStreamInfo>((resolve, reject) => {
             if (!this._twitchApiToken) {
                 reject("Cannot retrieve user id from twitch without authorization!");
                 return;
@@ -155,15 +263,23 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
             };
             const request = https.get(`https://api.twitch.tv/helix/streams?user_login=${channelName}`, options, (response) => {
                     response.on("data", (data) => {
-                        const responseJson: TwitchChannelInfoResponse | TwitchErrorResponse = JSON.parse(data.toString("utf8"));
+                        const responseJson: TwitchGetStreamsResponse | TwitchErrorResponse = JSON.parse(data.toString("utf8"));
                         const errorResponse = responseJson as TwitchErrorResponse;
                         if (errorResponse.error) {
                             reject(`Error retrieving channel info from twitch API: ${errorResponse.status} ${errorResponse.error}: ${errorResponse.message}`);
                             return;
                         }
 
-                        const channelInfoResponse = responseJson as TwitchChannelInfoResponse;
-                        resolve(channelInfoResponse);
+                        const channelInfoResponse = responseJson as TwitchGetStreamsResponse;
+                        if (channelInfoResponse.data.length > 1) {
+                            reject("More than one stream info received, expected only one.");
+                            return;
+                        }
+                        if (channelInfoResponse.data.length === 0) {
+                            reject("No stream info received in response, expected one.");
+                            return;
+                        }
+                        resolve(channelInfoResponse.data[0]);
                         return;
                     });
                 });
@@ -171,7 +287,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
                 console.log("Error sending auth token request to twitch:");
                 console.log(err);
                 reject(err);
-            });    
+            });
         });
     }
 

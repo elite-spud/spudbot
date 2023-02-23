@@ -226,23 +226,31 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
 
     protected abstract createFreshUserDetail(username: string, userId: string): TUserDetail;
 
+    protected async callCommandFunctionFromConfig(command: IIrcBotAuxCommandConfig, channel: string): Promise<boolean> {
+        const responseIndex = randomInt(command.responses.length);
+        const response = command.responses[responseIndex];
+        this.chat(channel, response);
+        return true;
+    }
+
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
     protected getCommandsFromConfig(commandGroups: IIrcBotAuxCommandGroupConfig[], channelToAddTimers: string | undefined) {
         const chatResponses: ((messageDetail: IPrivMessageDetail) => Promise<void>)[] = [];
         const timerGroups: TimerGroup[] = [];
         
         for (const commandGroup of commandGroups) {
-            const timerCommands = [];
+            const timerCommands: {(): Promise<boolean>}[] = [];
             for (const command of commandGroup.commands) {
                 if (channelToAddTimers !== undefined && channelToAddTimers !== null) {
                     if (!command.responses || command.responses.length === 0) {
                         continue;
                     }
-                    timerCommands.push(() => {
-                        const responseIndex = randomInt(command.responses.length);
-                        const response = command.responses[responseIndex];
-                        this.chat(channelToAddTimers, response);
-                    });
+                    const func = () => this.callCommandFunctionFromConfig(command, channelToAddTimers)
+                        .catch((err) => {
+                            this.onError(err);
+                            return false;
+                        });
+                    timerCommands.push(func);
                 }
 
                 if (!command.name) {
@@ -394,7 +402,7 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
     }
 
     protected onError(err: Error): void {
-        console.log("CAUGHT SOCKET ERROR");
+        console.log(`CAUGHT SOCKET ERROR`);
         console.log(err.stack);
     }
 
