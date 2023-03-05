@@ -225,7 +225,7 @@
 			},
 			{
 				"name": "!bebe",
-				"aliases": ["!baby", "!announcement"],
+				"aliases": ["!baby"],
 				"responses": [
 					"https://www.instagram.com/p/CoI-jAzuL_B/"
 				]
@@ -234,7 +234,7 @@
 				"name": "!marathon",
 				"aliases": ["!fatales", "!framefatales", "!frostfatales"],
 				"responses": [
-					"I'll be running Luigi's Mansion 100% as the opening run in Frost Fatales 2023 this February! Check the schedule and mark your calendar so you can tune in! https://gamesdonequick.com/schedule/42"
+					"I participated in Frost Fatales 2023 by running Luigi's Mansion 100%! Check out the VOD here if you missed it: https://youtu.be/hvXPqOkV9xU",
 				]
 			}
 		]
