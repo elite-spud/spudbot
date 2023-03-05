@@ -6,7 +6,7 @@ export class TimerGroup {
 
     public constructor(
         protected _commands: (() => Promise<boolean>)[],
-        protected readonly _delayMinutes: number,
+        protected readonly _intervalMinutes: number,
         protected readonly _offsetMinutes: number = 0,
         protected readonly _randomizeCommands: boolean = false) {
     }
@@ -29,9 +29,9 @@ export class TimerGroup {
             intervalCommands = shuffledCommands;
         }
         
-        const delayMillis = this._offsetMinutes * 60 * 1000;
+        const offsetMillis = this._offsetMinutes * 60 * 1000;
         setTimeout(() => {
-            const intervalMillis = this._delayMinutes * 60 * 1000;
+            const intervalMillis = this._intervalMinutes * 60 * 1000;
 
             const startIndex = currentIndex;
             const callNextCommand = () => {
@@ -47,8 +47,9 @@ export class TimerGroup {
                 });
             };
 
+            callNextCommand();
             this._intervalId = setInterval(callNextCommand, intervalMillis);
-        }, delayMillis);
+        }, offsetMillis);
     }
 
     public stopTimer(): void {

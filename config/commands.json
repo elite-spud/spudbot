@@ -1,6 +1,22 @@
 [
+    {
+		"timerMinutesOffset": 45,
+		"timerMinutes": 90,
+		"random": true,
+		"commands": [
+			{
+				"name": "!therun",
+				"aliases": ["!therungg"],
+				"autoPostGameWhitelist": ["Luigi's Mansion"],
+				"responses": [
+					"Want extra details and statistics about my splits as I speedrun? Check my profile on TheRun.gg, and click the live button to see realtime updates on my current run! https://therun.gg/live/Elite_Spud"
+				]
+			}
+		]
+	},
 	{
-		"timerMinutes": 100,
+		"timerMinutesOffset": 30,
+		"timerMinutes": 60,
 		"random": true,
 		"commands": [
 			{
@@ -15,22 +31,22 @@
 			{
 				"name": "!discord",
 				"responses": [
-					"I made a Discord server! Join in and become part of the community here: https://discord.gg/f4bhKYxPy8",
-					"Want consistent notifications when the stream is live? Join the Discord server and request a role to always get pinged! https://discord.gg/f4bhKYxPy8"
+					"I made a Discord server! Join in to keep up with the community offstream! https://discord.gg/f4bhKYxPy8",
+					"Want consistent notifications when the stream is live? Join the Discord server and request a role to always get pinged! https://discord.gg/f4bhKYxPy8",
+					"Wanna talk spoilers without posting directly in twitch chat? I've got a dedicated channel for spoiler-y discussion in the Discord server! https://discord.gg/f4bhKYxPy8"
 				]
 			},
 			{
-				"name": "!marathon",
-				"aliases": ["!fatales", "!framefatales", "!frostfatales"],
+				"name": "!incentive",
 				"responses": [
-					"I'll be running Luigi's Mansion 100% as the opening run in Frost Fatales 2023 this February! Check the schedule and mark your calendar so you can tune in! https://gamesdonequick.com/schedule/42"
+					"At 25 Sub points, I'll do a blindfolded playthrough of Luigi's Mansion PAL version. I have no idea if that's even been done before, which probably means it'll be gonna be a big, crazy adventure. To help reach the goal, I'll be matching all gift subs through March 31!"
 				]
 			}
 		]
 	},
 	{
-		"timerMinutes": 100,
-		"timerMinutesOffset": 50,
+		"timerMinutesOffset": 60,
+		"timerMinutes": 60,
 		"random": true,
 		"commands": [
 			{
@@ -38,7 +54,8 @@
 				"aliases": ["!lastfm", "!songs"],
 				"responses": [
 					"I collect music CDs and keep track of what I listen to as a hobby. You can judge my music taste here: https://www.last.fm/user/elite_spud",
-					"I've been building up a small collection of music CDs for a few years. You can see what I have and what I've been listening to recently here: https://www.last.fm/user/elite_spud"
+					"I've been building up a small collection of music CDs for a few years. You can see what I have and what I've been listening to recently here: https://www.last.fm/user/elite_spud",
+					"In my spare time, I curate a small music CD collection, mostly focused around heavy, progressive, dark, and ambient genres. Check out what I have at https://www.last.fm/user/elite_spud and shoot me a recommendation if you've got one!"
 				]
 			},
 			{
@@ -69,14 +86,6 @@
 				"aliases": ["!history", "!opinions"],
 				"responses": [
 					"I maintain a list of all the games I've streamed (and might stream) here: https://docs.google.com/spreadsheets/d/1JsdDfmdjaL3d-oGsuq38z_jhrvkhePF1LLz4W1dpzI4/edit?usp=sharing and keep a tier list of my blind playthroughs here: https://pastebin.com/fRPKHM7D You can also check my pastebin profile for some of my more substantial opinions on certain games: https://pastebin.com/u/ghetto_spud"
-				]
-			},
-			{
-				"name": "!therun",
-				"aliases": ["!therungg"],
-				"autoPostGameWhitelist": ["Luigi's Mansion"],
-				"responses": [
-					"Want extra details and statistics about my splits as I speedrun? Check my profile on TheRun.gg and click the live button to see realtime updates on my current run! https://therun.gg/Elite_Spud https://therun.gg/live/Elite_Spud"
 				]
 			}
 		]
@@ -219,6 +228,13 @@
 				"aliases": ["!baby", "!announcement"],
 				"responses": [
 					"https://www.instagram.com/p/CoI-jAzuL_B/"
+				]
+			},
+			{
+				"name": "!marathon",
+				"aliases": ["!fatales", "!framefatales", "!frostfatales"],
+				"responses": [
+					"I'll be running Luigi's Mansion 100% as the opening run in Frost Fatales 2023 this February! Check the schedule and mark your calendar so you can tune in! https://gamesdonequick.com/schedule/42"
 				]
 			}
 		]

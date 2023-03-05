@@ -111,6 +111,9 @@ export enum UserChatStatus {
 }
 
 export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
+    private _startupPromise: Promise<void>;
+    public get hasStarted(): Promise<void> { return this._startupPromise; };
+
     public static readonly userDetailEncoding = "utf8";
 
     /** Hardcoded responses are kept separate from those read from a configuration to allow interactive editing of configured commands */
@@ -140,7 +143,6 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
         const configCommands = this.getCommandsFromConfig(_config.auxCommandGroups, _config.connection.server.channel);
         this._configuredPrivMessageResponseHandlers = configCommands.chatResponses;
         this._configuredTimerGroups = configCommands.timerGroups;
-        this._configuredTimerGroups.forEach(timer => timer.startTimer());
 
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleChatMessageCount(detail));
         
@@ -180,7 +182,7 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
 
             const csv = this.getCsvUserDetail(this._userDetailByUserId);
             fs.writeFileSync(this.userDetailsPathCsv, csv);
-            console.log(`Successfully wrote userDetail to file: ${this.userDetailsPathCsv}`);
+            // console.log(`Successfully wrote userDetail to file: ${this.userDetailsPathCsv}`);
 
         } catch (err) {
             console.log(`Error writing userDetail status to file: ${err}`);
@@ -384,21 +386,35 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
         return true
     }
 
-    public startup(): void {
-        this._socket.on("connect", () => this.onConnect());
+    public async startup(): Promise<void> {
+        this._startupPromise = new Promise<void>((resolve, reject) => {
+            this._startup().then(() => {
+                resolve();
+            }).catch((err) => {
+                reject(err);
+            });
+        });
+
+        return this._startupPromise;
+    }
+
+    public async _startup(): Promise<void> {
         this._socket.on("error", (err) => this.onError(err));
         this._socket.on("data", (data) => this.onData(data));
 
-        this._socket.connect(this._config.connection.server.port, this._config.connection.server.host); // TODO: connect using the SSL URL (IRC or websocket?) https://dev.twitch.tv/docs/irc#twitch-specific-irc-messages
-    }
+        const connectPromise = new Promise<void>((resolve) => {
+            this._socket.connect(this._config.connection.server.port, this._config.connection.server.host,
+                () => {
+                    console.log("Connected successfully");
+                    this.sendRaw(`PASS ${this._config.connection.user.pass}\r\n`);
+                    this.sendRaw(`NICK ${this._config.connection.user.nick}\r\n`);
+                    this.sendRaw(`JOIN ${this._config.connection.server.channel}\r\n`);
+                    resolve();
+                }); // TODO: connect using the SSL URL (IRC or websocket?) https://dev.twitch.tv/docs/irc#twitch-specific-irc-messages
+        });
 
-    protected onConnect(): void {
-        console.log("Connected successfully");
-        setTimeout(() => {
-            this._socket.write(`PASS ${this._config.connection.user.pass}\r\n`);
-            this._socket.write(`NICK ${this._config.connection.user.nick}\r\n`);
-            this._socket.write(`JOIN ${this._config.connection.server.channel}\r\n`);
-        }, 1000);
+        await connectPromise;
+        this._configuredTimerGroups.forEach(timer => timer.startTimer());
     }
 
     protected onError(err: Error): void {
@@ -583,6 +599,7 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
     }
 
     public chat(recipient: string, message: string): void {
+        // TODO: Wait on join here?
         this.sendRaw(`PRIVMSG ${recipient} :${message}\r\n`);
 
         // // Log chat messages that the bot sends as well

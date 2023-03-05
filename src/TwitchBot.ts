@@ -135,9 +135,8 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
 
     protected override async callCommandFunctionFromConfig(command: ITwitchBotAuxCommandConfig, channel: string): Promise<boolean> {
         try {
-            const streamDetails = await this.getChannelDetails(this.twitchChannelName); // TODO: parameterize this
-        
             if (command.autoPostGameWhitelist) {
+                const streamDetails = await this.getChannelDetails(this.twitchChannelName); // TODO: parameterize this
                 let gameInWhitelist = false;
                 for (const gameName of command.autoPostGameWhitelist) {
                     if (streamDetails.game_name === gameName) {
@@ -206,6 +205,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
     protected async getChannelDetails(channelName: string): Promise<TwitchGetChannelInfo> {
         const broadcasterId = await this.getTwitchIdWithCache(channelName);
 
+        await this.hasStarted;
         return new Promise<TwitchGetChannelInfo>((resolve, reject) => {
             if (!this._twitchApiToken) {
                 reject("Cannot retrieve user id from twitch without authorization!");
@@ -249,6 +249,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
     }
 
     protected async getStreamDetails(channelName: string): Promise<TwitchGetStreamInfo> {
+        await this.hasStarted;
         return new Promise<TwitchGetStreamInfo>((resolve, reject) => {
             if (!this._twitchApiToken) {
                 reject("Cannot retrieve user id from twitch without authorization!");
@@ -306,6 +307,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
     }
 
     protected async getTwitchId(username: string): Promise<string> {
+        await this.hasStarted;
         return new Promise<string>((resolve, reject) => {
             if (!this._twitchApiToken) {
                 reject("Cannot retrieve user id from twitch without authorization!");
@@ -397,36 +399,43 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         return parsedTags;
     }
 
-    protected getAuthToken(): void {
+    protected async loadAuthToken(): Promise<void> {
         console.log("Performing Request...");
-        const authRequest = https.request(`https://id.twitch.tv/oauth2/token?client_id=${this._config.connection.twitch.oauth.clientId}&client_secret=${this._config.connection.twitch.oauth.clientSecret}&grant_type=client_credentials&scope=${this._config.connection.twitch.oauth.scope}`, {
-                method: "POST",
-                port: 443,
-            },
-            (response) => {
-                response.on("data", (data: Buffer) => {
-                    const responseJson = JSON.parse(data.toString("utf8"));
-                    if (responseJson.access_token) {
-                        this._twitchApiToken = responseJson;
-                        console.log("Successfully obtained API token from twitch.")
-                    } else {
-                        console.log("Issue retrieving access token from twitch:");
-                        console.log(responseJson);
-                    }
+        const promise = new Promise<void>((resolve, reject) => {
+            const authRequest = https.request(`https://id.twitch.tv/oauth2/token?client_id=${this._config.connection.twitch.oauth.clientId}&client_secret=${this._config.connection.twitch.oauth.clientSecret}&grant_type=client_credentials&scope=${this._config.connection.twitch.oauth.scope}`, {
+                    method: "POST",
+                    port: 443,
+                },
+                (response) => {
+                    response.on("data", (data: Buffer) => {
+                        const responseJson = JSON.parse(data.toString("utf8"));
+                        if (responseJson.access_token) {
+                            this._twitchApiToken = responseJson;
+                            console.log("Successfully obtained API token from twitch.");
+                            resolve();
+                        } else {
+                            const message = `Issue retrieving access token from twitch: ${responseJson}`
+                            console.log(message);
+                            reject(message);
+                        }
+                    });
                 });
+
+            authRequest.on("error", (err) => {
+                console.log("Error sending auth token request to twitch:");
+                console.log(err);
+                reject(err);
             });
-        authRequest.on("error", (err) => {
-            console.log("Error sending auth token request to twitch:");
-            console.log(err);
+            authRequest.end();
+            // TODO: Setup token refresh
         });
-        authRequest.end();
-        // TODO: Setup token refresh
+        return promise;
     }
 
-    public override startup(): void {
-        super.startup();
+    public override async _startup(): Promise<void> {
+        await super._startup();
 
-        this.getAuthToken();
+        await this.loadAuthToken();
 
         // TODO: listen for channel points redemptions by subscribing to a websocket feed: https://dev.twitch.tv/docs/pubsub#example-channel-points-event-message
         
