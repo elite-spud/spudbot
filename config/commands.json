@@ -11,6 +11,14 @@
 				"responses": [
 					"Want extra details and statistics about my splits as I speedrun? Check my profile on TheRun.gg, and click the live button to see realtime updates on my current run! https://therun.gg/live/Elite_Spud"
 				]
+			},
+			{
+				"name": "!blind_recurring",
+				"aliases": [],
+				"autoPostIfTitleContains": ["!blind"],
+				"responses": [
+					"This is a blind playthrough, which means that I know nothing about this game want to keep it that way. Do not tell me how to play the game. Do not spoil. Do not fake spoil. Do not hint, backseat, advise, guide, remind, or warn me in any way, please. Consider all questions to be rhetorical. Revel in my ignorance, and enjoy my suffering."
+				]
 			}
 		]
 	},

@@ -96,6 +96,8 @@ export interface TwitchErrorResponse {
 export interface ITwitchBotAuxCommandConfig extends IIrcBotAuxCommandConfig {
     /** Only post automatically (as part of a timer) when these categories are being streamed */
     autoPostGameWhitelist?: string[];
+    /** Only post automatically (as part of a timer) if the title contains any of these strings */
+    autoPostIfTitleContainsAny?: string[];
 }
 
 export type TwitchPrivMessageTagKeys = "badge-info" | "badges" | "client-nonce" | "color" | "display-name" | "emotes" | "flags" | "id" | "mod" | "room-id" | "subscriber" | "tmi-sent-ts" | "turbo" | "user-id" | "user-type" | string;
@@ -134,9 +136,10 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
     }
 
     protected override async callCommandFunctionFromConfig(command: ITwitchBotAuxCommandConfig, channel: string): Promise<boolean> {
+        let streamDetails: TwitchGetChannelInfo | undefined = undefined;
         try {
             if (command.autoPostGameWhitelist) {
-                const streamDetails = await this.getChannelDetails(this.twitchChannelName); // TODO: parameterize this
+                streamDetails = streamDetails ?? await this.getChannelDetails(this.twitchChannelName); // TODO: parameterize this
                 let gameInWhitelist = false;
                 for (const gameName of command.autoPostGameWhitelist) {
                     if (streamDetails.game_name === gameName) {
@@ -146,6 +149,21 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
                 }
 
                 if (!gameInWhitelist) {
+                    return false;
+                }
+            }
+
+            if (command.autoPostIfTitleContainsAny) {
+                streamDetails = streamDetails ?? await this.getChannelDetails(this.twitchChannelName); // TODO: parameterize this
+                let substringMatchesInTitle = false;
+                for (const substring of command.autoPostIfTitleContainsAny) {
+                    if (streamDetails.title.includes(substring)) {
+                        substringMatchesInTitle = true;
+                        break;
+                    }
+                }
+
+                if (!substringMatchesInTitle) {
                     return false;
                 }
             }
