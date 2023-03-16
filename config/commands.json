@@ -1,6 +1,6 @@
 [
     {
-		"timerMinutesOffset": 45,
+		"timerMinutesOffset": 50,
 		"timerMinutes": 90,
 		"random": true,
 		"commands": [
@@ -15,8 +15,8 @@
 		]
 	},
 	{
-		"timerMinutesOffset": 30,
-		"timerMinutes": 60,
+		"timerMinutesOffset": 45,
+		"timerMinutes": 90,
 		"random": true,
 		"commands": [
 			{
@@ -45,8 +45,8 @@
 		]
 	},
 	{
-		"timerMinutesOffset": 60,
-		"timerMinutes": 60,
+		"timerMinutesOffset": 90,
+		"timerMinutes": 90,
 		"random": true,
 		"commands": [
 			{
@@ -234,7 +234,7 @@
 				"name": "!marathon",
 				"aliases": ["!fatales", "!framefatales", "!frostfatales"],
 				"responses": [
-					"I participated in Frost Fatales 2023 by running Luigi's Mansion 100%! Check out the VOD here if you missed it: https://youtu.be/hvXPqOkV9xU",
+					"I participated in Frost Fatales 2023 by running Luigi's Mansion 100%! Check out the VOD here if you missed it: https://youtu.be/hvXPqOkV9xU"
 				]
 			}
 		]
