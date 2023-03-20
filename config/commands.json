@@ -1,6 +1,6 @@
 [
     {
-		"timerMinutesOffset": 50,
+		"timerMinutesOffset": 70,
 		"timerMinutes": 90,
 		"random": true,
 		"commands": [
@@ -15,7 +15,7 @@
 			{
 				"name": "!blind_recurring",
 				"aliases": [],
-				"autoPostIfTitleContains": ["!blind"],
+				"autoPostIfTitleContainsAny": ["!blind"],
 				"responses": [
 					"This is a blind playthrough, which means that I know nothing about this game want to keep it that way. Do not tell me how to play the game. Do not spoil. Do not fake spoil. Do not hint, backseat, advise, guide, remind, or warn me in any way, please. Consider all questions to be rhetorical. Revel in my ignorance, and enjoy my suffering."
 				]
