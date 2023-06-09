@@ -9,7 +9,7 @@
 				"aliases": ["!therungg"],
 				"autoPostGameWhitelist": ["Luigi's Mansion"],
 				"responses": [
-					"Want extra details and statistics about my splits as I speedrun? Check my profile on TheRun.gg, and click the live button to see realtime updates on my current run! https://therun.gg/live/Elite_Spud"
+					"Interested in seeing extra details and statistics about my splits as I speedrun? Check my profile on TheRun.gg, and click the live button to see realtime updates on my current run! https://therun.gg/live/Elite_Spud"
 				]
 			},
 			{
@@ -19,35 +19,13 @@
 				"responses": [
 					"This is a blind playthrough, which means that I know nothing about this game want to keep it that way. Do not tell me how to play the game. Do not spoil. Do not fake spoil. Do not hint, backseat, advise, guide, remind, or warn me in any way, please. Consider all questions to be rhetorical. Revel in my ignorance, and enjoy my suffering."
 				]
-			}
-		]
-	},
-	{
-		"timerMinutesOffset": 45,
-		"timerMinutes": 90,
-		"random": true,
-		"commands": [
-			{
-				"name": "!youtube",
-				"aliases": ["!vods", "!vod"],
-				"responses": [
-					"VODs get posted here (in higher quality than streams!): https://www.youtube.com/@elite_spud",
-					"Blind playthroughs and other interesting streams get archived on YouTube here (at 1440p!): https://www.youtube.com/@elite_spud",
-					"I archive my streams locally at 1440p and post them on YouTube! https://www.youtube.com/@elite_spud"
-				]
 			},
 			{
-				"name": "!discord",
+				"name": "!spoilerdiscord_recurring",
+				"aliases": [],
+				"autoPostIfTitleContainsAny": ["!blind"],
 				"responses": [
-					"I made a Discord server! Join in to keep up with the community offstream! https://discord.gg/f4bhKYxPy8",
-					"Want consistent notifications when the stream is live? Join the Discord server and request a role to always get pinged! https://discord.gg/f4bhKYxPy8",
 					"Wanna talk spoilers without posting directly in twitch chat? I've got a dedicated channel for spoiler-y discussion in the Discord server! https://discord.gg/f4bhKYxPy8"
-				]
-			},
-			{
-				"name": "!incentive",
-				"responses": [
-					"At 25 Sub points, I'll do a blindfolded playthrough of Luigi's Mansion PAL version. I have no idea if that's even been done before, which probably means it'll be gonna be a big, crazy adventure. To help reach the goal, I'll be matching all gift subs through March 31!"
 				]
 			}
 		]
@@ -58,12 +36,42 @@
 		"random": true,
 		"commands": [
 			{
+				"name": "!youtube",
+				"aliases": ["!vods", "!vod"],
+				"responses": [
+					"VODs get posted here (in higher quality than streams!): https://www.youtube.com/@elite_spud",
+					"Blind playthroughs and other interesting streams get uploaded to YouTube here: https://www.youtube.com/@elite_spud",
+					"Miss a playthrough you really wanted to catch? I archive my streams locally at 1440p and post them on YouTube! https://www.youtube.com/@elite_spud"
+				]
+			},
+			{
+				"name": "!discord",
+				"responses": [
+					"We have a Discord server! Join in and be a part of the community offstream! https://discord.gg/f4bhKYxPy8",
+					"Want consistent notifications when the stream is live? Join the Discord server and request a role to always get pinged! https://discord.gg/f4bhKYxPy8"
+				]
+			},
+			{
+				"name": "!tournament",
+				"aliases": ["!tourney"],
+				"responses": [
+					"I'll be participating in the annual Luigi's Mansion Any% No OoB tournament this year as both a runner and a commentator! Check out the bracket https://challonge.com/LMTournament2023 and schedule https://schedule.speedgaming.org/lm/#"
+				]
+			}
+		]
+	},
+	{
+		"timerMinutesOffset": 45,
+		"timerMinutes": 90,
+		"random": true,
+		"commands": [
+			{
 				"name": "!music",
 				"aliases": ["!lastfm", "!songs"],
 				"responses": [
 					"I collect music CDs and keep track of what I listen to as a hobby. You can judge my music taste here: https://www.last.fm/user/elite_spud",
-					"I've been building up a small collection of music CDs for a few years. You can see what I have and what I've been listening to recently here: https://www.last.fm/user/elite_spud",
-					"In my spare time, I curate a small music CD collection, mostly focused around heavy, progressive, dark, and ambient genres. Check out what I have at https://www.last.fm/user/elite_spud and shoot me a recommendation if you've got one!"
+					"I've been building up a small collection of music CDs for a few years. Check out what I've been listening to recently here: https://www.last.fm/user/elite_spud",
+					"In my spare time, I curate a small music CD collection, mostly focused around heavy, progressive, dark, and ambient genres. Check out what I have at https://www.last.fm/user/elite_spud and feel free to shoot me a recommendation if you've got one!"
 				]
 			},
 			{
@@ -78,8 +86,8 @@
 				"name": "!av",
 				"aliases": ["!diagram"],
 				"responses": [
-					"Wanna know how many wires are in my AV setup? Or what it takes to play GameBoy games on a PC monitor? Check the diagram here: https://gist.github.com/elite-spud/6f82f3da9d586df553757fa134278845 and the real life™ images here: https://twitter.com/elite_spud/status/1306375006008610817 Feel free to ask me questions about any specific components!",
-					"Wondering what kind of hardware I use to stream/play console games? Take a look at this layout diagram: https://gist.github.com/elite-spud/6f82f3da9d586df553757fa134278845 to see how everything hooks together. You can also find images of everything here: https://twitter.com/elite_spud/status/1306375006008610817 Don't be afraid to ask questions about how everything works!"
+					"Wanna know how many wires are in my AV setup? Or what it takes to play GameBoy games on a PC monitor? Check the diagram here: https://gist.github.com/elite-spud/6f82f3da9d586df553757fa134278845, and don't be afraid to ask me questions about any specific components!",
+					"Wondering what kind of hardware I use to stream/play console games? Take a look at this layout diagram: https://gist.github.com/elite-spud/6f82f3da9d586df553757fa134278845 to see how everything hooks together. Don't be afraid to ask questions about how everything works!"
 				]
 			},
 			{
@@ -104,7 +112,7 @@
 				"name": "!rules",
 				"aliases": ["!chatrules"],
 				"responses": [
-					"• No bigotry, harassment, or intolerance allowed. Respect other folks or be banned. • Don't spoil anything • Don't tell me how to play the game • Don't trauma dump. I want to cultivate a safe and positive space in my chat • Keep any political / religious discussions civil and infrequent • No shortened hyperlinks • No self-promotion spam • Don't be a dingus"
+					"• No bigotry, harassment, or intolerance allowed. Respect other folks or be banned • Don't spoil anything • Don't tell me how to play the game • Don't trauma dump. I want to cultivate a safe and positive space in my chat • Keep any political / religious discussions civil and infrequent • Stream is generally PG to PG-13. I prefer not to swear for my own reasons, but don't really care if you do (within reason) • No shortened hyperlinks • No self-promotion spam • Don't be a dingus •"
 				]
 			},
 			{
@@ -188,14 +196,9 @@
 			},
 			{
 				"name": "!ta",
+				"aliases": ["!totalannihilation", "!totala"],
 				"responses": [
 					"To play Total Annihilation on Windows 10, I use a program called DXWND to run the game in a window that tricks the game into thinking it's fullscreen. My method for doing that is detailed here: https://pastebin.com/2jBtcvqt"
-				]
-			},
-			{
-				"name": "!rtx",
-				"responses": [
-					"on https://twitter.com/elite_spud/status/1481396091853496320"
 				]
 			},
 			{
@@ -239,10 +242,49 @@
 				]
 			},
 			{
-				"name": "!marathon",
-				"aliases": ["!fatales", "!framefatales", "!frostfatales"],
+				"name": "!frostfatales",
+				"aliases": ["!fatales", "!framefatales"],
 				"responses": [
 					"I participated in Frost Fatales 2023 by running Luigi's Mansion 100%! Check out the VOD here if you missed it: https://youtu.be/hvXPqOkV9xU"
+				]
+			},
+			{
+				"name": "!incentive",
+				"responses": [
+					"At 25 Sub points, I'll do a blindfolded playthrough of Luigi's Mansion PAL version. I have no idea if that's even been done before, so that probably means it'll be a big, crazy adventure!"
+				]
+			},
+			{
+				"name": "!TDoV",
+				"aliases": ["!transdayofvisibility", "!tdov"],
+				"responses": [
+					"Today is Transgender Day of Visibility! As a trans person who's also observable in the visible spectrum of electromagnetic radiation, I'm here playing games and being proud about myself in the most public way I can. Not every trans person has the privilege to make themselves visible today, though, so I think it's important to stand in solidarity with those who aren't yet able. We exist, we are strong, and our voices will be heard."
+				]
+			},
+			{
+				"name": "!corathon",
+				"aliases": ["!marathon"],
+				"responses": [
+					"At 12:00 CST on April 8, I'll be taking part in Corathon, an upcoming speedrunning marathon, by showcasing Luigi's Mansion 100%! This event will benefit Cora, a friend-of-a-friend who's trying to move out of Texas to a more trans-friendly part of the US, a reality I'm all too familiar with. There's a lot of amazing games and amazing people featured in this marathon, so be sure to mark your calendars! To see the full schedule, please visit https://horaro.org/corathon/schedule."
+				]
+			},
+			{
+				"name": "!max%",
+				"aliases": ["!maxpercent"],
+				"responses": [
+					"Max% is: All Toads, All Gold Frames, & All Money (142,390,000G)"
+				]
+			},
+			{
+				"name": "!happy",
+				"responses": [
+					"Pride!"
+				]
+			},
+			{
+				"name": "!HAPPY",
+				"responses": [
+					"PRIDE!"
 				]
 			}
 		]
