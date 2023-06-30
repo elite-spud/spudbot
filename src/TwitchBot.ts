@@ -537,13 +537,12 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
             if (!httpRequest.url) {
                 return;
             }
-            console.log(httpRequest.url);
+            console.log(`Incoming Request: ${httpRequest.url}`);
             const incomingUrl = new URL(`${redirectUrl}${httpRequest.url}`);
             const authCode = incomingUrl.searchParams.get("code");
             if (!authCode) {
                 throw new Error(`Could not load user token: no auth code returned`);
             }
-            console.log(authCode);
 
             const tokenRequestBodyProps: { [key: string]: string } = {
                 client_id: this._config.connection.twitch.oauth.clientId,
@@ -600,9 +599,8 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
     public async timeout(channelUsername: string, usernameToTimeout: string, durationSeconds: number): Promise<void> {
         const userAccessToken = await this.getUserAccessToken();
 
-        console.log(`${channelUsername} ${usernameToTimeout}`)
+        console.log(`Timing out ${usernameToTimeout} in channel ${channelUsername}`)
         const broadcasterId = await this.getTwitchIdWithCache(channelUsername.replace("#", ""));
-        const moderatorId = await this.getTwitchIdWithCache();
         const chatbotId = await this.getTwitchIdWithCache(this._config.connection.user.nick);
         const userIdToBan = await this.getTwitchIdWithCache(usernameToTimeout);
         const body = {
@@ -611,9 +609,6 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
                 duration: durationSeconds,
             }
         }
-        
-        console.log(`${chatbotId} ${moderatorId}`);
-        console.log(`${userAccessToken.access_token}`);
 
         const response = await fetch(`https://api.twitch.tv/helix/moderation/bans?broadcaster_id=${broadcasterId}&moderator_id=${chatbotId}`, {
             method: `POST`,
@@ -625,7 +620,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
             body: JSON.stringify(body),
         });
         const fooJson = await response.json();
-        console.log(`${response.status} ${response.statusText}`);
+        console.log(`DEBUG Timeout Response: ${response.status} ${response.statusText}`);
         console.log(fooJson);
     }
 
