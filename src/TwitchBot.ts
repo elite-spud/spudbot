@@ -619,9 +619,13 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
             },
             body: JSON.stringify(body),
         });
-        const fooJson = await response.json();
-        console.log(`DEBUG Timeout Response: ${response.status} ${response.statusText}`);
-        console.log(fooJson);
+        const timeoutResponse: any = await response.json();
+        if (timeoutResponse.status !== 200) {
+            console.log(`Timeout request failed: ${response.status} ${response.statusText}`);
+            console.log(timeoutResponse);
+        } else {
+            console.log(`Timeout Successful.`);
+        }
     }
 
     public clearTimeout(channel: string, username: string): void {
