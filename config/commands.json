@@ -53,7 +53,7 @@
 			},
 			{
 				"name": "!tournament",
-				"aliases": ["!tourney"],
+				"aliases": ["!tourney", "!Tournament"],
 				"responses": [
 					"I'll be participating in the annual Luigi's Mansion Any% No OoB tournament this year as both a runner and a commentator! Check out the bracket https://challonge.com/LMTournament2023 and schedule https://schedule.speedgaming.org/lm/#"
 				]
