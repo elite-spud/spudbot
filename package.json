@@ -16,7 +16,8 @@
     },
     "dependencies": {
         "json2csv": "^5.0.3",
-        "open": "^8.3.0"
+        "open": "^8.3.0",
+        "keytar": "^7.9.0"
     },
     "devDependencies": {
         "@types/json2csv": "^5.0.3",

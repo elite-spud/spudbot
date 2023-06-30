@@ -1,6 +1,7 @@
 import * as http from "http";
 import * as https from "https";
 import * as open from "open";
+import { getPassword, setPassword } from "keytar";
 import { IIrcBotAuxCommandConfig, IIrcBotAuxCommandGroupConfig, IIrcBotConfig, IIrcBotConnectionConfig, IJoinMessageDetail, IPartMessageDetail, IPrivMessageDetail, IrcBotBase, IUserDetail } from "./IrcBot";
 
 export interface ITwitchUserDetail extends IUserDetail {
@@ -102,6 +103,16 @@ export interface ITwitchBotAuxCommandConfig extends IIrcBotAuxCommandConfig {
     autoPostIfTitleContainsAny?: string[];
 }
 
+export interface TwitchUserToken {
+    access_token: string,
+    expires_in: number,
+    refresh_token: string,
+    scope: string[],
+    token_type: string,
+    /** The access token used to access the Twitch API has its own associated userId, so we have to store it separately from the username/userId map */
+    user_id?: string,
+}
+
 export type TwitchPrivMessageTagKeys = "badge-info" | "badges" | "client-nonce" | "color" | "display-name" | "emotes" | "flags" | "id" | "mod" | "room-id" | "subscriber" | "tmi-sent-ts" | "turbo" | "user-id" | "user-type" | string;
 export type TwitchBadgeTagKeys = "admin" | "bits" | "broadcaster" | "global_mod" | "moderator" | "subscriber" | "staff" | "turbo" | string;
 
@@ -110,19 +121,13 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
     protected static readonly _knownConfig: { encoding: "utf8" } = { encoding: "utf8" };
 
     public declare readonly _config: ITwitchBotConfig;
-    /** The access token used to access the Twitch API has its own associated userId, so we have to store it separately from the username/userId map */
-    protected _userToken: {
-        access_token: string,
-        expires_in: number,
-        refresh_token: string,
-        scope: string[],
-        token_type: string,
-    };
+    protected _userAccessToken: TwitchUserToken;
     protected _twitchIdByUsername: { [key: string]: string } = {}
     protected _twitchApiToken: {
         access_token: string;
         expires_in: number;
     } | undefined = undefined;
+    protected readonly userAccessTokenAccountName = "default"; // TODO: find a good replacement for this
 
     public constructor(connection: ITwitchBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], configDir: string) {
         super(Object.assign(
@@ -323,7 +328,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
     protected async getTwitchIdWithCache(username?: string): Promise<string> {
         let id: string | undefined = username
             ? this._twitchIdByUsername[username]
-            : this._tokenTwitchId;
+            : this._userAccessToken.user_id;
         if (!id) {
             try {
                 id = await this.getTwitchId(username);
@@ -334,13 +339,18 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
             if (username) {
                 this._twitchIdByUsername[username] = id;
             } else {
-                this._tokenTwitchId = id;
+                this._userAccessToken.user_id = id;
             }
         }
         
         return id;
     }
 
+    /**
+     * 
+     * @param username Optional. if not provided, retrieves the twitch id for the active user access token
+     * @returns 
+     */
     protected async getTwitchId(username?: string): Promise<string> {
         await this.hasStarted;
         return new Promise<string>((resolve, reject) => {
@@ -349,9 +359,16 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
                 return;
             }
 
+            if (!username && !this._userAccessToken) {
+                reject("Cannot retrieve user id for user access token unless token already exists!");
+                return;
+            }
+
             const options = {
                 headers: {
-                    Authorization: `Bearer ${this._twitchApiToken.access_token}`,
+                    Authorization: username
+                        ? `Bearer ${this._twitchApiToken.access_token}`
+                        : `Bearer ${this._userAccessToken.access_token}`,
                     "client-id": `${this._config.connection.twitch.oauth.clientId}`,
                 },
             };
@@ -468,9 +485,53 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         return promise;
     }
 
-    protected async loadUserToken(): Promise<void> {
-        console.log("Performing Request...");
+    protected abstract getServiceName(): string;
 
+    protected async refreshUserToken(refreshToken: string): Promise<TwitchUserToken> {
+        console.log(`Attempting to obtain user access token via refresh token...`);
+
+        const tokenRequestBodyProps: { [key: string]: string } = {
+            client_id: this._config.connection.twitch.oauth.clientId,
+            client_secret: this._config.connection.twitch.oauth.clientSecret,
+            grant_type: "refresh_token",
+            refresh_token: refreshToken,
+        };
+        const tokenRequestBody = Object.keys(tokenRequestBodyProps)
+            .map(n => encodeURIComponent(n) + '=' + encodeURIComponent(tokenRequestBodyProps[n])).join('&');
+        const tokenResponse = await fetch(`https://id.twitch.tv/oauth2/token`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: tokenRequestBody,
+        });
+        const tokenResponseJson: any = await tokenResponse.json();
+        console.log(`User access token successfully obtained via refresh token`);
+        console.log(tokenResponseJson);
+        return tokenResponseJson;
+    }
+
+    protected storeUserTokenResponse(tokenResponse: TwitchUserToken): void {
+        this._userAccessToken = tokenResponse;
+        setPassword(this.getServiceName(), this.userAccessTokenAccountName, JSON.stringify(this._userAccessToken));
+    }
+
+    protected async loadUserToken(): Promise<void> {
+        const storedTokenString = await getPassword(this.getServiceName(), this.userAccessTokenAccountName);
+        if (storedTokenString) {
+            console.log(`Stored user access token found.`);
+            console.log(storedTokenString);
+            const storedToken: TwitchUserToken = JSON.parse(storedTokenString);
+            try {
+                const refreshTokenResponse = await this.refreshUserToken(storedToken.refresh_token);
+                this.storeUserTokenResponse(refreshTokenResponse);
+                return;
+            } catch (err) {
+                console.log(`Token Refresh failed: ${err}`);
+            }
+        }
+        
+        console.log(`Obtaining user access token from scratch...`);
         const redirectUrl = `http://localhost:3000`;
         const handleRequest = async (httpRequest: http.IncomingMessage, _httpResponse: http.ServerResponse) => {
             if (!httpRequest.url) {
@@ -502,12 +563,12 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
             });
             const tokenResponseJson: any = await tokenResponse.json();
             if (tokenResponse.status !== 200) {
-                console.log(`Failed to exchange authorization code for access token: ${tokenResponse.status} ${tokenResponseJson}`);
+                const errMessage = `Failed to exchange authorization code for access token: ${tokenResponse.status}`;
+                console.log(errMessage);
+                console.log(tokenResponseJson);
+                throw new Error(errMessage);
             }
-            this._tokenTwitchId = tokenResponseJson.access_token;
-            console.log(fooJson);
-
-            // TODO: Store the access token properly and securely store the refresh token so we don't need to login anymore
+            this.storeUserTokenResponse(tokenResponseJson);
         };
         const server = http.createServer(handleRequest);
         server.listen(new URL(redirectUrl).port);
@@ -532,10 +593,12 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         this.sendRaw("CAP REQ :twitch.tv/tags"); // Request capability to augment certain IRC messages with tag metadata
     }
 
+    public async getUserAccessToken(): Promise<TwitchUserToken> {
+        return this._userAccessToken; // TODO: auto-refresh the token if it's been too long
+    }
+
     public async timeout(channelUsername: string, usernameToTimeout: string, durationSeconds: number): Promise<void> {
-        if (!this._twitchApiToken) {
-            throw new Error("Cannot timeout Twitch user without authorization!");
-        }
+        const userAccessToken = await this.getUserAccessToken();
 
         console.log(`${channelUsername} ${usernameToTimeout}`)
         const broadcasterId = await this.getTwitchIdWithCache(channelUsername.replace("#", ""));
@@ -550,12 +613,12 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         }
         
         console.log(`${chatbotId} ${moderatorId}`);
-        console.log(`${this._twitchApiToken.access_token}`);
+        console.log(`${userAccessToken.access_token}`);
 
         const response = await fetch(`https://api.twitch.tv/helix/moderation/bans?broadcaster_id=${broadcasterId}&moderator_id=${chatbotId}`, {
             method: `POST`,
             headers: {
-                Authorization: `Bearer ${this._twitchApiToken.access_token}`,
+                Authorization: `Bearer ${userAccessToken.access_token}`,
                 "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
                 "Content-Type": `application/json`,
             },
