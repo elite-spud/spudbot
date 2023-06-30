@@ -7,7 +7,7 @@ import { TimerGroup } from "./TimerGroup";
 
 export interface IIrcBotConfig {
     connection: IIrcBotConnectionConfig,
-    encoding: "utf8" | "ascii" | string,
+    encoding: "utf8" | "ascii",
     auxCommandGroups: IIrcBotAuxCommandGroupConfig[],
     configDir: string,
 }
@@ -116,6 +116,8 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
 
     public static readonly userDetailEncoding = "utf8";
 
+    protected readonly _config: IIrcBotConfig;
+
     /** Hardcoded responses are kept separate from those read from a configuration to allow interactive editing of configured commands */
     protected readonly _hardcodedPrivMessageResponseHandlers: ((message: IPrivMessageDetail) => Promise<void>)[] = [];
     protected readonly _configuredPrivMessageResponseHandlers: ((message: IPrivMessageDetail) => Promise<void>)[] = [];
@@ -132,23 +134,27 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
     protected readonly _userDetailByUserId: IUserDetailCollection<TUserDetail>;
     protected readonly _usernamesInChat: { [key: string]: UserChatStatus } = {};
 
-    protected readonly userDetailsPath = fs.realpathSync(`${this._config.configDir}/users/twitchUserDetails.json`); // TODO: load this path later or ensure the file exists earlier to prevent errors
-    protected readonly userDetailsPathCsv = fs.realpathSync(`${this._config.configDir}/users/twitchUserDetails.csv`);
+    protected readonly _userDetailsPath;
+    protected readonly _userDetailsPathCsv;
     protected readonly chatHistoryPath = ``; // fs.realpathSync(`${configDir}/users/twitchChatHistory.csv`);
 
-    public constructor(protected readonly _config: IIrcBotConfig) {
+    public constructor(config: IIrcBotConfig) {
+        this._config = config;
+        this._userDetailsPath = fs.realpathSync(`${this._config.configDir}/users/twitchUserDetails.json`); // TODO: load this path later or ensure the file exists earlier to prevent errors
+        this._userDetailsPathCsv = fs.realpathSync(`${this._config.configDir}/users/twitchUserDetails.csv`);
+
         this._socket = new net.Socket();
         this._socket.setNoDelay();
 
-        const configCommands = this.getCommandsFromConfig(_config.auxCommandGroups, _config.connection.server.channel);
+        const configCommands = this.getCommandsFromConfig(config.auxCommandGroups, config.connection.server.channel);
         this._configuredPrivMessageResponseHandlers = configCommands.chatResponses;
         this._configuredTimerGroups = configCommands.timerGroups;
 
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleChatMessageCount(detail));
         
-        const userDetailJson: string = fs.readFileSync(this.userDetailsPath, { encoding: IrcBotBase.userDetailEncoding });
+        const userDetailJson: string = fs.readFileSync(this._userDetailsPath, { encoding: IrcBotBase.userDetailEncoding });
         this._userDetailByUserId = JSON.parse(userDetailJson); // TODO: Add error checking of some sort
-        console.log(`Successfully loaded userDetail from file: ${this.userDetailsPath}`);
+        console.log(`Successfully loaded userDetail from file: ${this._userDetailsPath}`);
 
         const userTrackingIntervalSeconds = 30;
         setInterval(() => this.trackUsersInChat(userTrackingIntervalSeconds), 1000 * userTrackingIntervalSeconds);
@@ -173,15 +179,15 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
             // const dateNow = new Date();
             // const dateSuffix = dateNow.toISOString().split(":").join("_").split(".").join("_");
             // fs.renameSync(this._config.userDetailFilePath, `${this._config.userDetailFilePath}_${dateSuffix}`);
-            const tempFilePath = `${this.userDetailsPath}_temp`;
+            const tempFilePath = `${this._userDetailsPath}_temp`;
 
             const json = JSON.stringify(this._userDetailByUserId);
             fs.writeFileSync(tempFilePath, json);
-            fs.renameSync(tempFilePath, this.userDetailsPath);
-            console.log(`Successfully wrote userDetail to file: ${this.userDetailsPath}`);
+            fs.renameSync(tempFilePath, this._userDetailsPath);
+            console.log(`Successfully wrote userDetail to file: ${this._userDetailsPath}`);
 
             const csv = this.getCsvUserDetail(this._userDetailByUserId);
-            fs.writeFileSync(this.userDetailsPathCsv, csv);
+            fs.writeFileSync(this._userDetailsPathCsv, csv);
             // console.log(`Successfully wrote userDetail to file: ${this.userDetailsPathCsv}`);
 
         } catch (err) {

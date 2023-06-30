@@ -20,6 +20,8 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
     protected _recentMessageCapsPercentages: { [userName: string]: number[] } = {};
     protected _capsMessageWarnings: { [userName: string]: Date | undefined } = {};
 
+    protected override getServiceName(): string { return "SpudBot" }
+
     public constructor(connection: ITwitchBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], configDir: string) {
         super(connection, auxCommandGroups, configDir);
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleEcho(detail));
