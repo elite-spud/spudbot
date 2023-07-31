@@ -29,6 +29,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleSlot(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleTimeout(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleGiveaway(detail));
+        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handlePlay(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleUptime(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleBonk(detail));
 
@@ -251,6 +252,24 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
             triggerPhrases: ["!giveaway", "!vacation"],
             strictMatch: false,
             commandId: "!giveaway",
+            globalTimeoutSeconds: 0,
+            userTimeoutSeconds: 0,
+        });
+        await func(messageDetail);
+    }
+
+    protected async handlePlay(messageDetail: IPrivMessageDetail): Promise<void> {
+        const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
+            if (messageDetail.username !== "elite_spud") { // TODO: detect streamer's name from conifg or make this a basic configuration with a name/broadcaster option
+                return;
+            }
+            this.chat(messageDetail.respondTo, "!play");
+        }
+        const func = this.getCommandFunc({
+            messageHandler: messageHandler,
+            triggerPhrases: ["!play"],
+            strictMatch: false,
+            commandId: "!play",
             globalTimeoutSeconds: 0,
             userTimeoutSeconds: 0,
         });
