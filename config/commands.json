@@ -50,13 +50,6 @@
 					"We have a Discord server! Join in and be a part of the community offstream! https://discord.gg/f4bhKYxPy8",
 					"Want consistent notifications when the stream is live? Join the Discord server and request a role to always get pinged! https://discord.gg/f4bhKYxPy8"
 				]
-			},
-			{
-				"name": "!tournament",
-				"aliases": ["!tourney", "!Tournament"],
-				"responses": [
-					"I'll be participating in the annual Luigi's Mansion Any% No OoB tournament this year as both a runner and a commentator! Check out the bracket https://challonge.com/LMTournament2023 and schedule https://schedule.speedgaming.org/lm/#"
-				]
 			}
 		]
 	},
@@ -67,11 +60,11 @@
 		"commands": [
 			{
 				"name": "!music",
-				"aliases": ["!lastfm", "!songs"],
+				"aliases": ["!rateyourmusic", "!musicratings", "!lastfm", "!songs"],
 				"responses": [
-					"I collect music CDs and keep track of what I listen to as a hobby. You can judge my music taste here: https://www.last.fm/user/elite_spud",
-					"I've been building up a small collection of music CDs for a few years. Check out what I've been listening to recently here: https://www.last.fm/user/elite_spud",
-					"In my spare time, I curate a small music CD collection, mostly focused around heavy, progressive, dark, and ambient genres. Check out what I have at https://www.last.fm/user/elite_spud and feel free to shoot me a recommendation if you've got one!"
+					"I collect music CDs and keep track of what I listen to as a hobby. You can judge my music taste here https://rateyourmusic.com/~elite_spud and here https://www.last.fm/user/elite_spud",
+					"I've been building up a small collection of music CDs for a few years. See what I've got and what I've been listening to https://rateyourmusic.com/~elite_spud & https://www.last.fm/user/elite_spud",
+					"In my spare time, I curate a small music CD collection, mostly focused around heavy, progressive, dark, and ambient genres. Check out what I have at https://rateyourmusic.com/~elite_spud + https://www.last.fm/user/elite_spud and feel free to shoot me a recommendation if you've got one!"
 				]
 			},
 			{
@@ -86,8 +79,8 @@
 				"name": "!av",
 				"aliases": ["!diagram"],
 				"responses": [
-					"Wanna know how many wires are in my AV setup? Or what it takes to play GameBoy games on a PC monitor? Check the diagram here: https://gist.github.com/elite-spud/6f82f3da9d586df553757fa134278845, and don't be afraid to ask me questions about any specific components!",
-					"Wondering what kind of hardware I use to stream/play console games? Take a look at this layout diagram: https://gist.github.com/elite-spud/6f82f3da9d586df553757fa134278845 to see how everything hooks together. Don't be afraid to ask questions about how everything works!"
+					"Wanna know how many wires are in my AV setup? Or what it takes to play GameBoy games on a PC monitor? Check out the diagram I made to keep up with it all, and don't be afraid to ask me questions about any specific components: https://gist.github.com/elite-spud/6f82f3da9d586df553757fa134278845",
+					"Wondering what kind of hardware I use to stream/play console games? Take a look at my layout diagram to see how everything hooks together: https://gist.github.com/elite-spud/6f82f3da9d586df553757fa134278845. Don't be afraid to ask questions about how everything works!"
 				]
 			},
 			{
@@ -98,10 +91,42 @@
 				]
 			},
 			{
-				"name": "!games",
-				"aliases": ["!history", "!opinions"],
+				"name": "!pendinggames",
+				"aliases": ["!streamgames", "!games"],
 				"responses": [
 					"I maintain a list of all the games I've streamed (and might stream) here: https://docs.google.com/spreadsheets/d/1JsdDfmdjaL3d-oGsuq38z_jhrvkhePF1LLz4W1dpzI4/edit?usp=sharing and keep a tier list of my blind playthroughs here: https://pastebin.com/fRPKHM7D You can also check my pastebin profile for some of my more substantial opinions on certain games: https://pastebin.com/u/ghetto_spud"
+				]
+			},
+			{
+				"name": "!github",
+				"aliases": ["!bot", "!chatbot", "!code", "!sourcecode"],
+				"responses": [
+					"I (Spud) wrote this chatbot myself because I'm a big nerd. If you fancy yourself a nerd too, you can peruse the source code on GitHub here: https://github.com/elite-spud/spudbot",
+					"This chatbot is © Spud Inc., which maintains an open policy of showcasing all the programming mistakes of the chatbot author for all to see here: https://github.com/elite-spud/spudbot",
+					"I'm a software engineer by day, and this chatbot is actually one of my side-projects! If you want to see how it works, you can find all the source code here: https://github.com/elite-spud/spudbot"
+				]
+			},
+			{
+				"name": "!glitchwave",
+				"aliases": ["!gameratings"],
+				"responses": [
+					"I took the time to catalog and rate all the games I've played over the years. Take a peek at my favorites and not-so-favorites here: https://glitchwave.com/user/elite_spud/",
+					"Curious if I've played your favorite game before, and/or what my opinions about it are? Look no further: https://glitchwave.com/user/elite_spud/",
+					"Got a favorite game? Me too: https://glitchwave.com/user/elite_spud/"
+				]
+			},
+			{
+				"name": "!baby",
+				"aliases": ["!bebe"],
+				"responses": [
+					"We're having a baby! Her name is Lilah and she's set to arrive on/around August 3! Expect the stream schedule to pause for a while once our little Tater Tot gets here ♥ https://www.instagram.com/p/CoI-jAzuL_B/"
+				]
+			},
+			{
+				"name": "!hydrate",
+				"aliases": ["!meds", "!vitamins"],
+				"responses": [
+					"Friendly reminder to take a sip of water, take any meds or vitamins you need, and grab a snack if you're hungry."
 				]
 			}
 		]
@@ -112,7 +137,7 @@
 				"name": "!rules",
 				"aliases": ["!chatrules"],
 				"responses": [
-					"• No bigotry, harassment, or intolerance allowed. Respect other folks or be banned • Don't spoil anything • Don't tell me how to play the game • Don't trauma dump. I want to cultivate a safe and positive space in my chat • Keep any political / religious discussions civil and infrequent • Stream is generally PG to PG-13. I prefer not to swear for my own reasons, but don't really care if you do (within reason) • No shortened hyperlinks • No self-promotion spam • Don't be a dingus •"
+					"Chat Rules: • No bigotry, harassment, or intolerance allowed. Respect other folks or be banned • Don't spoil anything • Don't tell me how to play the game • Don't trauma dump. I want to cultivate a safe and positive space in my chat • Keep any political / religious discussions civil and infrequent • Stream is generally PG to PG-13. I prefer not to swear for my own reasons, but don't really care if you do (within reason) • No shortened hyperlinks • No self-promotion spam • Don't be a dingus •"
 				]
 			},
 			{
@@ -181,14 +206,6 @@
 				]
 			},
 			{
-				"name": "!github",
-				"aliases": ["!bot", "!chatbot", "!code", "!sourcecode"],
-				"responses": [
-					"I (Spud) wrote this chatbot myself because I'm a big nerd. If you fancy yourself a nerd too, you can peruse the source code on GitHub here: https://github.com/elite-spud/ghetto_botato",
-					"This chatbot is © Spud Inc., which maintains an open policy of showcasing all the programming mistakes of the chatbot author for all to see here: https://github.com/elite-spud/ghetto_botato"
-				]
-			},
-			{
 				"name": "!commands",
 				"responses": [
 					"Available commands include: !commands    (note: list may be incomplete)"
@@ -224,7 +241,7 @@
 			{
 				"name": "!franklin",
 				"responses": [
-					"https://twitter.com/elite_spud/status/1512527695162265605"
+					"https://i.imgur.com/uZtU5PY.png"
 				]
 			},
 			{
@@ -232,13 +249,6 @@
 				"aliases": ["!hotel", "!western"],
 				"responses": [
 					"https://i.imgur.com/4FIRGa0.png"
-				]
-			},
-			{
-				"name": "!bebe",
-				"aliases": ["!baby"],
-				"responses": [
-					"https://www.instagram.com/p/CoI-jAzuL_B/"
 				]
 			},
 			{
@@ -258,7 +268,7 @@
 				"name": "!TDoV",
 				"aliases": ["!transdayofvisibility", "!tdov"],
 				"responses": [
-					"Today is Transgender Day of Visibility! As a trans person who's also observable in the visible spectrum of electromagnetic radiation, I'm here playing games and being proud about myself in the most public way I can. Not every trans person has the privilege to make themselves visible today, though, so I think it's important to stand in solidarity with those who aren't yet able. We exist, we are strong, and our voices will be heard."
+					"March 31 is Transgender Day of Visibility! As a trans person who's also observable in the visible spectrum of electromagnetic radiation, I'm here playing games and being proud about myself in the most public way I can. Not every trans person has the privilege to make themselves visible, though, so I think it's important to stand in solidarity with those who aren't yet able. We exist, we are strong, and our voices will be heard."
 				]
 			},
 			{
@@ -285,6 +295,13 @@
 				"name": "!HAPPY",
 				"responses": [
 					"PRIDE!"
+				]
+			},
+			{
+				"name": "!tournament",
+				"aliases": ["!tourney", "!Tournament"],
+				"responses": [
+					"I'm participating in the annual Luigi's Mansion Any% No OoB tournament this year as both a runner and a commentator! Check out the bracket https://challonge.com/LMTournament2023 and schedule https://schedule.speedgaming.org/lm/#"
 				]
 			}
 		]
