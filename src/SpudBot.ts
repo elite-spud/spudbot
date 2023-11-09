@@ -95,15 +95,18 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
     }
 
     protected async handleFirst(messageDetail: IPrivMessageDetail): Promise<void> {
-        const someoneWasAlreadyFirst = !!this._firstName;
-        if (!this._firstName) {
+        const broadcasterName = this._config.connection.server.channel.substring(1);
+        if (!this._firstName && messageDetail.username !== broadcasterName) {
             this._firstName = messageDetail.username;
         }
-
+        
         const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
             let response: string;
+            const someoneWasAlreadyFirst = !!this._firstName;
             if (this._firstName === messageDetail.username) {
                 response = `Congrats, ${this._firstName}, you${someoneWasAlreadyFirst ? "'re" : " were"} first today!`;
+            } else if (!this._firstName) {
+                response = `No one is first yet...`;
             } else {
                 response = `${this._firstName} was first today.`
             }
