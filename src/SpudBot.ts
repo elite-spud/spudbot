@@ -4,6 +4,7 @@ import { IChatWarriorState } from "./ChatWarrior";
 import { IIrcBotAuxCommandGroupConfig, IPrivMessageDetail } from "./IrcBot";
 import { ITwitchBotConnectionConfig, ITwitchUserDetail, TwitchBotBase } from "./TwitchBot";
 import { Utils } from "./Utils";
+import { egadd_quotes, luigi_quotes } from "./Quotes";
 
 export interface UserCommand {
     username: string,
@@ -32,6 +33,8 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handlePlay(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleUptime(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleBonk(detail));
+        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleEgaddQuote(detail));
+        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleLuigiQuote(detail));
 
         try {
             this._bonkCountPath = fs.realpathSync(`${this._config.configDir}/bonkCount.txt`);
@@ -309,6 +312,40 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
             commandId: "!uptime",
             globalTimeoutSeconds: 10,
             userTimeoutSeconds: 120,
+        });
+        await func(messageDetail);
+    }
+
+    protected async handleEgaddQuote(messageDetail: IPrivMessageDetail): Promise<void> {
+        const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
+            const quoteIndex = randomInt(egadd_quotes.length);
+            const quoteText = egadd_quotes[quoteIndex];
+            this.chat(messageDetail.respondTo, quoteText);
+        }
+        const func = this.getCommandFunc({
+            messageHandler: messageHandler,
+            triggerPhrases: ["!egaddquote"],
+            strictMatch: false,
+            commandId: "!egaddquote",
+            globalTimeoutSeconds: 0,
+            userTimeoutSeconds: 0,
+        });
+        await func(messageDetail);
+    }
+
+    protected async handleLuigiQuote(messageDetail: IPrivMessageDetail): Promise<void> {
+        const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
+            const quoteIndex = randomInt(luigi_quotes.length);
+            const quoteText = luigi_quotes[quoteIndex];
+            this.chat(messageDetail.respondTo, quoteText);
+        }
+        const func = this.getCommandFunc({
+            messageHandler: messageHandler,
+            triggerPhrases: ["!luigiquote"],
+            strictMatch: false,
+            commandId: "!luigiquote",
+            globalTimeoutSeconds: 0,
+            userTimeoutSeconds: 0,
         });
         await func(messageDetail);
     }
