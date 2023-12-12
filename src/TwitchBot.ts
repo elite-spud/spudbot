@@ -3,6 +3,9 @@ import * as https from "https";
 import * as open from "open";
 import { getPassword, setPassword } from "keytar";
 import { IIrcBotAuxCommandConfig, IIrcBotAuxCommandGroupConfig, IIrcBotConfig, IIrcBotConnectionConfig, IJoinMessageDetail, IPartMessageDetail, IPrivMessageDetail, IrcBotBase, IUserDetail } from "./IrcBot";
+import { ConsoleColors } from "./ConsoleColors";
+import { Future } from "./Future";
+// import { randomInt } from "crypto";
 
 export interface ITwitchUserDetail extends IUserDetail {
     /** globally unique id for a twitch user (persists between username changes) */
@@ -121,13 +124,15 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
     protected static readonly _knownConfig: { encoding: "utf8" } = { encoding: "utf8" };
 
     public declare readonly _config: ITwitchBotConfig;
-    protected _userAccessToken: TwitchUserToken;
+    protected _userAccessToken = new Future<TwitchUserToken>();
     protected _twitchIdByUsername: { [key: string]: string } = {}
     protected _twitchApiToken: {
         access_token: string;
         expires_in: number;
     } | undefined = undefined;
     protected readonly userAccessTokenAccountName = "default"; // TODO: find a good replacement for this
+    protected _twitchEventSub: WebSocket;
+    protected _twitchEventSubHeartbeatInterval: NodeJS.Timer; 
 
     public constructor(connection: ITwitchBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], configDir: string) {
         super(Object.assign(
@@ -328,7 +333,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
     protected async getTwitchIdWithCache(username?: string): Promise<string> {
         let id: string | undefined = username
             ? this._twitchIdByUsername[username]
-            : this._userAccessToken.user_id;
+            : (await this._userAccessToken).user_id;
         if (!id) {
             try {
                 id = await this.getTwitchId(username);
@@ -339,7 +344,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
             if (username) {
                 this._twitchIdByUsername[username] = id;
             } else {
-                this._userAccessToken.user_id = id;
+                (await this._userAccessToken).user_id = id;
             }
         }
         
@@ -353,7 +358,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
      */
     protected async getTwitchId(username?: string): Promise<string> {
         await this.hasStarted;
-        return new Promise<string>((resolve, reject) => {
+        return new Promise<string>(async (resolve, reject) => {
             if (!this._twitchApiToken) {
                 reject("Cannot retrieve user id from twitch without authorization!");
                 return;
@@ -368,7 +373,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
                 headers: {
                     Authorization: username
                         ? `Bearer ${this._twitchApiToken.access_token}`
-                        : `Bearer ${this._userAccessToken.access_token}`,
+                        : `Bearer ${(await this._userAccessToken).access_token}`,
                     "client-id": `${this._config.connection.twitch.oauth.clientId}`,
                 },
             };
@@ -455,7 +460,10 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
     protected async loadAuthToken(): Promise<void> {
         console.log("Performing Request...");
         const promise = new Promise<void>((resolve, reject) => {
-            const authRequest = https.request(`https://id.twitch.tv/oauth2/token?client_id=${this._config.connection.twitch.oauth.clientId}&client_secret=${this._config.connection.twitch.oauth.clientSecret}&grant_type=client_credentials&scope=${this._config.connection.twitch.oauth.scope}`, {
+            const url = `https://id.twitch.tv/oauth2/token?client_id=${this._config.connection.twitch.oauth.clientId}&client_secret=${this._config.connection.twitch.oauth.clientSecret}&grant_type=client_credentials&scope=${this._config.connection.twitch.oauth.scope}`;
+            console.log(url);
+            console.log(encodeURIComponent(url));
+            const authRequest = https.request(url, {
                     method: "POST",
                     port: 443,
                 },
@@ -511,12 +519,17 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         return tokenResponseJson;
     }
 
-    protected storeUserTokenResponse(tokenResponse: TwitchUserToken): void {
-        this._userAccessToken = tokenResponse;
-        setPassword(this.getServiceName(), this.userAccessTokenAccountName, JSON.stringify(this._userAccessToken));
+    protected storeUserTokenResponse(tokenResponse: TwitchUserToken, ): void {
+        setPassword(this.getServiceName(), this.userAccessTokenAccountName, JSON.stringify(tokenResponse));
+        this._userAccessToken.resolve(tokenResponse);
+        console.log(`Successfully stored user token response`);
     }
 
     protected async loadUserToken(): Promise<void> {
+        const clientId = this._config.connection.twitch.oauth.clientId;
+        // Keep alphabetical for easier comparison against returned scope in refresh token
+        const scope = `bits:read channel:read:redemptions channel:read:subscriptions moderator:manage:banned_users`;
+
         const storedTokenString = await getPassword(this.getServiceName(), this.userAccessTokenAccountName);
         if (storedTokenString) {
             console.log(`Stored user access token found.`);
@@ -524,6 +537,9 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
             const storedToken: TwitchUserToken = JSON.parse(storedTokenString);
             try {
                 const refreshTokenResponse = await this.refreshUserToken(storedToken.refresh_token);
+                if (refreshTokenResponse.scope.join(" ") !== scope) {
+                    throw new Error(`Refresh token scope does not match requested scope (${scope} !== ${refreshTokenResponse.scope.join(" ")})`);
+                }
                 this.storeUserTokenResponse(refreshTokenResponse);
                 return;
             } catch (err) {
@@ -572,8 +588,6 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         const server = http.createServer(handleRequest);
         server.listen(new URL(redirectUrl).port);
 
-        const clientId = this._config.connection.twitch.oauth.clientId;
-        const scope = `moderator:manage:banned_users`;
         const redirect_uri = redirectUrl;
         const url = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirect_uri}&response_type=code&scope=${scope}`;
         await open(url);
@@ -585,19 +599,62 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         await this.loadAuthToken();
         await this.loadUserToken();
 
-        // TODO: listen for channel points redemptions by subscribing to a websocket feed: https://dev.twitch.tv/docs/pubsub#example-channel-points-event-message
-        
+        this._twitchEventSub = new WebSocket("wss://eventsub.wss.twitch.tv/ws");
+        this._twitchEventSub.on("error", (err) => this.onError(err));
+        this._twitchEventSub.on("open", async () => await this.onEventSubOpen());
+        this._twitchEventSub.on("message", (msg) => this.onEventSubMessage(msg));
+        this._twitchEventSub.on("pong", () => this.onEventSubPong());
+        this._twitchEventSub.on("close", () => console.log("EventSub CLOSED!!!!"))
+        // TODO: handle reconnecting to the socket when a pong is not received
+
         this.sendRaw("CAP REQ :twitch.tv/membership"); // Request capability to receive JOIN and PART events from users connecting to channels)
         this.sendRaw("CAP REQ :twitch.tv/commands"); // Request capability to send & receive twitch-specific commands (timeouts, chat clears, host notifications, subscriptions, etc.)
         this.sendRaw("CAP REQ :twitch.tv/tags"); // Request capability to augment certain IRC messages with tag metadata
     }
 
-    public async getUserAccessToken(): Promise<TwitchUserToken> {
-        return this._userAccessToken; // TODO: auto-refresh the token if it's been too long
+    protected abstract getTwitchEventSubTopics(): string[];
+
+    public async onEventSubOpen(): Promise<void> {
+        // this._twitchEventSub.ping();
+        // const getIntervalTime = () => {
+        //     const bonusSeconds = randomInt(60);
+        //     return (1000 * 60 * 4) + bonusSeconds;
+        // }
+        // this._twitchEventSubHeartbeatInterval = setInterval(() => this._twitchEventSub.ping(), getIntervalTime());
+
+        console.log(`  ${ConsoleColors.FgYellow}${"Opened EventSub"}${ConsoleColors.Reset}\n`);
+
+        const userAccessToken = await this._userAccessToken;
+
+        if (!userAccessToken) {
+            throw Error("Cannot listen to EventSub events without a twitch API token!");
+        }
+        const listenRequest: TwitchEventSubListenRequest = {
+            type: "LISTEN",
+            data: {
+                topics: this.getTwitchEventSubTopics(),
+                auth_token: (await this._userAccessToken).access_token,
+            },
+        };
+        this._twitchEventSub.send(JSON.stringify(listenRequest));
+        console.log(`  ${ConsoleColors.FgYellow}${"Sent EventSub LISTEN message"}${ConsoleColors.Reset}\n`);
+
+    }
+
+    public onEventSubMessage(msg: RawData) {
+        console.log(`  ${ConsoleColors.FgYellow}EventSub Message Received! ${msg}${ConsoleColors.Reset}\n`);
+        const genericMessageJson: any = JSON.parse(msg.toString());
+        if (genericMessageJson.metadata.message_type === "session_welcome") {
+            this._twitchEventSub.send()
+        }
+    }
+
+    public onEventSubPong() {
+        console.log(`  ${ConsoleColors.FgYellow}Pong!${ConsoleColors.Reset}\n`);
     }
 
     public async timeout(channelUsername: string, usernameToTimeout: string, durationSeconds: number): Promise<void> {
-        const userAccessToken = await this.getUserAccessToken();
+        const userAccessToken = await this._userAccessToken;
 
         console.log(`Timing out ${usernameToTimeout} in channel ${channelUsername}`)
         const broadcasterId = await this.getTwitchIdWithCache(channelUsername.replace("#", ""));

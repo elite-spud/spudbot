@@ -45,6 +45,12 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
         }
     }
 
+    protected override getTwitchEventSubTopics(): string[] {
+        // TODO: get this dynamically based on the channel name
+        const channelId = 47243772;
+        return [`channel-bits-events-v2.${channelId}`, `channel-points-channel-v1.${channelId}`, `channel-subscribe-events-v1.${channelId}`];
+    }
+
     /**
      * Reads the bonk count value from a file
      * @returns 

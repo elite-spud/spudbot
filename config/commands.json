@@ -354,7 +354,7 @@
 				"name": "!fc",
 				"aliases": ["!friendcode"],
 				"responses": [
-					"SW-4503-0355-0916 • Please let me know if you send me a friend request"
+					"SW-4503-0355-0916 • Please let me know if you send me a friend request so I can accept it!"
 				]
 			},
 			{

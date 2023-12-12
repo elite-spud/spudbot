@@ -513,14 +513,18 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
         this.sendRaw(`PONG :${messageDetail.hostname}\r\n`);
     }
 
-    public sendRaw(data: string): void {
+    public sendRaw(data: string, enableLogging: boolean = true): void {
         if (!data.endsWith("\r\n")) {
             data += "\r\n";
         }
         this._socket.write(data);
-        console.log("Sent Data")
+        if (enableLogging) {
+            console.log("Sent Data");
+        }
         const printStr = data.split("\r\n").join("\r\n  ").trimEnd();
-        console.log(`  ${ConsoleColors.FgBlue}${printStr}${ConsoleColors.Reset}\n`);
+        if (enableLogging) {
+            console.log(`  ${ConsoleColors.FgCyan}${printStr}${ConsoleColors.Reset}\n`);
+        }
     }
 
     protected parsePingMessage(message: string): IPingMessageDetail | undefined {
