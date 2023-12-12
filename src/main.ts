@@ -6,11 +6,16 @@ import { ITwitchBotConnectionConfig } from "./TwitchBot";
 const configDir = fs.realpathSync(`./config`);
 const connectionConfigPath = fs.realpathSync(`${configDir}/config.json`);
 const commandConfigPath = fs.realpathSync(`${configDir}/commands.json`);
+const sslOptions = {
+    key: fs.readFileSync(`${configDir}/key.pem`),
+    cert: fs.readFileSync(`${configDir}/cert.pem`),
+};
+  
 
 const connectionConfig = loadJsonFile<ITwitchBotConnectionConfig>(connectionConfigPath);
 const commands = loadJsonFile<IIrcBotAuxCommandGroupConfig[]>(commandConfigPath);
 
-const bot = new SpudBotTwitch(connectionConfig, commands, configDir);
+const bot = new SpudBotTwitch(connectionConfig, commands, configDir, sslOptions);
 bot.startup();
 
 export function loadJsonFile<T>(filePath: string): T {

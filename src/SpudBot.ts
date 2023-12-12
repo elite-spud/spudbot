@@ -5,6 +5,7 @@ import { IIrcBotAuxCommandGroupConfig, IPrivMessageDetail } from "./IrcBot";
 import { ITwitchBotConnectionConfig, ITwitchUserDetail, TwitchBotBase } from "./TwitchBot";
 import { Utils } from "./Utils";
 import { egadd_quotes, luigi_quotes } from "./Quotes";
+import * as https from "https";
 
 export interface UserCommand {
     username: string,
@@ -23,8 +24,8 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
 
     protected override getServiceName(): string { return "SpudBot" }
 
-    public constructor(connection: ITwitchBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], configDir: string) {
-        super(connection, auxCommandGroups, configDir);
+    public constructor(connection: ITwitchBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], configDir: string, sslOptions: https.ServerOptions) {
+        super(connection, auxCommandGroups, configDir, sslOptions);
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleEcho(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleFirst(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleSlot(detail));
