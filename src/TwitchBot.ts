@@ -140,6 +140,59 @@ export interface TwitchEventSubWebsocketWelcome {
     }
 }
 
+export interface TwitchEventSub_Websocket_Notification {
+    metadata: {
+        /** Guid */
+        message_id: string,
+        message_type: "session_welcome",
+        message_timestamp: string,
+        subscription_type: string,
+        subscription_version: string,
+    },
+    payload: TwitchEventSub_Notification,
+}
+
+export interface TwitchEventSub_Notification {
+    subscription: {
+        /** Guid */
+        id: string,
+        status: "enabled" | string,
+        type: string,
+        version: string,
+        condition: {
+        },
+        transport: {
+        },
+        created_at: string,
+    },
+    event: TwitchEventSub_NotificationEvent
+}
+
+export interface TwitchEventSub_NotificationEvent {
+
+}
+
+export interface TwitchEventSub_NotificationEvent_ChannelPointCustomRewardRedemptionAdd extends TwitchEventSub_NotificationEvent {
+    /** Guid */
+    id: string,
+    broadcaster_user_id: string,
+    broadcaster_user_login: string,
+    broadcaster_user_name: string,
+    user_id: string,
+    user_login: string,
+    user_name: string,
+    user_input: string,
+    status: "fulfilled" | "unfulfilled" | string,
+    reward: {
+        /** Guid */
+        id: string,
+        title: string,
+        cost: number,
+        prompt: string,
+    },
+    redeemed_at: string,
+}
+
 /** https://dev.twitch.tv/docs/api/reference/#create-eventsub-subscription */
 export interface TwitchEventSubCreateSubscription {
     type: string,
@@ -672,10 +725,15 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
     }
 
     public async onEventSubMessage(msg: any): Promise<void> {
-        console.log(`  ${ConsoleColors.FgYellow}EventSub Message Received! ${msg}${ConsoleColors.Reset}\n`);
         const messageJson: any = JSON.parse(msg.toString());
+        if (messageJson.metadata.message_type === "session_keepalive") {
+            return; // TODO: attempt reconnection when these don't appear as expected, but don't log them above Trace level
+        }
+        console.log(`  ${ConsoleColors.FgYellow}EventSub Message Received! ${msg}${ConsoleColors.Reset}\n`);
         if (messageJson.metadata.message_type === "session_welcome") {
             await this.handleEventSubWelcome(messageJson);
+        } else if (messageJson.metadata.message_type === "notification") {
+            await this.handleEventSubNotification(messageJson);
         }
     }
 
@@ -698,11 +756,17 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
                     "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
                     "Content-Type": `application/json`,
                 },
-                body: JSON.stringify(body),
+                body: JSON.stringify(body), // TODO: try sending an array of events
             });
+            // TODO: check if event is enabled or disabled and log the result intead of everything
+            // TODO: remove old subscriptions on startup or something
             console.log(`  ${ConsoleColors.FgYellow}Received subscription response!${ConsoleColors.Reset}\n`);
             console.log(await subscriptionResponse.json());
         }
+    }
+
+    public async handleEventSubNotification(notificationMessage: TwitchEventSub_Notification): Promise<void> {
+
     }
 
     public onEventSubPong() {
