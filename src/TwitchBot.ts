@@ -140,6 +140,23 @@ export interface TwitchEventSubWebsocketWelcome {
     }
 }
 
+/** https://dev.twitch.tv/docs/api/reference/#create-eventsub-subscription */
+export interface TwitchEventSubCreateSubscription {
+    type: string,
+    version: string,
+    condition: {
+    }
+    transport: {
+        method: "webhook" | "websocket" | string,
+        /** For webhooks only */
+        callback?: string,
+        /** 10 - 100 characters */
+        secret?: string,
+        /** Identifies a WebSocket */
+        session_id?: string,
+    }
+}
+
 export type TwitchPrivMessageTagKeys = "badge-info" | "badges" | "client-nonce" | "color" | "display-name" | "emotes" | "flags" | "id" | "mod" | "room-id" | "subscriber" | "tmi-sent-ts" | "turbo" | "user-id" | "user-type" | string;
 export type TwitchBadgeTagKeys = "admin" | "bits" | "broadcaster" | "global_mod" | "moderator" | "subscriber" | "staff" | "turbo" | string;
 
@@ -620,7 +637,9 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         this.sendRaw("CAP REQ :twitch.tv/tags"); // Request capability to augment certain IRC messages with tag metadata
     }
 
-    protected abstract getTwitchEventSubTopics(): string[];
+    protected abstract getTwitchBroadcasterId(): Promise<string>;
+
+    protected abstract getTwitchEventSubTopics(): Promise<string[]>;
 
     public async onEventSubOpen(): Promise<void> {
         // this._twitchEventSub.ping();
@@ -645,13 +664,38 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         // console.log(`  ${ConsoleColors.FgYellow}${"Sent EventSub LISTEN message"}${ConsoleColors.Reset}\n`);
     }
 
-    public onEventSubMessage(msg: any) {
+    public async onEventSubMessage(msg: any): Promise<void> {
         console.log(`  ${ConsoleColors.FgYellow}EventSub Message Received! ${msg}${ConsoleColors.Reset}\n`);
         const messageJson: any = JSON.parse(msg.toString());
         if (messageJson.metadata.message_type === "session_welcome") {
-            const welcomeMessage = messageJson as TwitchEventSubWebsocketWelcome;
-            this._twitchEventSub.send()
+            await this.handleEventSubWelcome(messageJson);
         }
+    }
+
+    public async handleEventSubWelcome(welcomeMessage: TwitchEventSubWebsocketWelcome): Promise<void> {
+        // Websockets are read-only (aside from PONG responses), so subscriptions are set up via HTTP instead (just like webhooks)
+        const body: TwitchEventSubCreateSubscription = {
+            type: "channel.update",
+            version: "2",
+            condition: {
+                broadcaster_user_id: await this.getTwitchBroadcasterId(),
+            },
+            transport: {
+                method: "websocket",
+                session_id: welcomeMessage.payload.session.id,
+            }
+        };
+        const subscriptionResponse = await fetch(`https://api.twitch.tv/helix/eventsub/subscriptions`, {
+            method: `POST`,
+            headers: {
+                Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
+                "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
+                "Content-Type": `application/json`,
+            },
+            body: JSON.stringify(body),
+        });
+        console.log(`  ${ConsoleColors.FgYellow}Received subscription response!${ConsoleColors.Reset}\n`);
+        console.log(await subscriptionResponse.json());
     }
 
     public onEventSubPong() {

@@ -45,9 +45,13 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
         }
     }
 
-    protected override getTwitchEventSubTopics(): string[] {
+    protected override async getTwitchBroadcasterId(): Promise<string> {
+        return "47243772"; // TODO: make this dynamic;
+    }
+
+    protected override async getTwitchEventSubTopics(): Promise<string[]> {
         // TODO: get this dynamically based on the channel name
-        const channelId = 47243772;
+        const channelId = await this.getTwitchBroadcasterId();
         return [`channel-bits-events-v2.${channelId}`, `channel-points-channel-v1.${channelId}`, `channel-subscribe-events-v1.${channelId}`];
     }
 
