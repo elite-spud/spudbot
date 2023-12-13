@@ -1,11 +1,11 @@
 import * as http from "http";
 import * as https from "https";
-import * as open from "open";
 import { getPassword, setPassword } from "keytar";
-import { IIrcBotAuxCommandConfig, IIrcBotAuxCommandGroupConfig, IIrcBotConfig, IIrcBotConnectionConfig, IJoinMessageDetail, IPartMessageDetail, IPrivMessageDetail, IrcBotBase, IUserDetail } from "./IrcBot";
+import * as open from "open";
+import { WebSocket } from "ws";
 import { ConsoleColors } from "./ConsoleColors";
 import { Future } from "./Future";
-import { WebSocket } from "ws";
+import { IIrcBotAuxCommandConfig, IIrcBotAuxCommandGroupConfig, IIrcBotConfig, IIrcBotConnectionConfig, IJoinMessageDetail, IPartMessageDetail, IPrivMessageDetail, IUserDetail, IrcBotBase } from "./IrcBot";
 // import { randomInt } from "crypto";
 
 export interface ITwitchUserDetail extends IUserDetail {
@@ -154,6 +154,13 @@ export interface TwitchEventSubCreateSubscription {
         secret?: string,
         /** Identifies a WebSocket */
         session_id?: string,
+    }
+}
+
+export interface TwitchEventSubSubscriptionType {
+    name: string,
+    version: string,
+    condition: {
     }
 }
 
@@ -639,7 +646,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
 
     protected abstract getTwitchBroadcasterId(): Promise<string>;
 
-    protected abstract getTwitchEventSubTopics(): Promise<string[]>;
+    protected abstract getTwitchEventSubTopics(): Promise<TwitchEventSubSubscriptionType[]>;
 
     public async onEventSubOpen(): Promise<void> {
         // this._twitchEventSub.ping();
@@ -673,29 +680,29 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
     }
 
     public async handleEventSubWelcome(welcomeMessage: TwitchEventSubWebsocketWelcome): Promise<void> {
-        // Websockets are read-only (aside from PONG responses), so subscriptions are set up via HTTP instead (just like webhooks)
-        const body: TwitchEventSubCreateSubscription = {
-            type: "channel.update",
-            version: "2",
-            condition: {
-                broadcaster_user_id: await this.getTwitchBroadcasterId(),
-            },
-            transport: {
-                method: "websocket",
-                session_id: welcomeMessage.payload.session.id,
-            }
-        };
-        const subscriptionResponse = await fetch(`https://api.twitch.tv/helix/eventsub/subscriptions`, {
-            method: `POST`,
-            headers: {
-                Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
-                "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
-                "Content-Type": `application/json`,
-            },
-            body: JSON.stringify(body),
-        });
-        console.log(`  ${ConsoleColors.FgYellow}Received subscription response!${ConsoleColors.Reset}\n`);
-        console.log(await subscriptionResponse.json());
+        for (const topic of await this.getTwitchEventSubTopics()) {
+            const body: TwitchEventSubCreateSubscription = {
+                type: topic.name,
+                version: topic.version,
+                condition: topic.condition,
+                transport: {
+                    method: "websocket",
+                    session_id: welcomeMessage.payload.session.id,
+                }
+            };
+            // Websockets are read-only (aside from PONG responses), so subscriptions are set up via HTTP instead (just like webhooks)
+            const subscriptionResponse = await fetch(`https://api.twitch.tv/helix/eventsub/subscriptions`, {
+                method: `POST`,
+                headers: {
+                    Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
+                    "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
+                    "Content-Type": `application/json`,
+                },
+                body: JSON.stringify(body),
+            });
+            console.log(`  ${ConsoleColors.FgYellow}Received subscription response!${ConsoleColors.Reset}\n`);
+            console.log(await subscriptionResponse.json());
+        }
     }
 
     public onEventSubPong() {

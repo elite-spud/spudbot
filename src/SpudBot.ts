@@ -2,9 +2,9 @@ import { randomInt } from "crypto";
 import * as fs from "fs";
 import { IChatWarriorState } from "./ChatWarrior";
 import { IIrcBotAuxCommandGroupConfig, IPrivMessageDetail } from "./IrcBot";
-import { ITwitchBotConnectionConfig, ITwitchUserDetail, TwitchBotBase } from "./TwitchBot";
-import { Utils } from "./Utils";
 import { egadd_quotes, luigi_quotes } from "./Quotes";
+import { ITwitchBotConnectionConfig, ITwitchUserDetail, TwitchBotBase, TwitchEventSubSubscriptionType } from "./TwitchBot";
+import { Utils } from "./Utils";
 
 export interface UserCommand {
     username: string,
@@ -46,13 +46,47 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
     }
 
     protected override async getTwitchBroadcasterId(): Promise<string> {
-        return "47243772"; // TODO: make this dynamic;
+        return "47243772"; // TODO: make this dynamic
     }
 
-    protected override async getTwitchEventSubTopics(): Promise<string[]> {
-        // TODO: get this dynamically based on the channel name
-        const channelId = await this.getTwitchBroadcasterId();
-        return [`channel-bits-events-v2.${channelId}`, `channel-points-channel-v1.${channelId}`, `channel-subscribe-events-v1.${channelId}`];
+    protected override async getTwitchEventSubTopics(): Promise<TwitchEventSubSubscriptionType[]> {
+        return [{
+            name: `channel.channel_points_custom_reward_redemption.add`,
+            version: `1`,
+            condition: {
+                broadcaster_user_id: await this.getTwitchBroadcasterId(),
+            }
+        }, {
+            name: `channel.cheer`,
+            version: `1`,
+            condition: {
+                broadcaster_user_id: await this.getTwitchBroadcasterId(),
+            }
+        }, {
+            name: `channel.subscribe`,
+            version: `1`,
+            condition: {
+                broadcaster_user_id: await this.getTwitchBroadcasterId(),
+            }
+        }, {
+            name: `channel.subscription.gift`,
+            version: `1`,
+            condition: {
+                broadcaster_user_id: await this.getTwitchBroadcasterId(),
+            }
+        }, {
+            name: `channel.subscription.message`,
+            version: `1`,
+            condition: {
+                broadcaster_user_id: await this.getTwitchBroadcasterId(),
+            }
+        }, {
+            name: `channel.raid`,
+            version: `1`,
+            condition: {
+                to_broadcaster_user_id: await this.getTwitchBroadcasterId(),
+            }
+        }];
     }
 
     /**
