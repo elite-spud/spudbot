@@ -5,6 +5,7 @@ import { getPassword, setPassword } from "keytar";
 import { IIrcBotAuxCommandConfig, IIrcBotAuxCommandGroupConfig, IIrcBotConfig, IIrcBotConnectionConfig, IJoinMessageDetail, IPartMessageDetail, IPrivMessageDetail, IrcBotBase, IUserDetail } from "./IrcBot";
 import { ConsoleColors } from "./ConsoleColors";
 import { Future } from "./Future";
+import { WebSocket } from "ws";
 // import { randomInt } from "crypto";
 
 export interface ITwitchUserDetail extends IUserDetail {
@@ -106,6 +107,11 @@ export interface ITwitchBotAuxCommandConfig extends IIrcBotAuxCommandConfig {
     autoPostIfTitleContainsAny?: string[];
 }
 
+export interface TwitchAppToken {
+    access_token: string;
+    expires_in: number;
+}
+
 export interface TwitchUserToken {
     access_token: string,
     expires_in: number,
@@ -114,6 +120,24 @@ export interface TwitchUserToken {
     token_type: string,
     /** The access token used to access the Twitch API has its own associated userId, so we have to store it separately from the username/userId map */
     user_id?: string,
+}
+
+export interface TwitchEventSubWebsocketWelcome {
+    metadata: {
+        /** Guid */
+        message_id: string,
+        message_type: "session_welcome",
+        message_timestamp: string,
+    },
+    payload: {
+        session: {
+            id: string,
+            status: string,
+            connected_at: string,
+            keepalive_timeout_seconds: 10,
+            reconnect_url: null,
+        }
+    }
 }
 
 export type TwitchPrivMessageTagKeys = "badge-info" | "badges" | "client-nonce" | "color" | "display-name" | "emotes" | "flags" | "id" | "mod" | "room-id" | "subscriber" | "tmi-sent-ts" | "turbo" | "user-id" | "user-type" | string;
@@ -125,11 +149,8 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
 
     public declare readonly _config: ITwitchBotConfig;
     protected _userAccessToken = new Future<TwitchUserToken>();
+    protected _twitchAppToken = new Future<TwitchAppToken>();
     protected _twitchIdByUsername: { [key: string]: string } = {}
-    protected _twitchApiToken: {
-        access_token: string;
-        expires_in: number;
-    } | undefined = undefined;
     protected readonly userAccessTokenAccountName = "default"; // TODO: find a good replacement for this
     protected _twitchEventSub: WebSocket;
     protected _twitchEventSubHeartbeatInterval: NodeJS.Timer; 
@@ -243,16 +264,12 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
     protected async getChannelDetails(channelName: string): Promise<TwitchGetChannelInfo> {
         const broadcasterId = await this.getTwitchIdWithCache(channelName);
 
-        await this.hasStarted;
+        const appToken = await this._twitchAppToken;
         return new Promise<TwitchGetChannelInfo>((resolve, reject) => {
-            if (!this._twitchApiToken) {
-                reject("Cannot retrieve user id from twitch without authorization!");
-                return;
-            }
     
             const options = {
                 headers: {
-                    Authorization: `Bearer ${this._twitchApiToken.access_token}`,
+                    Authorization: `Bearer ${appToken.access_token}`,
                     "client-id": `${this._config.connection.twitch.oauth.clientId}`,
                 },
             };
@@ -287,16 +304,12 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
     }
 
     protected async getStreamDetails(channelName: string): Promise<TwitchGetStreamInfo> {
-        await this.hasStarted;
+        const appToken = await this._twitchAppToken;
         return new Promise<TwitchGetStreamInfo>((resolve, reject) => {
-            if (!this._twitchApiToken) {
-                reject("Cannot retrieve user id from twitch without authorization!");
-                return;
-            }
     
             const options = {
                 headers: {
-                    Authorization: `Bearer ${this._twitchApiToken.access_token}`,
+                    Authorization: `Bearer ${appToken.access_token}`,
                     "client-id": `${this._config.connection.twitch.oauth.clientId}`,
                 },
             };
@@ -357,14 +370,9 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
      * @returns 
      */
     protected async getTwitchId(username?: string): Promise<string> {
-        await this.hasStarted;
         return new Promise<string>(async (resolve, reject) => {
-            if (!this._twitchApiToken) {
-                reject("Cannot retrieve user id from twitch without authorization!");
-                return;
-            }
 
-            if (!username && !this._userAccessToken) {
+            if (!username) {
                 reject("Cannot retrieve user id for user access token unless token already exists!");
                 return;
             }
@@ -372,7 +380,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
             const options = {
                 headers: {
                     Authorization: username
-                        ? `Bearer ${this._twitchApiToken.access_token}`
+                        ? `Bearer ${(await this._twitchAppToken).access_token}`
                         : `Bearer ${(await this._userAccessToken).access_token}`,
                     "client-id": `${this._config.connection.twitch.oauth.clientId}`,
                 },
@@ -471,7 +479,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
                     response.on("data", (data: Buffer) => {
                         const responseJson = JSON.parse(data.toString("utf8"));
                         if (responseJson.access_token) {
-                            this._twitchApiToken = responseJson;
+                            this._twitchAppToken.resolve(responseJson);
                             console.log("Successfully obtained API token from twitch.");
                             resolve();
                         } else {
@@ -624,27 +632,24 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
 
         console.log(`  ${ConsoleColors.FgYellow}${"Opened EventSub"}${ConsoleColors.Reset}\n`);
 
-        const userAccessToken = await this._userAccessToken;
+        // const userAccessToken = await this._userAccessToken;
 
-        if (!userAccessToken) {
-            throw Error("Cannot listen to EventSub events without a twitch API token!");
-        }
-        const listenRequest: TwitchEventSubListenRequest = {
-            type: "LISTEN",
-            data: {
-                topics: this.getTwitchEventSubTopics(),
-                auth_token: (await this._userAccessToken).access_token,
-            },
-        };
-        this._twitchEventSub.send(JSON.stringify(listenRequest));
-        console.log(`  ${ConsoleColors.FgYellow}${"Sent EventSub LISTEN message"}${ConsoleColors.Reset}\n`);
-
+        // const listenRequest: TwitchEventSubListenRequest = {
+        //     type: "LISTEN",
+        //     data: {
+        //         topics: this.getTwitchEventSubTopics(),
+        //         auth_token: userAccessToken.access_token,
+        //     },
+        // };
+        // this._twitchEventSub.send(JSON.stringify(listenRequest));
+        // console.log(`  ${ConsoleColors.FgYellow}${"Sent EventSub LISTEN message"}${ConsoleColors.Reset}\n`);
     }
 
-    public onEventSubMessage(msg: RawData) {
+    public onEventSubMessage(msg: any) {
         console.log(`  ${ConsoleColors.FgYellow}EventSub Message Received! ${msg}${ConsoleColors.Reset}\n`);
-        const genericMessageJson: any = JSON.parse(msg.toString());
-        if (genericMessageJson.metadata.message_type === "session_welcome") {
+        const messageJson: any = JSON.parse(msg.toString());
+        if (messageJson.metadata.message_type === "session_welcome") {
+            const welcomeMessage = messageJson as TwitchEventSubWebsocketWelcome;
             this._twitchEventSub.send()
         }
     }
