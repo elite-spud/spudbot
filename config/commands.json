@@ -73,6 +73,13 @@
 				"responses": [
 					"Friendly reminder to take a sip of water, stretch your legs, take any meds or vitamins you need, and grab a snack if you're hungry."
 				]
+			},
+			{
+				"name": "!puwp",
+				"aliases": ["!winterpride"],
+				"responses": [
+					"This Thursday, I'll be playing Luigi's Mansion for Power Up With Pride's Winter Pride 2023 Marathon! https://horaro.org/wp23/schedule. @PolarLike will be joining me on comms for the run (which will be either 100% or Any% (No OoB)"
+				]
 			}
 		]
 	},
