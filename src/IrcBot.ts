@@ -42,6 +42,10 @@ export interface IUserDetail {
     lastSeenInChat?: Date;
     lastChatted?: Date;
     oldUsernames?: { username: string, lastSeenInChat: Date }[];
+    monthsSubscribed?: number,
+    currentSubcriptionStreak?: number,
+    subscriptionTier?: string,
+    lastKnownSubscribedDate?: Date,
 }
 
 export interface IIrcBotAuxCommandConfig {

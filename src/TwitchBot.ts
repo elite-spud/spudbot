@@ -122,6 +122,30 @@ export interface TwitchUserToken {
     user_id?: string,
 }
 
+export interface TwitchBroadcasterSubscriptionsResponse {
+    data: TwitchSubscriptionDetail[],
+    pagination: {
+        cursor: string,
+    },
+    total: number,
+    points: number,
+}
+
+export interface TwitchSubscriptionDetail {
+    broadcaster_id: string,
+    broadcaster_login: string,
+    broadcaster_name: string,
+    gifter_id: string,
+    gifter_login: string,
+    gifter_name: string,
+    is_gift: boolean,
+    tier: string,
+    plan_name: string,
+    user_id: string,
+    user_name: string,
+    user_login: string,
+}
+
 export interface TwitchEventSub_Websocket_Welcome {
     metadata: {
         /** Guid */
@@ -193,6 +217,30 @@ export interface TwitchEventSub_ChannelPointCustomRewardRedemptionAdd extends Tw
         prompt: string,
     },
     redeemed_at: string,
+}
+
+export interface TwitchEventSub_SubscriptionMessage extends TwitchEventSub_Notification_Payload_Event {
+    user_id: string,
+    user_login: string,
+    user_name: string,
+    broadcaster_user_id: string,
+    broadcaster_user_login: string,
+    broadcaster_user_name: string,
+    tier: string,
+    message: {
+        text: string,
+        emotes: [
+            {
+                begin: number,
+                end: number,
+                id: string
+            }
+        ]
+    },
+    cumulative_months: number,
+    /** null if not shared */
+    streak_months: number | null,
+    duration_months: number
 }
 
 /** https://dev.twitch.tv/docs/api/reference/#create-eventsub-subscription */
@@ -693,9 +741,12 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         this._twitchEventSub.on("message", (msg) => this.onEventSubMessage(msg));
         this._twitchEventSub.on("close", (code, reason) => console.log(`EventSub Closed! Code: ${code} Reason: ${reason}`));
 
-        this.sendRaw("CAP REQ :twitch.tv/membership"); // Request capability to receive JOIN and PART events from users connecting to channels)
+        this.sendRaw("CAP REQ :twitch.tv/membership"); // Request capability to receive JOIN and PART events from users connecting to channels
         this.sendRaw("CAP REQ :twitch.tv/commands"); // Request capability to send & receive twitch-specific commands (timeouts, chat clears, host notifications, subscriptions, etc.)
         this.sendRaw("CAP REQ :twitch.tv/tags"); // Request capability to augment certain IRC messages with tag metadata
+
+        const subDetail = await this.getActiveBroadcasterSubcriptions();
+        this.updateSubscribedUsers(subDetail);
     }
 
     protected abstract getTwitchBroadcasterId(): Promise<string>;
@@ -753,10 +804,22 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
     protected async handleEventSubNotification(notificationMessage: TwitchEventSub_Notification_Payload): Promise<void> {
         if (notificationMessage.subscription.type === "channel.channel_points_custom_reward_redemption.add") {
             await this.handleChannelPointRewardRedeem(notificationMessage.event as TwitchEventSub_ChannelPointCustomRewardRedemptionAdd);
+        } else if (notificationMessage.subscription.type === "channel.subscription.message") {
+            await this.handleSubscriptionMessage(notificationMessage.event as TwitchEventSub_SubscriptionMessage);
+        } else if (notificationMessage.subscription.type === "channel.subscription.gift") {
+            // TODO
         }
     }
 
     protected abstract handleChannelPointRewardRedeem(event: TwitchEventSub_ChannelPointCustomRewardRedemptionAdd): Promise<void>;
+
+    protected async handleSubscriptionMessage(event: TwitchEventSub_SubscriptionMessage): Promise<void> {
+        const userDetail = await this.getUserDetailWithCache(event.user_login);
+        userDetail.lastKnownSubscribedDate = new Date();
+        userDetail.monthsSubscribed = event.cumulative_months;
+        userDetail.currentSubcriptionStreak = event.streak_months ?? 0;
+        userDetail.subscriptionTier = event.tier;
+    }
 
     protected async getEventSubSubscriptions(): Promise<any[]> {
         const response = await fetch(`https://api.twitch.tv/helix/eventsub/subscriptions`, {
@@ -790,6 +853,29 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
             }
         }
         console.log(`  ${ConsoleColors.FgYellow}Deleted ${numDeleted} useless subscriptions${ConsoleColors.Reset}\n`);
+    }
+
+    protected async getActiveBroadcasterSubcriptions(): Promise<TwitchBroadcasterSubscriptionsResponse> {
+        // TODO: fetch more than 100 subs via paging
+        const broadcasterId = await this.getTwitchBroadcasterId();
+        const response = await fetch(`https://api.twitch.tv/helix/subscriptions?broadcaster_id=${broadcasterId}&first=100`, {
+            method: `GET`,
+            headers: {
+                Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
+                "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
+            },
+        });
+        const json: TwitchBroadcasterSubscriptionsResponse = await response.json();
+        console.log(`  ${ConsoleColors.FgYellow}Current number of subs/subpoints: ${json.total}/${json.points}${ConsoleColors.Reset}\n`);
+        return json;
+    }
+
+    protected async updateSubscribedUsers(subDetail: TwitchBroadcasterSubscriptionsResponse): Promise<void> {
+        for (const sub of subDetail.data) {
+            const userDetail = await this.getUserDetailWithCache(sub.user_login);
+            userDetail.subscriptionTier = sub.tier;
+            userDetail.lastKnownSubscribedDate = new Date();
+        }
     }
 
     public async timeout(channelUsername: string, usernameToTimeout: string, durationSeconds: number): Promise<void> {
