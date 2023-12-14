@@ -542,12 +542,10 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         return parsedTags;
     }
 
-    protected async loadAuthToken(): Promise<void> {
-        console.log("Performing Request...");
+    protected async loadAppAuthToken(): Promise<void> {
+        console.log("Loading app auth token...");
         const promise = new Promise<void>((resolve, reject) => {
             const url = `https://id.twitch.tv/oauth2/token?client_id=${this._config.connection.twitch.oauth.clientId}&client_secret=${this._config.connection.twitch.oauth.clientSecret}&grant_type=client_credentials&scope=${this._config.connection.twitch.oauth.scope}`;
-            console.log(url);
-            console.log(encodeURIComponent(url));
             const authRequest = https.request(url, {
                     method: "POST",
                     port: 443,
@@ -557,10 +555,10 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
                         const responseJson = JSON.parse(data.toString("utf8"));
                         if (responseJson.access_token) {
                             this._twitchAppToken.resolve(responseJson);
-                            console.log("Successfully obtained API token from twitch.");
+                            console.log("Successfully obtained app auth token from twitch.");
                             resolve();
                         } else {
-                            const message = `Issue retrieving access token from twitch: ${responseJson}`
+                            const message = `Issue retrieving app auth token from twitch: ${responseJson}`
                             console.log(message);
                             reject(message);
                         }
@@ -568,7 +566,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
                 });
 
             authRequest.on("error", (err) => {
-                console.log("Error sending auth token request to twitch:");
+                console.log("Error sending app auth token request to twitch:");
                 console.log(err);
                 reject(err);
             });
@@ -681,10 +679,11 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
     public override async _startup(): Promise<void> {
         await super._startup();
 
-        await this.loadAuthToken();
+        await this.loadAppAuthToken();
         await this.loadUserToken();
 
-        await this.getEventSubSubscriptions();
+        const existingSubscriptions = await this.getEventSubSubscriptions();
+        await this.deleteUnusedEventSubSubscriptions(existingSubscriptions);
 
         this._twitchEventSub = new WebSocket("wss://eventsub.wss.twitch.tv/ws");
         this._twitchEventSub.on("error", (err) => this.onError(err));
@@ -772,7 +771,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
 
     }
 
-    protected async getEventSubSubscriptions(): Promise<void> {
+    protected async getEventSubSubscriptions(): Promise<any[]> {
         const response = await fetch(`https://api.twitch.tv/helix/eventsub/subscriptions`, {
             method: `GET`,
             headers: {
@@ -783,9 +782,12 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         });
         const json = await response.json();
         console.log(`  ${ConsoleColors.FgYellow}Current number of EventSub Subscriptions: ${json.total}${ConsoleColors.Reset}\n`);
+        return json.data;
+    }
 
+    protected async deleteUnusedEventSubSubscriptions(subs: any[]): Promise<void> {
         let numDeleted = 0;
-        for (const sub of json.data) {
+        for (const sub of subs) {
             if (sub.status === "websocket_failed_ping_pong" || "websocket_disconnected") {
                 const deleteResponse = await fetch(`https://api.twitch.tv/helix/eventsub/subscriptions?id=${sub.id}`, {
                     method: `DELETE`,

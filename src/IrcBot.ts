@@ -429,7 +429,7 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
     }
 
     protected onData(data: Buffer): void {
-        console.log("Received Data");
+        console.log("Received IRC Data");
         const dataStr = data.toString(this._config.encoding);
         const dataStrMessages = dataStr.trimEnd().split("\r\n").map(x => `${x}\r\n`);
         console.log(`  ${ConsoleColors.FgGreen}- ${dataStrMessages.join(`  - `).trimEnd()}${ConsoleColors.Reset}`);
@@ -519,7 +519,7 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
         }
         this._socket.write(data);
         if (enableLogging) {
-            console.log("Sent Data");
+            console.log("Sent IRC Data");
         }
         const printStr = data.split("\r\n").join("\r\n  ").trimEnd();
         if (enableLogging) {
