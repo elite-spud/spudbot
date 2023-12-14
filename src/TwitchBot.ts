@@ -122,21 +122,23 @@ export interface TwitchUserToken {
     user_id?: string,
 }
 
-export interface TwitchEventSubWebsocketWelcome {
+export interface TwitchEventSub_Websocket_Welcome {
     metadata: {
         /** Guid */
         message_id: string,
         message_type: "session_welcome",
         message_timestamp: string,
     },
-    payload: {
-        session: {
-            id: string,
-            status: string,
-            connected_at: string,
-            keepalive_timeout_seconds: 10,
-            reconnect_url: null,
-        }
+    payload: TwitchEventSub_Welcome_Payload,
+}
+
+export interface TwitchEventSub_Welcome_Payload {
+    session: {
+        id: string,
+        status: string,
+        connected_at: string,
+        keepalive_timeout_seconds: 10,
+        reconnect_url: null,
     }
 }
 
@@ -144,15 +146,15 @@ export interface TwitchEventSub_Websocket_Notification {
     metadata: {
         /** Guid */
         message_id: string,
-        message_type: "session_welcome",
+        message_type: string,
         message_timestamp: string,
         subscription_type: string,
         subscription_version: string,
     },
-    payload: TwitchEventSub_Notification,
+    payload: TwitchEventSub_Notification_Payload,
 }
 
-export interface TwitchEventSub_Notification {
+export interface TwitchEventSub_Notification_Payload {
     subscription: {
         /** Guid */
         id: string,
@@ -165,14 +167,14 @@ export interface TwitchEventSub_Notification {
         },
         created_at: string,
     },
-    event: TwitchEventSub_NotificationEvent
+    event: TwitchEventSub_Notification_Payload_Event
 }
 
-export interface TwitchEventSub_NotificationEvent {
+export interface TwitchEventSub_Notification_Payload_Event {
 
 }
 
-export interface TwitchEventSub_NotificationEvent_ChannelPointCustomRewardRedemptionAdd extends TwitchEventSub_NotificationEvent {
+export interface TwitchEventSub_ChannelPointCustomRewardRedemptionAdd extends TwitchEventSub_Notification_Payload_Event {
     /** Guid */
     id: string,
     broadcaster_user_id: string,
@@ -711,13 +713,13 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         }
         console.log(`  ${ConsoleColors.FgYellow}EventSub Message Received! ${msg}${ConsoleColors.Reset}\n`);
         if (messageJson.metadata.message_type === "session_welcome") {
-            await this.handleEventSubWelcome(messageJson);
+            await this.handleEventSubWelcome(messageJson.payload);
         } else if (messageJson.metadata.message_type === "notification") {
-            await this.handleEventSubNotification(messageJson);
+            await this.handleEventSubNotification(messageJson.payload);
         }
     }
 
-    protected async handleEventSubWelcome(welcomeMessage: TwitchEventSubWebsocketWelcome): Promise<void> {
+    protected async handleEventSubWelcome(payload: TwitchEventSub_Welcome_Payload): Promise<void> {
         let numAttemptedSubscriptions = 0;
         let numNewSubscriptions = 0;
         for (const topic of await this.getTwitchEventSubTopics()) { // Cannot send arrays of subscriptions, must do one by one
@@ -728,7 +730,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
                 condition: topic.condition,
                 transport: {
                     method: "websocket",
-                    session_id: welcomeMessage.payload.session.id,
+                    session_id: payload.session.id,
                 }
             };
             // Websockets are read-only (aside from PONG responses), so subscriptions are set up via HTTP instead (just like webhooks)
@@ -748,8 +750,16 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         console.log(`  ${ConsoleColors.FgYellow}Subscribed to ${numNewSubscriptions}/${numAttemptedSubscriptions} EventSub Topics!${ConsoleColors.Reset}\n`);
     }
 
-    protected async handleEventSubNotification(_notificationMessage: TwitchEventSub_Notification): Promise<void> {
+    protected async handleEventSubNotification(notificationMessage: TwitchEventSub_Notification_Payload): Promise<void> {
+        if (notificationMessage.subscription.type === "channel.channel_points_custom_reward_redemption.add") {
+            await this.handleChannelPointRewardRedeem(notificationMessage.event as TwitchEventSub_ChannelPointCustomRewardRedemptionAdd);
+        }
+    }
 
+    protected async handleChannelPointRewardRedeem(event: TwitchEventSub_ChannelPointCustomRewardRedemptionAdd) {
+        if (event.reward.title === "Hi, I'm Lurking!") {
+            this.chat(`#${event.broadcaster_user_name}`, `${event.user_name}, enjoy the lurk elites72Heart`);
+        }
     }
 
     protected async getEventSubSubscriptions(): Promise<any[]> {
@@ -825,7 +835,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
     public override chat(recipient: string, message: string): void {
         let actualMessage = message;
         if (message.length > TwitchBotBase.maxChatMessageLength) {
-            actualMessage = "<Message was too long. Please file a bug report with the owner :)>";
+            actualMessage = "<Message was too long. Please file a bug report with the owner :)>"; // TODO: include first few words of attempted message
             console.log(`Message too long for Twitch: ${message}`);
         }
         super.chat(recipient, actualMessage);
