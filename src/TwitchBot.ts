@@ -756,11 +756,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         }
     }
 
-    protected async handleChannelPointRewardRedeem(event: TwitchEventSub_ChannelPointCustomRewardRedemptionAdd) {
-        if (event.reward.title === "Hi, I'm Lurking!") {
-            this.chat(`#${event.broadcaster_user_name}`, `${event.user_name}, enjoy the lurk elites72Heart`);
-        }
-    }
+    protected abstract handleChannelPointRewardRedeem(event: TwitchEventSub_ChannelPointCustomRewardRedemptionAdd): Promise<void>;
 
     protected async getEventSubSubscriptions(): Promise<any[]> {
         const response = await fetch(`https://api.twitch.tv/helix/eventsub/subscriptions`, {

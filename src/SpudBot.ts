@@ -3,7 +3,7 @@ import * as fs from "fs";
 import { IChatWarriorState } from "./ChatWarrior";
 import { IIrcBotAuxCommandGroupConfig, IPrivMessageDetail } from "./IrcBot";
 import { egadd_quotes, luigi_quotes } from "./Quotes";
-import { ITwitchBotConnectionConfig, ITwitchUserDetail, TwitchBotBase, TwitchEventSubSubscriptionType } from "./TwitchBot";
+import { ITwitchBotConnectionConfig, ITwitchUserDetail, TwitchBotBase, TwitchEventSubSubscriptionType, TwitchEventSub_ChannelPointCustomRewardRedemptionAdd } from "./TwitchBot";
 import { Utils } from "./Utils";
 
 export interface UserCommand {
@@ -87,6 +87,13 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
                 to_broadcaster_user_id: await this.getTwitchBroadcasterId(),
             }
         }];
+    }
+
+    protected override async handleChannelPointRewardRedeem(event: TwitchEventSub_ChannelPointCustomRewardRedemptionAdd): Promise<void> {
+        // TODO: Make this a config file
+        if (event.reward.title === "Hi, I'm Lurking!") {
+            this.chat(`#${event.broadcaster_user_name}`, `${event.user_name}, enjoy the lurk elites72Heart`);
+        }
     }
 
     /**
