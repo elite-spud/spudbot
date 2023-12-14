@@ -600,7 +600,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         });
         const tokenResponseJson: any = await tokenResponse.json();
         console.log(`User access token successfully obtained via refresh token`);
-        console.log(tokenResponseJson);
+        // console.log(tokenResponseJson); // TODO: log this at Trace level
         return tokenResponseJson;
     }
 
@@ -618,7 +618,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         const storedTokenString = await getPassword(this.getServiceName(), this.userAccessTokenAccountName);
         if (storedTokenString) {
             console.log(`Stored user access token found.`);
-            console.log(storedTokenString);
+            // console.log(storedTokenString); // TODO: log this at Trace level
             const storedToken: TwitchUserToken = JSON.parse(storedTokenString);
             try {
                 const refreshTokenResponse = await this.refreshUserToken(storedToken.refresh_token);
@@ -684,13 +684,13 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         await this.loadAuthToken();
         await this.loadUserToken();
 
+        await this.getEventSubSubscriptions();
+
         this._twitchEventSub = new WebSocket("wss://eventsub.wss.twitch.tv/ws");
         this._twitchEventSub.on("error", (err) => this.onError(err));
         this._twitchEventSub.on("open", async () => await this.onEventSubOpen());
         this._twitchEventSub.on("message", (msg) => this.onEventSubMessage(msg));
-        this._twitchEventSub.on("pong", () => this.onEventSubPong());
-        this._twitchEventSub.on("close", () => console.log("EventSub CLOSED!!!!"))
-        // TODO: handle reconnecting to the socket when a pong is not received
+        this._twitchEventSub.on("close", (code, reason) => console.log(`EventSub Closed! Code: ${code} Reason: ${reason}`));
 
         this.sendRaw("CAP REQ :twitch.tv/membership"); // Request capability to receive JOIN and PART events from users connecting to channels)
         this.sendRaw("CAP REQ :twitch.tv/commands"); // Request capability to send & receive twitch-specific commands (timeouts, chat clears, host notifications, subscriptions, etc.)
@@ -701,7 +701,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
 
     protected abstract getTwitchEventSubTopics(): Promise<TwitchEventSubSubscriptionType[]>;
 
-    public async onEventSubOpen(): Promise<void> {
+    protected async onEventSubOpen(): Promise<void> {
         // this._twitchEventSub.ping();
         // const getIntervalTime = () => {
         //     const bonusSeconds = randomInt(60);
@@ -724,7 +724,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         // console.log(`  ${ConsoleColors.FgYellow}${"Sent EventSub LISTEN message"}${ConsoleColors.Reset}\n`);
     }
 
-    public async onEventSubMessage(msg: any): Promise<void> {
+    protected async onEventSubMessage(msg: any): Promise<void> {
         const messageJson: any = JSON.parse(msg.toString());
         if (messageJson.metadata.message_type === "session_keepalive") {
             return; // TODO: attempt reconnection when these don't appear as expected, but don't log them above Trace level
@@ -737,8 +737,11 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         }
     }
 
-    public async handleEventSubWelcome(welcomeMessage: TwitchEventSubWebsocketWelcome): Promise<void> {
-        for (const topic of await this.getTwitchEventSubTopics()) {
+    protected async handleEventSubWelcome(welcomeMessage: TwitchEventSubWebsocketWelcome): Promise<void> {
+        let numAttemptedSubscriptions = 0;
+        let numNewSubscriptions = 0;
+        for (const topic of await this.getTwitchEventSubTopics()) { // Cannot send arrays of subscriptions, must do one by one
+            numAttemptedSubscriptions++;
             const body: TwitchEventSubCreateSubscription = {
                 type: topic.name,
                 version: topic.version,
@@ -756,21 +759,48 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
                     "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
                     "Content-Type": `application/json`,
                 },
-                body: JSON.stringify(body), // TODO: try sending an array of events
+                body: JSON.stringify(body),
             });
-            // TODO: check if event is enabled or disabled and log the result intead of everything
-            // TODO: remove old subscriptions on startup or something
-            console.log(`  ${ConsoleColors.FgYellow}Received subscription response!${ConsoleColors.Reset}\n`);
-            console.log(await subscriptionResponse.json());
+            if (subscriptionResponse.status === 202) {
+                numNewSubscriptions++;
+            }
         }
+        console.log(`  ${ConsoleColors.FgYellow}Subscribed to ${numNewSubscriptions}/${numAttemptedSubscriptions} EventSub Topics!${ConsoleColors.Reset}\n`);
     }
 
-    public async handleEventSubNotification(notificationMessage: TwitchEventSub_Notification): Promise<void> {
+    protected async handleEventSubNotification(_notificationMessage: TwitchEventSub_Notification): Promise<void> {
 
     }
 
-    public onEventSubPong() {
-        console.log(`  ${ConsoleColors.FgYellow}Pong!${ConsoleColors.Reset}\n`);
+    protected async getEventSubSubscriptions(): Promise<void> {
+        const response = await fetch(`https://api.twitch.tv/helix/eventsub/subscriptions`, {
+            method: `GET`,
+            headers: {
+                Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
+                "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
+                "Content-Type": `application/json`,
+            },
+        });
+        const json = await response.json();
+        console.log(`  ${ConsoleColors.FgYellow}Current number of EventSub Subscriptions: ${json.total}${ConsoleColors.Reset}\n`);
+
+        let numDeleted = 0;
+        for (const sub of json.data) {
+            if (sub.status === "websocket_failed_ping_pong" || "websocket_disconnected") {
+                const deleteResponse = await fetch(`https://api.twitch.tv/helix/eventsub/subscriptions?id=${sub.id}`, {
+                    method: `DELETE`,
+                    headers: {
+                        Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
+                        "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
+                        "Content-Type": `application/json`,
+                    },
+                });
+                if (deleteResponse.status === 204) {
+                    numDeleted++;
+                }
+            }
+        }
+        console.log(`  ${ConsoleColors.FgYellow}Deleted ${numDeleted} useless subscriptions${ConsoleColors.Reset}\n`);
     }
 
     public async timeout(channelUsername: string, usernameToTimeout: string, durationSeconds: number): Promise<void> {
