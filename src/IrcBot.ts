@@ -42,6 +42,10 @@ export interface IUserDetail {
     lastSeenInChat?: Date;
     lastChatted?: Date;
     oldUsernames?: { username: string, lastSeenInChat: Date }[];
+    monthsSubscribed?: number,
+    currentSubcriptionStreak?: number,
+    subscriptionTier?: string,
+    lastKnownSubscribedDate?: Date,
 }
 
 export interface IIrcBotAuxCommandConfig {
@@ -429,7 +433,7 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
     }
 
     protected onData(data: Buffer): void {
-        console.log("Received Data");
+        console.log("Received IRC Data");
         const dataStr = data.toString(this._config.encoding);
         const dataStrMessages = dataStr.trimEnd().split("\r\n").map(x => `${x}\r\n`);
         console.log(`  ${ConsoleColors.FgGreen}- ${dataStrMessages.join(`  - `).trimEnd()}${ConsoleColors.Reset}`);
@@ -513,14 +517,18 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
         this.sendRaw(`PONG :${messageDetail.hostname}\r\n`);
     }
 
-    public sendRaw(data: string): void {
+    public sendRaw(data: string, enableLogging: boolean = true): void {
         if (!data.endsWith("\r\n")) {
             data += "\r\n";
         }
         this._socket.write(data);
-        console.log("Sent Data")
+        if (enableLogging) {
+            console.log("Sent IRC Data");
+        }
         const printStr = data.split("\r\n").join("\r\n  ").trimEnd();
-        console.log(`  ${ConsoleColors.FgBlue}${printStr}${ConsoleColors.Reset}\n`);
+        if (enableLogging) {
+            console.log(`  ${ConsoleColors.FgCyan}${printStr}${ConsoleColors.Reset}\n`);
+        }
     }
 
     protected parsePingMessage(message: string): IPingMessageDetail | undefined {

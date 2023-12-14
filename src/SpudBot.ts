@@ -2,9 +2,9 @@ import { randomInt } from "crypto";
 import * as fs from "fs";
 import { IChatWarriorState } from "./ChatWarrior";
 import { IIrcBotAuxCommandGroupConfig, IPrivMessageDetail } from "./IrcBot";
-import { ITwitchBotConnectionConfig, ITwitchUserDetail, TwitchBotBase } from "./TwitchBot";
-import { Utils } from "./Utils";
 import { egadd_quotes, luigi_quotes } from "./Quotes";
+import { ITwitchBotConnectionConfig, ITwitchUserDetail, TwitchBotBase, TwitchEventSubSubscriptionType, TwitchEventSub_ChannelPointCustomRewardRedemptionAdd } from "./TwitchBot";
+import { Utils } from "./Utils";
 
 export interface UserCommand {
     username: string,
@@ -42,6 +42,57 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
             // TODO: make sure the error is because the file doesn't exist yet
             fs.writeFileSync(`${this._config.configDir}/bonkCount.txt`, "0");
             this._bonkCountPath = fs.realpathSync(`${this._config.configDir}/bonkCount.txt`);
+        }
+    }
+
+    protected override async getTwitchBroadcasterId(): Promise<string> {
+        return "47243772"; // TODO: make this dynamic
+    }
+
+    protected override async getTwitchEventSubTopics(): Promise<TwitchEventSubSubscriptionType[]> {
+        return [{
+            name: `channel.channel_points_custom_reward_redemption.add`,
+            version: `1`,
+            condition: {
+                broadcaster_user_id: await this.getTwitchBroadcasterId(),
+            }
+        }, {
+            name: `channel.cheer`,
+            version: `1`,
+            condition: {
+                broadcaster_user_id: await this.getTwitchBroadcasterId(),
+            }
+        }, {
+            name: `channel.subscribe`,
+            version: `1`,
+            condition: {
+                broadcaster_user_id: await this.getTwitchBroadcasterId(),
+            }
+        }, {
+            name: `channel.subscription.gift`,
+            version: `1`,
+            condition: {
+                broadcaster_user_id: await this.getTwitchBroadcasterId(),
+            }
+        }, {
+            name: `channel.subscription.message`,
+            version: `1`,
+            condition: {
+                broadcaster_user_id: await this.getTwitchBroadcasterId(),
+            }
+        }, {
+            name: `channel.raid`,
+            version: `1`,
+            condition: {
+                to_broadcaster_user_id: await this.getTwitchBroadcasterId(),
+            }
+        }];
+    }
+
+    protected override async handleChannelPointRewardRedeem(event: TwitchEventSub_ChannelPointCustomRewardRedemptionAdd): Promise<void> {
+        // TODO: Make this a config file
+        if (event.reward.title === "Hi, I'm Lurking!") {
+            this.chat(`#${event.broadcaster_user_name}`, `${event.user_name}, enjoy your lurk elites72Heart`);
         }
     }
 
