@@ -701,26 +701,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
     protected abstract getTwitchEventSubTopics(): Promise<TwitchEventSubSubscriptionType[]>;
 
     protected async onEventSubOpen(): Promise<void> {
-        // this._twitchEventSub.ping();
-        // const getIntervalTime = () => {
-        //     const bonusSeconds = randomInt(60);
-        //     return (1000 * 60 * 4) + bonusSeconds;
-        // }
-        // this._twitchEventSubHeartbeatInterval = setInterval(() => this._twitchEventSub.ping(), getIntervalTime());
-
         console.log(`  ${ConsoleColors.FgYellow}${"Opened EventSub"}${ConsoleColors.Reset}\n`);
-
-        // const userAccessToken = await this._userAccessToken;
-
-        // const listenRequest: TwitchEventSubListenRequest = {
-        //     type: "LISTEN",
-        //     data: {
-        //         topics: this.getTwitchEventSubTopics(),
-        //         auth_token: userAccessToken.access_token,
-        //     },
-        // };
-        // this._twitchEventSub.send(JSON.stringify(listenRequest));
-        // console.log(`  ${ConsoleColors.FgYellow}${"Sent EventSub LISTEN message"}${ConsoleColors.Reset}\n`);
     }
 
     protected async onEventSubMessage(msg: any): Promise<void> {
