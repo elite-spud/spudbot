@@ -2,7 +2,7 @@ import { randomInt } from "crypto";
 import * as fs from "fs";
 import { IChatWarriorState } from "./ChatWarrior";
 import { IIrcBotAuxCommandGroupConfig, IPrivMessageDetail } from "./IrcBot";
-import { egadd_quotes, luigi_quotes } from "./Quotes";
+import { egadd_quotes, luigi_quotes, f_zero_gx_story_quotes } from "./Quotes";
 import { ITwitchBotConnectionConfig, ITwitchUserDetail, TwitchBotBase, TwitchEventSubSubscriptionType, TwitchEventSub_ChannelPointCustomRewardRedemptionAdd } from "./TwitchBot";
 import { Utils } from "./Utils";
 
@@ -35,6 +35,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleBonk(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleEgaddQuote(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleLuigiQuote(detail));
+        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleFZeroGXStoryQuote(detail));
 
         try {
             this._bonkCountPath = fs.realpathSync(`${this._config.configDir}/bonkCount.txt`);
@@ -400,6 +401,25 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
         });
         await func(messageDetail);
     }
+
+    protected async handleFZeroGXStoryQuote(messageDetail: IPrivMessageDetail): Promise<void> {
+        const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
+            const quoteIndex = randomInt(f_zero_gx_story_quotes.length);
+            const quoteText = f_zero_gx_story_quotes[quoteIndex];
+            this.chat(messageDetail.respondTo, quoteText);
+        }
+        const func = this.getCommandFunc({
+            messageHandler: messageHandler,
+            triggerPhrases: ["!fzerogxstoryquote", "!gxstoryquote"],
+            strictMatch: false,
+            commandId: "!fzerogxstoryquote",
+            globalTimeoutSeconds: 0,
+            userTimeoutSeconds: 0,
+        });
+        await func(messageDetail);
+    }
+
+
 
     // protected handleStatus(messageDetails: IPrivMessageDetail): void {
     //     if (!this.doesTriggerMatch(messageDetails, "!status", false)
