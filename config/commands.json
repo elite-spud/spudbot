@@ -44,7 +44,7 @@
 					"I'm attempting Luigi's Mansion Max% with Crowd Control active! For every death, I'll gift a sub (max 20), and for every 10 pieces of money missed at the end, I'll gift another (max 20 more). I fully expect everyone to make this as difficult as possible, so go ahead and hit me with your best shot"
 				]
 			},
-						{
+			{
 				"name": "!incentive",
 				"aliases": ["!incentives", "!goals", "!subgoals"],
 				"autoPostIfTitleContainsAny": ["!incentive", "!incentives"],
@@ -64,7 +64,8 @@
 				"responses": [
 					"Ask a question but didn't get an answer? Feel free to ask again in a few minutes with an @ if I don't respond the first time!",
 					"I often get tunnel vision when playing video games on stream, so it's tough to keep up with chat sometimes. If your question isn't answered, please ask again after a little while!",
-					"Sorry if I miss any of your questions! I promise it's not intentional. Please @ me and ask again if I don't get around to your message the first time."
+					"Sorry if I miss any of your questions! I promise it's not intentional. Please @ me and ask again if I don't get around to your message the first time.",
+					"I'm easily distracted, and often go on tangents while in the middle of making a point. If I get sidetracked while talking about something you found interesting, please feel free to bring it up again so I can finish sharing my thoughts!"
 				]
 			},
 			{
@@ -72,13 +73,6 @@
 				"aliases": ["!meds", "!vitamins"],
 				"responses": [
 					"Friendly reminder to take a sip of water, stretch your legs, take any meds or vitamins you need, and grab a snack if you're hungry."
-				]
-			},
-			{
-				"name": "!puwp",
-				"aliases": ["!winterpride"],
-				"responses": [
-					"This Thursday, I'll be playing Luigi's Mansion for Power Up With Pride's Winter Pride 2023 Marathon! https://horaro.org/wp23/schedule. @PolarLike will be joining me on comms for the run (which will be either 100% or Any% (No OoB)"
 				]
 			}
 		]
@@ -88,11 +82,18 @@
 		"timerMinutes": 90,
 		"random": true,
 		"commands": [
+		]
+	},
+	{
+		"timerMinutesOffset": 45,
+		"timerMinutes": 90,
+		"random": true,
+		"commands": [
 			{
 				"name": "!youtube",
 				"aliases": ["!vods", "!vod"],
 				"responses": [
-					"VODs get posted here (in higher quality than streams!): https://www.youtube.com/@elite_spud",
+					"VODs get posted to Youtube (in higher quality than streams!): https://www.youtube.com/@elite_spud",
 					"Blind playthroughs and other interesting streams get uploaded to YouTube here: https://www.youtube.com/@elite_spud",
 					"Miss a playthrough you really wanted to catch? I archive my streams locally at 1440p and post them on YouTube! https://www.youtube.com/@elite_spud"
 				]
@@ -102,30 +103,18 @@
 				"responses": [
 					"We have a Discord server! Join in and be a part of the community offstream! https://discord.gg/f4bhKYxPy8",
 					"Want consistent notifications when the stream is live? Join the Discord server and request a role to always get pinged! https://discord.gg/f4bhKYxPy8",
-					"Enjoy using my sub emotes? You can link your Twitch account with Discord to get access to them on other servers if you're a subscriber; no Nitro required! https://discord.gg/f4bhKYxPy8"
+					"Enjoy using my sub emotes? You can link your Twitch account with Discord to get access to them on other servers if you're a subscriber; no Nitro required! https://discord.gg/f4bhKYxPy8",
+					"Like seeing Loki and the other kitties on stream? You can see more of them and other folks' cats in the community Discord! https://discord.gg/f4bhKYxPy8",
+					"Wanna talk about music you love or discovered recently? We've got a Discord channel for that! https://discord.gg/f4bhKYxPy8"
 				]
 			},
-			{
-				"name": "!baby",
-				"aliases": ["!bebe"],
-				"responses": [
-					"We recently welcomed our new baby! Her name is Lilah and she's quite the handful right now, so expect the stream schedule to be a little sporadic for a while!"
-				]
-			}
-		]
-	},
-	{
-		"timerMinutesOffset": 45,
-		"timerMinutes": 90,
-		"random": true,
-		"commands": [
 			{
 				"name": "!music",
 				"aliases": ["!rateyourmusic", "!musicratings", "!lastfm", "!songs"],
 				"responses": [
 					"I collect music CDs and keep track of what I listen to as a hobby. You can judge my music taste here https://rateyourmusic.com/~elite_spud and here https://www.last.fm/user/elite_spud",
 					"I've been building up a small collection of music CDs for a few years. See what I've got and what I've been listening to https://rateyourmusic.com/~elite_spud & https://www.last.fm/user/elite_spud",
-					"In my spare time, I curate a small music CD collection, mostly focused around heavy, progressive, dark, and ambient genres. Check out what I have at https://rateyourmusic.com/~elite_spud + https://www.last.fm/user/elite_spud and feel free to shoot me a recommendation if you've got one!"
+					"In my spare time, I curate a small music CD collection, mostly focused around heavy, progressive, dark, and ambient genres. Check out what I have at https://rateyourmusic.com/~elite_spud + https://www.last.fm/user/elite_spud and feel free to shoot me a recommendation (any genre) if you've got one!"
 				]
 			},
 			{
@@ -174,6 +163,19 @@
 					"I took the time to catalog and rate all the games I've played over the years. Take a peek at my favorites and not-so-favorites here: https://glitchwave.com/user/elite_spud/",
 					"Curious if I've played your favorite game before, and/or what my opinions about it are? Look no further: https://glitchwave.com/user/elite_spud/",
 					"Got a favorite game? Me too: https://glitchwave.com/user/elite_spud/"
+				]
+			},
+			{
+				"name": "!twitchnotifications",
+				"responses": [
+					"Twitch notifications are sometimes inconsistent, but I try to include special little messages in my going live pings for each stream, so turn 'em on if you wanna be implicated in my goofin' around! You can manage your notifications in detail here: https://www.twitch.tv/settings/notifications"
+				]
+			},
+			{
+				"name": "!streamteam",
+				"aliases": ["!binarybreakers", "!bb"],
+				"responses": [
+					"I'm part of a stream team on Twitch now! If you're looking for some amazing nonbinary streamers to follow, check out the Binary Breakers! https://www.twitch.tv/team/binarybreakers"
 				]
 			}
 		]
@@ -305,14 +307,20 @@
 				]
 			},
 			{
-				"name": "!frostfatales",
+				"name": "!frostfatales2023",
 				"responses": [
 					"I participated in Frost Fatales 2023 by running Luigi's Mansion 100%! Check out the VOD here if you missed it: https://youtu.be/hvXPqOkV9xU"
 				]
 			},
 			{
+				"name": "!frostfatales2024",
+				"aliases": ["!fatales", "!framefatales", "!frostfatales", "!gdq"],
+				"responses": [
+					"I'm participating in Frost Fatales 2024 this March by running Luigi's Mansion PAL 100%, and I'll be practicing all month ahead of the marathon. Check out the full schedule here: https://gamesdonequick.com/schedule/47"
+				]
+			},
+			{
 				"name": "!frightfatales",
-				"aliases": ["!fatales", "!framefatales"],
 				"responses": [
 					"I'm participating in Frame Fatales' Halloween-themed event, Fright Fatales, this year! I'll be playing Luigi's Mansion Any% (No OoB) this Saturday at 1:15 CST. Going for a sub-hour run and maybe even a surprise PB!"
 				]
@@ -368,7 +376,60 @@
 				"name": "!pb",
 				"aliases": ["!personalbest"],
 				"responses": [
-					"Luigi's Mansion - Any% (No OoB): 58:41 • Luigi's Mansion - 100%: 1:14:43 • Luigi's Mansion - Max%: 3:01:05"
+					"Luigi's Mansion - Any% (No OoB): 58:41 - 100%: 1:14:43 - Max%: 3:01:05 - PAL 100%: 1:30:45"
+				]
+			},
+			{
+				"name": "!baby",
+				"aliases": ["!bebe"],
+				"responses": [
+					"We recently welcomed our new baby! Her name is Lilah and she's quite the handful right now, so expect the stream schedule to be a little sporadic for a while!"
+				]
+			},
+			{
+				"name": "!keys",
+				"responses": [
+					"On the wall behind me, you can see 3D printed replicas of the keys from Luigi's Mansion! The person who made them has a store on Etsy where they sell all sorts of Mario and video game related replicas https://www.etsy.com/listing/1388972794/luigis-mansion-key"
+				]
+			},
+			{
+				"name": "!ladyarcaders",
+				"aliases": ["!la"],
+				"responses": [
+					"Lady Arcaders is an all-women's gaming collective that organizes weekly showcases by members of the community as well as larger charity events throughout the year. If you're a woman in gaming, whether it be casual, speedrunning, or development, please consider joining in! https://ladyarcaders.com/"
+				]
+			},
+			{
+				"name": "!binarybreakers",
+				"aliases": ["!bb"],
+				"responses": [
+					"The Binary Breakers are a community of speedrunners who are between, outside, and beyond the gender binary. If that sounds like a space you'd like to be a part of, please don't hesitate to reach out about joining! https://binarybreakersspeedrunning.carrd.co/"
+				]
+			},
+			{
+				"name": "!laraidtrain",
+				"responses": [
+					"The Lady Arcaders are celebrating their 2 year anniversary, so the collective has organized a massive raid train event to mark the occasion! https://ladyarcaders.com/raid-train For a little more than 2 days, 25 streamers will take their viewers on a scenic tour through the LA community, and my channel is the first stop! I'm hoping to get this engine up to speed before I pass things off to @EikoTheBlue 4 hours in, so I hope you'll stick around! nevVERS"
+				]
+			},
+      {
+				"name": "!cutscenes",
+				"responses": [
+					"\"Why are you watching the cutscenes? I thought this was a speedrun! You've already seen them before!\" - Because I wanna lol"
+				]
+			},
+      {
+				"name": "!dvt",
+				"aliases": ["!clot", "!bloodclot"],
+				"responses": [
+					"In 2022, I developed a substantial deep vein thrombosis (blood clot) in my left leg following a major surgery. Because I suffered significant vascular scarring from that clot, I'll forever be at high risk of developing another one, which means that I need to take low-dose blood thinners for the rest of my life to reduce the chances of that happening. Staying active also helps, though, so I take regular breaks during streaming to walk around and stretch; I encourage you all to do the same!"
+				]
+			},
+      {
+				"name": "!fulltime",
+        "aliases": ["!hobby"],
+				"responses": [
+					"Streaming as a Job vs. Hobby: https://pastebin.com/uPRfD7QC"
 				]
 			}
 		]
