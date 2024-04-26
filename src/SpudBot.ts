@@ -2,9 +2,10 @@ import { randomInt } from "crypto";
 import * as fs from "fs";
 import { IChatWarriorState } from "./ChatWarrior";
 import { IIrcBotAuxCommandGroupConfig, IPrivMessageDetail } from "./IrcBot";
-import { egadd_quotes, luigi_quotes, f_zero_gx_story_quotes } from "./Quotes";
+import { egadd_quotes, luigi_quotes, f_zero_gx_story_quotes, f_zero_gx_interview_quotes, f_zero_gx_quotes } from "./Quotes";
 import { ITwitchBotConnectionConfig, ITwitchUserDetail, TwitchBotBase, TwitchEventSubSubscriptionType, TwitchEventSub_ChannelPointCustomRewardRedemptionAdd } from "./TwitchBot";
 import { Utils } from "./Utils";
+import { ChannelPointRequests } from "./ChannelPointRequests";
 
 export interface UserCommand {
     username: string,
@@ -36,6 +37,8 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleEgaddQuote(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleLuigiQuote(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleFZeroGXStoryQuote(detail));
+        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleFZeroGXInterviewQuote(detail));
+        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleFZeroGXQuote(detail));
 
         try {
             this._bonkCountPath = fs.realpathSync(`${this._config.configDir}/bonkCount.txt`);
@@ -53,6 +56,12 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
     protected override async getTwitchEventSubTopics(): Promise<TwitchEventSubSubscriptionType[]> {
         return [{
             name: `channel.channel_points_custom_reward_redemption.add`,
+            version: `1`,
+            condition: {
+                broadcaster_user_id: await this.getTwitchBroadcasterId(),
+            }
+        }, {
+            name: `channel.channel_points_custom_reward_redemption.update`,
             version: `1`,
             condition: {
                 broadcaster_user_id: await this.getTwitchBroadcasterId(),
@@ -94,6 +103,10 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
         // TODO: Make this a config file
         if (event.reward.title === "Hi, I'm Lurking!") {
             this.chat(`#${event.broadcaster_user_name}`, `${event.user_name}, enjoy your lurk elites72Heart`);
+        }
+
+        if (event.reward.title.includes("Contribute to a !GameRequest")) {
+            await ChannelPointRequests.handleChannelPointGameRequest(event);
         }
     }
 
@@ -419,7 +432,39 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
         await func(messageDetail);
     }
 
+    protected async handleFZeroGXInterviewQuote(messageDetail: IPrivMessageDetail): Promise<void> {
+        const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
+            const quoteIndex = randomInt(f_zero_gx_interview_quotes.length);
+            const quoteText = f_zero_gx_interview_quotes[quoteIndex];
+            this.chat(messageDetail.respondTo, quoteText);
+        }
+        const func = this.getCommandFunc({
+            messageHandler: messageHandler,
+            triggerPhrases: ["!fzerogxinterviewquote", "!gxinterviewquote"],
+            strictMatch: false,
+            commandId: "!fzerogxinterviewquote",
+            globalTimeoutSeconds: 0,
+            userTimeoutSeconds: 0,
+        });
+        await func(messageDetail);
+    }
 
+    protected async handleFZeroGXQuote(messageDetail: IPrivMessageDetail): Promise<void> {
+        const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
+            const quoteIndex = randomInt(f_zero_gx_quotes.length);
+            const quoteText = f_zero_gx_quotes[quoteIndex];
+            this.chat(messageDetail.respondTo, quoteText);
+        }
+        const func = this.getCommandFunc({
+            messageHandler: messageHandler,
+            triggerPhrases: ["!fzerogxquote", "!gxquote"],
+            strictMatch: false,
+            commandId: "!fzerogxquote",
+            globalTimeoutSeconds: 0,
+            userTimeoutSeconds: 0,
+        });
+        await func(messageDetail);
+    }
 
     // protected handleStatus(messageDetails: IPrivMessageDetail): void {
     //     if (!this.doesTriggerMatch(messageDetails, "!status", false)

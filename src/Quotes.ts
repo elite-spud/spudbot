@@ -280,3 +280,870 @@ export const f_zero_gx_story_quotes = [
     "Are you ready? Hahahahaha! (\"The Creators\"- Chapter 9)",
     "Come off it! You think YOU can beat ME? No way! (Captain Falcon - Chapter 9)"
 ];
+
+export const f_zero_gx_interview_quotes = [
+    // 00 - Deathborn (Dark Schneider)
+    "Congratulations on your stunning victory! • The legendary Grand Prix? Hardly challenging for someone of my talent! (Deathborn, Novice)",
+    "Can you tell us why you became an F-Zero racer? • I have already won the F-Zero in the underworld. (Deathborn, Novice)",
+    "That's a great machine you've got there. • The Dark Schneider! The wings of darkness! *close-up shot of the vehicle* (Deathborn, Novice)",
+
+    "What was the key to your victory? • The same power that will enable me to control the world! (Deathborn, Standard)",
+    "Your rivals are howling for revenge! • You dare to challenge my supremacy?! You have a death wish?! Bwahahahaha!!! (Deathborn, Standard)",
+    "A message for all your TV fans out there? • You're all going to die. Say goodbye to your loved ones. (Deathborn, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • The winner's belt is in my hands! The fate of the galaxy is in my hands! Gwahahahaha!!! (Deathborn, Expert)",
+    "What are your plans, now that you've won? • Dominate the galaxy, and create a new world order. (Deathborn, Expert)",
+    "How will you use the one billion space credits in prize money? • You can have it all. • Th... thank you, Champion!... (Deathborn, Expert)",
+
+    "Can you tell us something about your other interests? • World domination! You are all nothing more than pawns in my grand battle plan! (Deathborn, Master)",
+    "What do you plan to achieve through world domination? • Make the world a much more interesting place. (Deathborn, Master)",
+    "Any advice for your rivals? • None of you will ever truly be my rivals. Give up now! (Deathborn, Master)",
+    "A final message for the defeated Captain Falcon? • Don't get up off your knees. Everyone is going to bow down to me eventually anyhow. (Deathborn, Master)",
+    "May I have your autograph, Champ? • *swats down the signature board* Don't mess with me! You know the fate of the universe depends on my mood! (Deathborn, Master)",
+    "Once the interviews are done, the Grand Prix is over. • Yes, the dream is over! Now your worst possible nightmare is about to begin! Gwahahahaha!!! (Deathborn, Master)",
+    "You'll win the next Grand Prix too, then? • This will be the last of these boring little races! (Deathborn, Master)",
+    
+    // 01 - Mighty Gazelle (Red Gazelle)
+    "Congratulations on your stunning victory! • I survived my accident, and now I'm back with a vengeance! (Mighty Gazelle, Novice)",
+    "Can you tell us why you became an F-Zero racer? • For the glory. (Mighty Gazelle, Novice)",
+    "That's a great machine you've got there. • It looks like a gazelle leaping across the plains of the savannah, doesn't it? *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (Mighty Gazelle, Novice)",
+
+    "What was the key to your victory? • That should be obvious! This new, upgraded steel body! (Mighty Gazelle, Standard)",
+    "Your rivals are howling for revenge! • Hahahahaha! My muscles hurt from laughing! Even though I don't have muscles anymore. (Mighty Gazelle, Standard)",
+    "A message for all your TV fans out there? • As long as you support us, the Red Gazelle and I will stay on the track. (Mighty Gazelle, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • A million volts of running power - who can catch me? (Mighty Gazelle, Expert)",
+    "What are your plans, now that you've won? • Plans? Who makes plans? I go where the wind takes me. (Mighty Gazelle, Expert)",
+    "How will you use the one billion space credits in prize money? • Buy a new body. One of those antique ones. (Mighty Gazelle, Expert)",
+
+    "What do you do when you're not racing? • Disaster rescue. I can go where humans can't. (Mighty Gazelle, Master)",
+    "Are you confident of defending this title? • That's a stupid question! I'm champion now, and I'll be champion next time, too! (Mighty Gazelle, Master)",
+    "You were in a serious F-Zero crash, weren't you? • It was enough to keep me out of the F-Zero for a while. But who can stay away? (Mighty Gazelle, Master)",
+    "May I have your autograph, Champ? • Anyone who wants my autograph, line up here! *draws his face on the board* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates*  (Mighty Gazelle, Master)",
+    "Do you have a girlfriend? • Of course I do. ...I hope you don't think she's a cyborg, too? (Mighty Gazelle, Master)",
+    "Some racers are saying your victory is a victory for science. • I know they don't want to admit defeat. But they have to acknowledge my skill! (Mighty Gazelle, Master)",
+    "Don't you miss having a human form? • Not at all. You have no idea how good a coat of oil feels, or a good jolt of electricity! (Mighty Gazelle, Master)",
+
+    // 02 - Jody Summer (White Cat)
+    "Congratulations on your stunning victory! • I didn't do it alone. I'd like to thank the Galactic Space Federation for their support. (Jody Summer, Novice)",
+    "Can you tell us why you became an F-Zero racer? • I'm going to eliminate the criminal element that congregates for this race! (Jody Summer, Novice)",
+    "That's a great machine you've got there. • Those who don't take my White Cat seriously, learn to regret it. *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life!  (Jody Summer, Novice)",
+
+    "What was the key to your victory? • Doing my best. Although that's not as simple as it sounds, of course. (Jody Summer, Standard)",
+    "Your rivals are howling for revenge! • I'll take you on, anytime! (Jody Summer, Standard)",
+    "A message for all your TV fans out there? • You knew I'd do it, didn't you? (Jody Summer, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • How could the day not end with my victory lap? (Jody Summer, Expert)",
+    "What are your plans, now that you've won? • TV appearances, and I have three contracts for product endorsements. (Jody Summer, Expert)",
+    "How will you use the one billion space credits in prize money? • Ah... Pamper myself at the best beauty salon in the galaxy! (Jody Summer, Expert)",
+
+    "May I have your autograph, Champ? • Of course. Treasure it always! *signs* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (Jody Summer, Master)",
+    "We expect no less from the Galactic Space Federation's star racer. • The best in the Federation is the best in the galaxy! (Jody Summer, Master)",
+    "There was a lot of dangerous driving today! • My spin attack got rid of those bad-mannered troublemakers! (Jody Summer, Master)",
+    "What do you treasure most in life? • My family. They're very precious to me. (Jody Summer, Master)",
+    "When there are no races, what do you do? • Helping the Federation maintain order in the galaxy. (Jody Summer, Master)",
+    "You have a great mechanic. • Oh yes. John Tanaka. Yes, he's a vital member of my team. (Jody Summer, Master)",
+    "Your rivals tried to get you as hard as ever! • But of course, I won! The story has a happy ending for the heroine. (Jody Summer, Master)",
+
+    // 03 - Dr. Stewart (Golden Fox)
+    "Congratulations on your stunning victory! • Yes! Not bad, don't you think? (Dr. Stewart, Novice)",
+    "Can you tell us why you became an F-Zero racer? • To prove my father's theories. (Dr. Stewart, Novice)",
+    "That's a great machine you've got there. • The Golden Fox... Just as my late father designed it. *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (Dr. Stewart, Novice)",
+
+    "What was the key to your victory? • It's not something one can simply explain in words. (Dr. Stewart, Expert)",
+    "Your rivals are howling for revenge! • Hah! They need to learn what the F-Zero is all about! (Dr. Stewart, Expert)",
+    "A message for all your TV fans out there? • I hope you feel honored to have witnessed my consummate skill! (Dr. Stewart, Expert)",
+
+    "The winner of the Expert Class. Congratulations! • The way I drive is an art form! (Dr. Stewart, Expert)",
+    "What are your plans, now that you've won? • Visit my father's grave, and tell him of my victory. (Dr. Stewart, Expert)",
+    "How will you use the one billion space credits in prize money? • I race for the honor. You can keep the money. (Dr. Stewart, Expert)",
+
+    "May I have your autograph, Champ? • Make sure you display it in a very expensive frame! *signs* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (Dr. Stewart, Novice)",
+    "You had quite an elite life as a doctor. • Who wants guaranteed success? All I'm interested in right now is the thrill of F-Zero! (Dr. Stewart, Master)",
+    "That's a nice scarf. • Hahaha, I wear it for somebody. It's a symbol of our friendship. (Dr. Stewart, Master)",
+    "Can you tell us about your father? • He was a man of strong convictions. I hope to follow in his footsteps. (Dr. Stewart, Master)",
+    "Not even Falcon could stop you! • With my driving, and my machine? Nobody could stop me! (Dr. Stewart, Master)",
+    "The way you drive is an art form! • My driving was perfect! Not a millimeter of movement wasted. (Dr. Stewart, Master)",
+    "Are you confident of defending this title? • Of course! Who else could possibly win? (Dr. Stewart, Master)",
+
+    // 04 - Baba (Iron Tiger)
+    "Congratulations on your stunning victory! • I'm on fire! (Baba, Novice)",
+    "Can you tell us why you became an F-Zero racer? • F-Zero is the only worthy recipient of my affections! (Baba, Novice)",
+    "That's a great machine you've got there. • I love her. She's beautiful, isn't she? *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (Baba, Novice)",
+
+    "What was the key to your victory? • Love! No racer I set my eyes on, escapes! (Baba, Standard)",
+    "Your rivals are howling for revenge! • Sure, I'll take you all on! The fun continues! (Baba, Standard)",
+    "A message for all your TV fans out there? • Can you feel how much I love you? (Baba, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • The F-Zero goddess wins again! (Baba, Expert)",
+    "What are your plans, now that you've won? • The fun is just beginning! Let's join in the victory parade! (Baba, Expert)",
+    "How will you use the one billion space credits in prize money? • Commission a huge statue of me! (Baba, Expert)",
+
+    "May I have your autograph, Champ? • With love, from me! *signs* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (Baba, Master)",
+    "You look lovely in that tiger print. • You have to be graceful but masculine to get away with a look like this, baby! (Baba, Master)",
+    "We hear you're an excellent dancer! • Poetry in motion, baby! Watch these moves! (Baba, Master)",
+    "Who do you consider your biggest rivals? • Hahahaha! Who on earth could keep up with me?! (Baba, Master)",
+    "You have quite a colorful group of fans here today! • And they'll be back to decorate my next victory, too! (Baba, Master)",
+    "Not even Falcon could stop you. • It was time that someone good-looking won this race! (Baba, Master)",
+    "What a powerful, dynamic performance you gave us today! • Never underestimate a man in drag! (Baba, Master)",
+
+    // 05 - Samurai Goroh (Fire Stingray)
+    "Congratulations on your stunning victory! • Samurai Goroh is the best in the galaxy! (Samurai Goroh, Novice)",
+    "Can you tell us why you became an F-Zero racer? • To cut Falcon down to size! (Samurai Goroh, Novice)",
+    "That's a great machine you've got there. • The power of two RS-5060 engines knows no equal! *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (Samurai Goroh, Novice)",
+
+    "What was the key to your victory? • Being so handsome! Bwahahahaha! (Samurai Goroh, Standard)",
+    "Your rivals are howling for revenge! • Hahaha! They're no more than toys for me to amuse myself with! (Samurai Goroh, Standard)",
+    "A message for all your TV fans out there? • Goroh is the greatest man in racing. In fact, in the whole galaxy! (Samurai Goroh, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • Pedal to the metal! Samurai Goroh stops for no one! (Samurai Goroh, Expert)",
+    "What are your plans, now that you've won? • Have it out with Falcon! *points at camera* You wouldn't run away from a challenge, would you, Falcon?! • We'll take a look at that in a special program after F-Zero TV! (Samurai Goroh, Expert)",
+    "How will you use the one billion space credits in prize money? • That's a pittance. I'll take it to the casino, and come back with a 100 times as much! (Samurai Goroh, Expert)",
+
+    "May I have your autograph, Champ? • Sure! As many as you want! Hahahaha! *makes a giant handprint* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (Samurai Goroh, Master)",
+    "Are you really the boss of a gang of thieves? • Yes, I am! And I've stolen this victory! Muhahaha! (Samurai Goroh, Master)",
+    "We hear you like to drink. • Yeah. Drink a toast to my success. And to the look on Falcon's face right now! (Samurai Goroh, Master)",
+    "There doesn't seem to be anyone who can beat you! • Haha! Samurai Goroh's time has come! (Samurai Goroh, Master)",
+    "We're overwhelmed with young people who want to join your gang of thieves! • Come with me, if you dare! We'll rule the universe! (Samurai Goroh, Master)",
+    "We hear you have a lot of secret fans out there. • Samurai Goroh never lets his fans down! (Samurai Goroh, Master)",
+    "Falcon looked pretty unhappy. • Ha! I'm a better racer, and a better bounty hunter! (Samurai Goroh, Master)",
+
+    // 06 - Pico (Wild Goose)
+    "Congratulations on your stunning victory! • The thrill of F-Zero reminds me of the battlefield. (Pico, Novice)",
+    "Can you tell us why you became an F-Zero racer? • Only the F-Zero can quench my thirst for blood! (Pico, Novice)",
+    "That's a great machine you've got there. • Ahahahaha! Faster than a speeding bullet! *close-up shot of the vehicle* (Pico, Novice)",
+
+    "What was the key to your victory? • I wiped out all the racers. (Pico, Standard)",
+    "Your rivals are howling for revenge! • The next time they race will be their last! (Pico, Standard)",
+    "A message for all your TV fans out there? • I'm going to bathe the circuit in blood! Hahahahahahaha! (Pico, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • Hahaha! Who can stop me? (Pico, Expert)",
+    "What are your plans, now that you've won? • Time for my other career. I have some assassinations to take care of. (Pico, Expert)",
+    "How will you use the one billion space credits in prize money? • Sponsor the 'Pico Cup'! The most thrilling race in F-Zero history! (Pico, Expert)",
+
+    "May I have your autograph, Champ? • Just one. And don't ask me again. *signs in blood-red ink* (Pico, Master)",
+    "What are your plans for the next Grand Prix? • Next time, no one will make it home alive! (Pico, Master)",
+    "They say the Galactic Space Federation is out to arrest you. • Me, against the Galactic Space Federation? NOW the game gets interesting! (Pico, Master)",
+    "We heard that you're a professional hit man!... • Anyone you want taken care of, just let me know! (Pico, Master)",
+    "What are your other interests? • I collect knives. And they all cut veeeeeeery well. (Pico, Master)",
+    "What kind of food do you like? • A nice slab of steak, dripping with blood. (Pico, Master)",
+    "Aren't you ever afraid during races? • What are you talking about? I love the danger! (Pico, Master)",
+
+    // 07 - Captain Falcon (Blue Falcon)
+    "Congratulations on your stunning victory! • Thank you. I couldn't have done it without my fans. (Captain Falcon, Novice)",
+    "Can you tell us why you became an F-Zero racer? • I was born to be an F-Zero racer. (Captain Falcon, Novice)",
+    "That's a great machine you've got there. • The Blue Falcon is the fastest machine on the circuit. *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (Captain Falcon, Novice)",
+
+    "What was the key to your victory? • You don't win by being lucky. You win by being bold. (Captain Falcon, Standard)",
+    "Your rivals are howling for revenge! • Hah. Come on, then! (Captain Falcon, Standard)",
+    "A message for all your TV fans out there? • I'll take on anybody, anytime! (Captain Falcon, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • Now you all know the genius of the Falcon! (Captain Falcon, Expert)",
+    "What are your plans, now that you've won? • Winning this race next time, of course. (Captain Falcon, Expert)",
+    "How will you use the one billion space credits in prize money? • I'm planning to spend it on construction of the Neo Blue Falcon. • We're looking forward to it! (Captain Falcon, Expert)",
+
+    "May I have your autograph, Champ? • Of course. How's this? *signs* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (Captain Falcon, Master)",
+    "Listen to that crowd! Do you have anything to say to them? • *raises fist* YEAH!!! (Captain Falcon, Master)",
+    "What's the most important requirement for a racer? • *beats chest with one fist* HEART! (Captain Falcon, Master)",
+    "What do you do when you're not racing? • Chase prize money. I'm a bounty hunter. (Captain Falcon, Master)",
+    "Will you let us see your face? • If you can beat me in a race, I'll show you. (Captain Falcon, Master)",
+    "I want to be a racer like you! • Hmm. You're quite sharp, aren't you? You'd make a good racer. (Captain Falcon, Master)",
+    "Is it true that you're thinking of retiring? • Of course not. There are still rivals to be defeated. The battle is just beginning. (Captain Falcon, Master)",
+
+    // 08 - Octoman (Deep Claw)
+    "Congratulations on your stunning victory! • Heheheheh. It was for the Octopus race. (Octoman, Novice)",
+    "Can you tell us why you became an F-Zero racer? • If I won, the next Grand Prix would be held on our planet. (Octoman, Novice)",
+    "That's a great machine you've got there. • It's a second-hand machine, but it's a gem. *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (Octoman, Novice)",
+
+    "What was the key to your victory? • I have more arms! (Octoman, Standard)",
+    "Your rivals are howling for revenge! • Spineless, the lot of them... Bring on some real competition! (Octoman, Standard)",
+    "A message for all your TV fans out there? • I love you all! (Octoman, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • Well done, indeed. (Octoman, Expert)",
+    "What are your plans, now that you've won? • My shoulders are really stiff. I'm going for a massage. (Octoman, Expert)",
+    "How will you use the one billion space credits in prize money? • Use it to support all these youngsters. *camera pans to show 30 small aliens of Octoman's race* (Octoman, Expert)",
+
+    "May I have your autograph, Champ? • I'll write it with homemade ink! *signs in black, circular letters* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (Octoman, Master)",
+    "What would you like to do in the future? • Rescue every octopus in the universe that is in danger of being eaten. (Octoman, Master)",
+    "If you compared yourself to an animal, what would it be? • Gentle, but strong... I'd have to say, an elephant! (Octoman, Master)",
+    "How do you spend your days off? • Lounging in the sun, and taking ice-cold seawater showers. (Octoman, Master)",
+    "You're finally able to go back to your planet. • I miss the oceans of home. (Octoman, Master)",
+    "Is being an octopus inconvenient? • Oh, yes. There are people who want to eat me! (Octoman, Master)",
+    "You've defeated your old rival, Jody Summer! • Jody should get over her anti-octopus feelings. (Octoman, Master)",
+
+    // 09 - Mr. EAD (Great Star)
+    "Congratulations on your stunning victory! • Hohohoho! It all went according to my computer program! (Mr. EAD, Novice)",
+    "Can you tell us why you became an F-Zero racer? • To check for bugs in my program. (Mr. EAD, Novice)",
+    "That's a great machine you've got there. • This is my brother! *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (Mr. EAD, Novice)",
+
+    "What was the key to your victory? • My flawless performance! (Mr. EAD, Standard)",
+    "Your rivals are howling for revenge! • Hohohoho! This should make for interesting data! Come on, then! (Mr. EAD, Standard)",
+    "A message for all your TV fans out there? • To all of you big wigs at the EAD: This should prove what I can do! Can we go into mass production now? (Mr. EAD, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • Power: A! Reflexes: A! Judgment: A! With my straight-A record! (Mr. EAD, Expert)",
+    "What are your plans, now that you've won? • Transmit all this data I've collected from the race. (Mr. EAD, Expert)",
+    "How will you use the one billion space credits in prize money? • Use it as the capital for my mass production. (Mr. EAD, Expert)",
+
+    "May I have your autograph, Champ? • Of course! This is a chance to test my writing function! *draws a picture of himself with his name underneath* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (Mr. EAD, Master)",
+    "What kind of food do you like? • Italian, Italian. Hohohoho! (Mr. EAD, Master)",
+    "What are your dreams for the future? • I like the human likestyle. I want to wear overalls everyday and take it easy. Hohohohoho! (Mr. EAD, Master)",
+    "Do androids have emotions? • Of course. When I think of how my brother was recycled... *sob* as my racing car... *sob* (Mr. EAD, Master)",
+    "Are you moving towards mass production? • Mass production has already begun! *laughs for a long time, with shots of the Great Star shown on-screen* (Mr. EAD, Master)",
+    "Your name is unusual. Where does it come from? • From my various components. Body strength level E. Boost capability level A. And grip capability level D. *tries to clumsily depict the letters E, A and D with his body whilst saying them* (Mr. EAD, Master)",
+    "Where are you originally from? • Kyoto, in Japan. I'm not allowed to tell you any more. (Mr. EAD, Master)",
+
+    // 10 - James McCloud (Little Wyvern)
+    "Congratulations on your stunning victory! • A great achievement. And if it brings me more work, it'll be perfect. (James McCloud, Novice)",
+    "Can you tell us why you became an F-Zero racer? • Galaxy Dog was running at a loss.  (James McCloud, Novice)",
+    "That's a great machine you've got there. • It's the top of the Space Dynamics line. *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (James McCloud, Novice)",
+
+    "What was the key to your victory? • The ability to think and act quickly when the pressure's on. (James McCloud, Standard)",
+    "Your rivals are howling for revenge! • Tough luck. They had their chance, and they blew it. (James McCloud, Standard)",
+    "A message for all your TV fans out there? • Galaxy Dog - mercenaries for hire! Give us a call. (James McCloud, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • With a machine like this, the winner's podium is only a short step away! (James McCloud, Expert)",
+    "What are your plans, now that you've won? • Go celebrate my victory with my friends at Galaxy Dog! (James McCloud, Expert)",
+    "How will you use the one billion space credits in prize money? • Buy the latest model racing machine for my son. (James McCloud, Expert)",
+
+    "May I have your autograph, Champ? • Aw, gee, this is embarrassing!... *signs* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (James McCloud, Master)",
+    "Chance was smiling on you today! • No. There are no miracles in F-Zero. I earned this victory. (James McCloud, Master)",
+    "What are your dreams for the future? • To raise my son to be a better man than me. (James McCloud, Master)",
+    "What's that insignia on your back? • The Galaxy Dog logo. I designed it. (James McCloud, Master)",
+    "Who do you consider to be your closest rivals? • My only rival is myself. (James McCloud, Master)",
+    "Do you have any favorite words or saying? • 'Friendship is a treasure that lasts a lifetime.' My mates at Galaxy Dog are the greatest! (James McCloud, Master)",
+    "Do you ever feel like pulling out when the race gets dangerous? • My machine has no reverse gear. The only way out is the finish line! (James McCloud, Master)",
+
+    // 11 - Billy (Mad Wolf)
+    "Congratulations on your stunning victory! • Hurry up! Where's my prize money?! (Billy, Novice)",
+    "Can you tell us why you became an F-Zero racer? • For the money! Money makes the world go around! (Billy, Novice)",
+    "That's a great machine you've got there. • This thing really brings in the money. *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (Billy, Novice)",
+
+    "What was the key to your victory? • What key? I just went after the cash! (Billy, Standard)",
+    "Your rivals are howling for revenge! • OK, OK, bring 'em on. But you have to offer the same stakes. (Billy, Standard)",
+    "A message for all your TV fans out there? • I'm the richest monkey in the galaxy! (Billy, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • Five races, for one billion credits prize money? What a profit! (Billy, Expert)",
+    "What are your plans, now that you've won? • If you want to know, cough up the billion credits. (Billy, Expert)",
+    "How will you use the one billion space credits in prize money? • Loan it to those in need. At an exorbitant rate! (Billy, Expert)",
+
+    "May I have your autograph, Champ? • 50,000 space credits each! I'll give you two for 90,000. *signs* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (Billy, Master)",
+    "That was quite aggressive racing. No one could catch you. • I don't need flattery! Just bring me out the money! (Billy, Master)",
+    "What are your dreams for the future? • A big house? Hmm... A beautiful wife? Nah, it would have to be money! (Billy, Master)",
+    "How did you find out about the F-Zero? • A TV commercial. That one where Falcon says 'Let's try!' at the end. (Billy, Master)",
+    "What do you do when you're not racing? • A cut-price banana business... Door to door sales... Anything that makes money! (Billy, Master)",
+    "Are you going to donate some of your prize money to charity? • Shut up! This is MY money, and I'm not giving any of it to anybody else! (Billy, Master)",
+    "What do you think of those drivers who break the race rules? • Are you implying something about my driving? (Billy, Master)",
+
+    // 12 - Kate Alen (Super Piranha)
+    "Congratulations on your stunning victory! • I'm the Prima Donna of the race circuit! (Kate Alen, Novice)",
+    "Can you tell us why you became an F-Zero racer? • It's always been my dream to enter a race. (Kate Alen, Novice)",
+    "That's a great machine you've got there. • Without it, my dream never would have come true. *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (Kate Alen, Novice)",
+
+    "What was the key to your victory? • I was lucky! (Kate Alen, Standard)",
+    "Your rivals are howling for revenge! • I'll see if I can fit them into my schedule. (Kate Alen, Standard)",
+    "A message for all your TV fans out there? • See you again at the next Grand Prix! *blows kisses* (Kate Alen, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • If I'm dreaming, please don't wake me! (Kate Alen, Expert)",
+    "What are your plans, now that you've won? • Recording, honey. I can make a great song out of this! (Kate Alen, Expert)",
+    "How will you use the one billion space credits in prize money? • First, I need to buy a purse to put it in. (Kate Alen, Expert)",
+
+    "May I have your autograph, Champ? • Just for you. But don't tell my manager! *signs* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (Kate Alen, Master)",
+    "Are you confident of being able to defend your title? • Of course. Kate Alen will win again! Spread the challenge through the galaxy! (Kate Alen, Master)",
+    "Are there any similarities between racing and the music world? • The burning passion that you need. (Kate Alen, Master)",
+    "There are some who say the rules need to be tightened to prevent accidents during the race. • Accidents are what spice up this race! I love that extra thrill! (Kate Alen, Master)",
+    "What's a greater thrill - winning the Grand Prix, or having one of your songs top the charts? • Winning the F-Zero Grand Prix, of course. There's nothing like it. (Kate Alen, Master)",
+    "What were you doing a year ago? • Performing at an outdoor concert in Red Canyon. Who'd have thought I'd end up here? (Kate Alen, Master)",
+    "You won! • No one had the skill to keep up with me! It was just like dancing! (Kate Alen, Master)",
+
+    // 13 - Zoda (Death Anchor)
+    "Congratulations on your stunning victory! • Ohoho! My time has finally come! Ohohohohoho! (Zoda, Novice)",
+    "Can you tell us why you became an F-Zero racer? • Winning the Grand Prix seemed a good first step on my path to world domination! (Zoda, Novice)",
+    "That's a great machine you've got there. • It was created by a genius! Ha! *points at self* *close-up shot of the vehicle* (Zoda, Novice)",
+
+    "What was the key to your victory? • I tampered with the other racers' machines! Ohohohohahahaha! (Zoda, Standard)",
+    "Your rivals are howling for revenge! • I'll send the lot of you home, in coffins! Ohohohohahahaha! • Th-thank you for the interview, and thank you for the excellent race!... (Zoda, Standard)",
+    "A message for all your TV fans out there? • I am the new Emperor of Evil! (Zoda, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • The F-Zero is no real challenge for an evil genius! (Zoda, Expert)",
+    "What are your plans, now that you've won? • This is my first step towards controlling the whole world! (Zoda, Expert)",
+    "How will you use the one billion space credits in prize money? • To sponsor more acts of evil, and develop new weapons. (Zoda, Expert)",
+
+    "May I have your autograph, Champ? • Here! Have a self-portrait as well! *signs, and draws his face* (Zoda, Master)",
+    "What do you do in your spare time? • I like to grow flowers. Flowers that kill people! (Zoda, Master)",
+    "A message for your fans who've supported you all this time? • I have fans? Hey, raise your hand if you're my fan! One... two... three... four... five... I have five fans! (Zoda, Master)",
+    "You've been inundated with requests to appear on TV! • You've heard that? Then tell me why they only want me on comedy shows. (Zoda, Master)",
+    "Tell us why you want to control the world. • It's every bad guy's dream, of course! (Zoda, Master)",
+    "A beautiful victory over the Arrows!... • I will definitely bring those two over to the Dark Side. They can work for me, when I rule the world! (Zoda, Master)",
+    "Which planet do you come from? • Earth! I'm not an alien, I'm an improved version of the human!  (Zoda, Master)",
+
+    // 14 - Jack Levin (Astro Robin)
+    "Congratulations on your stunning victory! • It was a fantastic race! (Jack Levin, Novice)",
+    "Can you tell us why you became an F-Zero racer? • The F-Zero was the only showcase for my looks and talent! (Jack Levin, Novice)",
+    "That's a great machine you've got there. • The Astro Robin. Tough and good-looking, just like me! *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (Jack Levin, Novice)",
+
+    "What was the key to your victory? • Lady Luck is a fan of mine! Heh heh heh heh! (Jack Levin, Standard)",
+    "Your rivals are howling for revenge! • They're all great racers, but they're second rate! (Jack Levin, Standard)",
+    "A message for all your TV fans out there? • I dedicate this victory to all of you! *blows a kiss* (Jack Levin, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • The roar of the fans is the only incentive I need! *blows a kiss* (Jack Levin, Expert)",
+    "What are your plans, now that you've won? • I have to sign a billion autographs! That'll be tougher than this race! (Jack Levin, Expert)",
+    "How will you use the one billion space credits in prize money? • Giving autographed souvenirs to the kids in my fan club! (Jack Levin, Expert)",
+
+    "May I have your autograph, Champ? • Of course! This is number 1,745,233,248! *signs* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (Jack Levin, Master)",
+    "If everyone were your fan, we'd have world peace, wouldn't we? • That's a great idea! That would make me the happiest man in the galaxy! (Jack Levin, Master)",
+    "Is there anything you're afraid of? • My mother. She's impervious to my charms. (Jack Levin, Master)",
+    "Do you have a girlfriend? • My 20 billion fans are my girlfriends! *blows a kiss* (Jack Levin, Master)",
+    "Say hello to the citizens of the galaxy! • I'm Jack Levin, and I'm the most handsome F-Zero in the galaxy! (Jack Levin, Master)",
+    "A message for all your fans who supported you all this time? • The love of my fans is part of the prize. And I'll be going after both again! (Jack Levin, Master)",
+    "You'll be defending your crown? • Of course! For the sake of my fans... *does a spinning kick in place* I'll be back and I'll be the best! (Jack Levin, Master)",
+
+    // 15 - Bio Rex (Big Fang)
+    "Congratulations on your stunning victory! • You look surprised. Aren't dinosaurs supposed to win? (Bio Rex, Novice)",
+    "Can you tell us why you became an F-Zero racer? • I heard that the winner gets to eat the tastiest meat in the galaxy. (Bio Rex, Novice)",
+    "That's a great machine you've got there. • I designed it. Dinosaurs are smarter than humans. *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (Bio Rex, Novice)",
+
+    "What was the key to your victory? • I was all revved up to eat my opposition! (Bio Rex, Standard)",
+    "Your rivals are howling for revenge! • If I beat you again, I'll eat the lot of you! (Bio Rex, Standard)",
+    "A message for all your TV fans out there? • Dinosaurs were on this planet long before you humans came along. The Earth belongs to us! (Bio Rex, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • I'm hungry. Could we make this a quick interview? (Bio Rex, Expert)",
+    "What are your plans, now that you've won? • First of all, I want meat. Bring the champion some meat! (Bio Rex, Expert)",
+    "How will you use the one billion space credits in prize money? • Spend it all on food! RAWR!!! (Bio Rex, Expert)",
+
+    "May I have your autograph, Champ? • If you've got something to eat, I'll do anything for you. *makes a giant handprint* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (Bio Rex, Master)",
+    "What are your favorite foods? • Uhhh... Hamburgers... Steaks... Hot dogs... Humans... Anything with meat. (Bio Rex, Master)",
+    "Can you tell us something about dinosaur beliefs? • Everyone you meet is food. Eat all the food put in front of you. And brush your teeth properly. (Bio Rex, Master)",
+    "You're quite an aggressive racer. You left everyone behind you! • Why, thank you! Here, have some of this meat! (Bio Rex, Master)",
+    "You're confident of defending this title, of course? • I'm a gourmand. I won't race against anyone who wouldn't make a good meal. (Bio Rex, Master)",
+    "What do you think of the other racers? • They all looked delicious!... Except for Samurai Goroh. (Bio Rex, Master)",
+    "What would you consider your pride and joy? • These fangs! They're so sharp, I could eat my racing machine! (Bio Rex, Master)",
+
+    // 16 - The Skull (Sonic Phantom)
+    "Congratulations on your stunning victory! • I'm not even tired. Ha! (The Skull, Novice)",
+    "Can you tell us why you became an F-Zero racer? • I was born to be a racer. (The Skull, Novice)",
+    "That's a great machine you've got there. • Oho! This has amazing boosters. It could blast all the way to the netherworld! *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (The Skull, Novice)",
+
+    "What was the key to your victory? • Techniques I learned from the dead. (The Skull, Standard)",
+    "Your rivals are howling for revenge! • I've got plenty of time. I'll take on all comers! (The Skull, Standard)",
+    "A message for all your TV fans out there? • Is this being broadcast in the underworld? (The Skull, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • Haha! Not even the Grim Reaper could have kept up with me! (The Skull, Expert)",
+    "What are your plans, now that you've won? • Take a nice, long nap in my coffin. (The Skull, Expert)",
+    "How will you use the one billion space credits in prize money? • Heh heh heh heh. Dead men don't need money. I do it for the thrills! Gotta make the heart beat faster! (The Skull, Expert)",
+
+    "May I have your autograph, Champ? • Don't lose it! It's your passport to the netherworld! *signs* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (The Skull, Master)",
+    "What have you learned since you died? • Ahh... Living is not all there is to life. When you die, you'll know what I mean. (The Skull, Master)",
+    "And is there anything you'd like to say to the racers you beat today? • Here's a one-way ticket to the netherworld! (The Skull, Master)",
+    "Do you have your eye on any of the other racers? • Captain Falcon. I'd really like to see him in the Land of the Dead. (The Skull, Master)",
+    "What's the first thing you want to do, now you're back from the dead? • Visit my grave. (The Skull, Master)",
+    "Any advice for the other racers? • It's okay to go at full speed. But if you don't watch out for accidents, you'll end up like me! (The Skull, Master)",
+    "What's it like in the Land of the Dead? • Hahaha, the netherworld? Everyone's turned into health freaks! (The Skull, Master)",
+
+    // 17 - Antonio Guster (Green Panther)
+    "Congratulations on your stunning victory! • Look at me, Goroh! I am number one! (Antonio Guster, Novice)",
+    "Can you tell us why you became an F-Zero racer? • This is just the beginning of my revenge, Goroh! (Antonio Guster, Novice)",
+    "That's a great machine you've got there. • The Green Panther never lets me down. *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (Antonio Guster, Novice)",
+
+    "What was the key to your victory? • Holding on to how much I hate Samurai Goroh. (Antonio Guster, Standard)",
+    "Your rivals are howling for revenge! • Come on, then! (Antonio Guster, Standard)",
+    "A message for all your TV fans out there? • I can't believe I have supporters. I'm so darn lucky. (Antonio Guster, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • Goroh stands defeated, and I won! This is a great race! Hahahahaha! (Antonio Guster, Expert)",
+    "What are your plans, now that you've won? • To beat Samurai Goroh senseless. Don't run away, coward! (Antonio Guster, Expert)",
+    "How will you use the one billion space credits in prize money? • Donate it all to the Victims of Samurai Goroh Society. (Antonio Guster, Expert)",
+
+    "May I have your autograph, Champ? • Here. I wrote, 'in memory of Goroh's defeat.' *signs, then makes a faceprint* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (Antonio Guster, Master)",
+    "What is it with you and Goroh? • As soon as the Federation put a price on my head, he tried to turn me in! (Antonio Guster, Master)",
+    "What's your hair like under that helmet? • Well, it's either a Mohawk, an Afro, or a skinhead do. *his head alternates each hairstyle as he says it* You can't guess? It's a Mohawk! *takes off helmet, revealing a giant, dark blue Mohawk* (Antonio Guster, Master)",
+    "We hear you're not a bad baseball pitcher. • Baseball... Yeah, I'd really like to send Goroh a few dead balls... (Antonio Guster, Master)",
+    "What do you do when you're not racing? • I'm a bodyguard. I'll protect anyone, as long as they pay me. (Antonio Guster, Master)",
+    "What do you and your gang do, exactly? • Fight. No one can beat me in unarmed combat! (Antonio Guster, Master)",
+    "Goroh looked unhappy with the result. • Yeah, he looks great, doesn't he? Hahahahaha! (Antonio Guster, Master)",
+
+    // 18 - Beastman (Hyper Speeder)
+
+    "Congratulations on your stunning victory! • We all knew it would end this way. (Beastman, Novice)",
+    "Can you tell us why you became an F-Zero racer? • I put my life on the line. I love the thrill! (Beastman, Novice)",
+    "That's a great machine you've got there. • The Hyper Speeder and I are an unbeatable team! *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (Beastman, Novice)",
+
+    "What was the key to your victory? • The machine's explosive speed, my superhuman fitness and reflexes... The list is endless! (Beastman, Standard)",
+    "Your rivals are howling for revenge! • The race has been won by the best man! They can't change that! (Beastman, Standard)",
+    "A message for all your TV fans out there? • If you see any wild animals, give me a call! I'll be after them at 2,000 kilometers an hour! (Beastman, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • I am Beastman! I fight to the death! (Beastman, Expert)",
+    "What are your plans, now that you've won? • The wild animals are calling. The Hyper Speeder and I are off! (Beastman, Expert)",
+    "How will you use the one billion space credits in prize money? • Money just dulls a hunter's reflexes. All I need is a sauna after training. (Beastman, Expert)",
+
+    "May I have your autograph, Champ? • It's the signature of the greatest beast hunter alive! Treasure it! *kicks the signature board, leaving a footprint* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (Beastman, Master)",
+    "That was a great race. We look forward to the next one. • I'm going to show you a thrilling Grand Prix! (Beastman, Master)",
+    "Are there similarities between the F-Zero and your job - hunting beasts? • Both require dedication. A moment's hesitation can be the difference between life and death. (Beastman, Master)",
+    "What's the biggest animal you've brought down? • This one! *points to his helmet, made from an alligator head* Next, I want to make a helmet from a Bio Rex! (Beastman, Master)",
+    "Can you tell us how you became a world-class hunter? • Used gym equipment I bought from catalogues, and took a karate course by correspondence. (Beastman, Master)",
+    "Do you have any dreams for the future? • A peaceful world, free of wild animals! (Beastman, Master)",
+    "What's the secret of your great driving style? • Attack, attack, attack! (Beastman, Master)",
+
+    // 19 - Leon (Space Angler)
+    "Congratulations on your stunning victory! • Yeah! Victory is mine! (Leon, Novice)",
+    "Can you tell us why you became an F-Zero racer? • To see the smiles on the kids' faces. (Leon, Novice)",
+    "That's a great machine you've got there. • The Space Angler! It cuts through the wind like a knife! *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (Leon, Novice)",
+    
+    "What was the key to your victory? • Racing for someone other than myself. (Leon, Standard)",
+    "Your rivals are howling for revenge! • Catch me if you can! (Leon, Standard)",
+    "A message for all your TV fans out there? • Did you see me race? That's the power of a wild beast! (Leon, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • The power of the wild one! No one stands in my way! (Leon, Expert)",
+    "What are your plans, now that you've won? • I plan to take up wrestling. (Leon, Expert)",
+    "How will you use the one billion space credits in prize money? • Tonight, we eat like lords, kids! I'm on my way! (Leon, Expert)",
+
+    "May I have your autograph, Champ? • Give it to the kids who are watching the race on TV tonight! *draws... something... can't figure what it is...* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (Leon, Master)",
+    "Nice gloves! • They were a present from the kids. (Leon, Master)",
+    "What are your hobbies? • I coach soccer. The kids are pretty good. (Leon, Master)",
+    "For the sake of the kids, you can't lose, can you? • I fight for a reason, I win for a reason. (Leon, Master)",
+    "Your machine's a beautiful color. • It's the color of the sky over my home planet. (Leon, Master)",
+    "You've made the children a promise? • I promised to build them a soccer field with the money. And I'll keep that promise. (Leon, Master)",
+    "What do you do when you're not racing? • I'm the head of an orphanage. I won this race for the kids. (Leon, Master)",
+
+    // 20 - Super Arrow (King Meteor)
+    "Congratulations on your stunning victory! • Super Arrow knows not the word 'impossible'! (Super Arrow, Novice)",
+    "Can you tell us why you became an F-Zero racer? • For justice and galactic peace! (Super Arrow, Novice)",
+    "That's a great machine you've got there. • My sword of justice, the King Meteor! That's a 40 year loan, that is... *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (Super Arrow, Novice)",
+
+    "What was the key to your victory? • Justice always wins in the end. (Super Arrow, Standard)",
+    "Your rivals are howling for revenge! • The stronger my rivals are, the better I fight! (Super Arrow, Standard)",
+    "A message for all your TV fans out there? • People of Earth! I have foiled Zoda's ambition. Rest easy! (Super Arrow, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • I am champion! I am justice! I am Super Arrow! (Super Arrow, Expert)",
+    "What are your plans, now that you've won? • To eliminate evil! It will be a little harder than winning a Grand Prix... (Super Arrow, Expert)",
+    "How will you use the one billion space credits in prize money? • To pay off the loan on my machine. Hey, honey! It's time to raise my allowance! (Super Arrow, Expert)",
+
+    "May I have your autograph, Champ? • Signing autographs is one of a hero's duties! *signs* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (Super Arrow, Master)",
+    "Can we see your face? • The defender of justice must keep his face hidden. (Super Arrow, Master)",
+    "You'll be able to sleep well tonight! • We've triumphed over evil! I'll be able to rest well for a while. (Super Arrow, Master)",
+    "You're always with that owl, aren't you? • It brings me good luck. (Super Arrow, Master)",
+    "Nobody could keep up with you! • Thanks to my wife's strict training! (Super Arrow, Master)",
+    "Who is faster? You, or your wife? • I concede that victory to my wife. I'm scared not to!... (Super Arrow, Master)",
+    "Are there any negative aspects to being a defender of justice? • Uh... the wages are really low. (Super Arrow, Master)",
+
+    // 21 - Mrs. Arrow (Queen Meteor)
+    "Congratulations on your stunning victory! • I won! I won! (Mrs. Arrow, Novice)",
+    "Can you tell us why you became an F-Zero racer? • The Arrows go wherever evil is. (Mrs. Arrow, Novice)",
+    "That's a great machine you've got there. • It's the greatest. *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (Mrs. Arrow, Novice)",
+
+    "What was the key to your victory? • Boosts. And good timing. (Mrs. Arrow, Standard)",
+    "Your rivals are howling for revenge! • I'll teach them how to drive, if they like. (Mrs. Arrow, Standard)",
+    "A message for all your TV fans out there? • An elegant race, wasn't it? I hope you enjoyed it. (Mrs. Arrow, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • The most beautiful champion in F-Zero history! (Mrs. Arrow, Expert)",
+    "What are your plans, now that you've won? • I'd like to take a vacation. But there is no rest for the defenders of justice. (Mrs. Arrow, Expert)",
+    "How will you use the one billion space credits in prize money? • It will all go to charity. My husband can make do with the allowance he has. (Mrs. Arrow, Expert)",
+
+    "May I have your autograph, Champ? • Just one, then. *signs* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (Mrs. Arrow, Master)",
+    "The race was yours from the beginning. No one else stood a chance! • Hahaha, was such a foregone conclusion boring to watch? (Mrs. Arrow, Master)",
+    "I heard the justice of Mrs. Arrow is known for its severity. • Racers who break the rules will be severely punished! (Mrs. Arrow, Master)",
+    "What do you think of Super Arrow's racing? • He still needs a little work! (Mrs. Arrow, Master)",
+    "The rumor mill says you and your husband aren't getting on. • You've got to be kidding! Of course we fight, but we have a great relationship built on trust. (Mrs. Arrow, Master)",
+    "How did Super Arrow propose to you? • He was beating around the bush, so I ordered him to marry me! (Mrs. Arrow, Master)",
+    "Your driving will live in F-Zero history! • A driver wants to live on in the records, and in people's memories. (Mrs. Arrow, Master)",
+
+    // 22 - Gomar and Shioh (Twin Noritta)
+    "Congratulations on your stunning victory! • Gomar and Shioh are the greatest! (Gomar and Shioh, Novice)",
+    "Can you tell us why you became an F-Zero racer? • We wanted you to know... • G: ...if you work together, you can do anything. (Gomar and Shioh, Novice)",
+    "That's a great machine you've got there. • The Twin Noritta is the third member of our team. *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (Gomar and Shioh, Novice)",
+
+    "What was the key to your victory? • Pairing up together! (Gomar and Shioh, Standard)",
+    "Your rivals are howling for revenge! • We have the best machine! • The best engineer! • The best pilots! • We'll win again! (Gomar and Shioh, Standard)",
+    "A message for all your TV fans out there? • Gomar and Shioh make the impossible come true! (Gomar and Shioh, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • You're a champion! • You're a champion! • We're the champions! Gomar and Shioh are the champions! (Gomar and Shioh, Expert)",
+    "What are your plans, now that you've won? • We're going to talk it over together. (Gomar and Shioh, Expert)",
+    "How will you use the one billion space credits in prize money? • Save it. • Gamble with it! (Gomar and Shioh, Expert)",
+
+    "May I have your autograph, Champ? • Two... *Shioh signs* • ...for the price of one! *Gomar signs* • What a bargain! • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (Gomar and Shioh, Master)",
+    "Your driving technique is amazing! • That's us, Gomar and Shioh! • Different from all the rest! (Gomar and Shioh, Master)",
+    "You're a great team. You have no rivals! • One plus one equals one hundred! • That's us, Gomar and Shioh! (Gomar and Shioh, Master)",
+    "Nice scarves you're wearing. • These scarves are the symbol of our friendship! (Gomar and Shioh, Master)",
+    "What do you treasure most in life? • My partner! • Money! (Gomar and Shioh, Master)",
+    "Will you enter the Grand Prix again? • F-Zero is great! • Everyone looks so happy! • We'll be back again! (Gomar and Shioh, Master)",
+    "You don't know the word 'impossible', do you? • That's us, Gomar and Shioh! • Together, we'll take on the galaxy! *Shioh tosses Gomar high up in the air* (Gomar and Shioh, Master)",
+
+    // 23 - Silver Neelsen (Night Thunder)
+    "Congratulations on your stunning victory! • I wanted to win, and now I have! Peace! *does the V/peace sign with his hand* (Silver Neelsen, Novice)",
+    "Can you tell us why you became an F-Zero racer? • F-Zero drivers are so cool. And I'm the coolest in the universe! (Silver Neelsen, Novice)",
+    "That's a great machine you've got there. • We've got a lot of mileage left in us yet. *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (Silver Neelsen, Novice)",
+
+    "What was the key to your victory? • My machine was important! But more than that!... Um... I... forget already. (Silver Neelsen, Standard)",
+    "Your rivals are howling for revenge! • I'll teach them what F-Zero is all about! (Silver Neelsen, Standard)",
+    "A message for all your TV fans out there? • Life is short. Enjoy every day as much as you can. (Silver Neelsen, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • I won! What a great end to the Grand Prix! Hahahahaha! (Silver Neelsen, Expert)",
+    "What are your plans, now that you've won? • My 99th birthday party. It's going to be huge! (Silver Neelsen, Expert)",
+    "How will you use the one billion space credits in prize money? • Open the Silver Neelsen Museum. (Silver Neelsen, Expert)",
+
+    "May I have your autograph, Champ? • My first autograph as a champion! Wow! *signs* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (Silver Neelsen, Master)",
+    "That was quite aggressive racing. No one could catch you! • Silver Neelsen, the most aggressive old man in the galaxy! Hahahahaha! (Silver Neelsen, Master)",
+    "You've been looking forward to victory for so long. Now you can retire. • I'll never retire! And after I die, I'll race in the afterlife! (Silver Neelsen, Master)",
+    "Tell us, what's the secret of your longevity? • Hahahahaha! Laughing a lot! It's good for your health! Hahaha! (Silver Neelsen, Master)",
+    "How many times have you entered the Grand Prix? • Uh... Um... I forget already... (Silver Neelsen, Master)",
+    "You're a very energetic 98-year old. • 98 is still young! Peace! *does the V/peace sign with his hand* (Silver Neelsen, Master)",
+    "You're the man of the moment! We hear you'll be starring in a movie! • To celebrate my victory, they're going to make a movie of my life. (Silver Neelsen, Master)",
+
+    // 24 - Michael Chain (Wild Boar)
+    "Congratulations on your stunning victory! • Behold the power of the Bloody Chain! (Michael Chain, Novice)",
+    "Can you tell us why you became an F-Zero racer? • To show the world the strength of the Bloody Chain. (Michael Chain, Novice)",
+    "That's a great machine you've got there. • The boss of the Bloody Chain must have the best. *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (Michael Chain, Novice)",
+
+    "What was the key to your victory? • Eliminating everyone who got in my way! Gwahahahaha! (Michael Chain, Standard)",
+    "Your rivals are howling for revenge! • They're brave, aren't they? They should join us in the Bloody Chain! (Michael Chain, Standard)",
+    "A message for all your TV fans out there? • I make all the rules! I do as I want! (Michael Chain, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • I am the king of F-Zero! (Michael Chain, Expert)",
+    "What are your plans, now that you've won? • A victory parade through the entire galaxy! Hahahahaha! (Michael Chain, Expert)",
+    "How will you use the one billion space credits in prize money? • Gold! I'm going to cover my machine in gold! The Golden Boar! (Michael Chain, Expert)",
+
+    "May I have your autograph, Champ? • Sure. I'm in a good mood today. How many do you want? *signs* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (Michael Chain, Master)",
+    "What do you do in your spare time? • Boxing. There's nobody I can't knock to the ground! (Michael Chain, Master)",
+    "Can you tell us what you value in life? • Fame! Money! Power! And the Grand Prix gave me them all! Mwahahahaha! (Michael Chain, Master)",
+    "This was a race that will live in F-Zero history! • The fame of my driving will live on! (Michael Chain, Master)",
+    "What's the most important quality for an F-Zero driver? • Guts! The guts to keep your feet on the pedal, even in a crisis! (Michael Chain, Master)",
+    "Any messages for the members of the Bloody Chain? • Stay with me, and you'll get money and women beyond your wildest dreams! (Michael Chain, Master)",
+    "Can you tell us something about the Bloody Chain? • We have 10,000 members, and control three planets. We are the greatest! (Michael Chain, Master)",
+
+    // 25 - Blood Falcon (Blood Hawk)
+    "Congratulations on your stunning victory! • Time for a new hero, Falcon! (Blood Falcon, Novice)",
+    "Can you tell us why you became an F-Zero racer? • This was my destiny as a clone. (Blood Falcon, Novice)",
+    "That's a great machine you've got there. • I'm the only one who can control the power of the Blood Hawk! *close-up shot of the vehicle* (Blood Falcon, Novice)",
+
+    "What was the key to your victory? • The heart of a devil! Doing whatever it takes to win! (Blood Falcon, Standard)",
+    "Your rivals are howling for revenge! • My only true rival is Falcon. All the rest are small fry. (Blood Falcon, Standard)",
+    "A message for all your TV fans out there? • Blood Falcon, or Captain Falcon? Now all of you know which one of us is the real hero! (Blood Falcon, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • There can be only one champion! Blood Falcon! (Blood Falcon, Expert)",
+    "What are your plans, now that you've won? • Find a rival stronger than Captain Falcon. (Blood Falcon, Expert)",
+    "How will you use the one billion space credits in prize money? • Who's interested in money? My only objective was to squash Falcon! (Blood Falcon, Expert)",
+
+    "May I have your autograph, Champ? • Ha... Different from Falcon's autograph, isn't it? *makes a print with a closed fist* (Blood Falcon, Master)",
+    "A message for Captain Falcon? • I'm going to kill you. Resistance is futile. (Blood Falcon, Master)",
+    "A message for the racers you put in hospital? • Are you in agony? Are you in pain? Stay away from me if you don't want to suffer more! (Blood Falcon, Master)",
+    "How do you spend your time when you're not racing? • You probably don't know, but I race F-Zero in the underworld as well. (Blood Falcon, Master)",
+    "Do you have any secrets you'd like to share with us? • Falcon, I'm not the only copy of you! (Blood Falcon, Master)",
+    "You defeated Black Shadow, your creator! • I show no mercy for any of my rivals, no matter who they are! (Blood Falcon, Master)",
+    "The Galactic Space Federation will try to have you arrested!... • Hahahaha! Keep count of how many of them I kill. (Blood Falcon, Master)",
+
+    // 26 - John Tanaka (Wonder Wasp)
+    "Congratulations on your stunning victory! • Thank you. All my effort paid off. (John Tanaka, Novice)",
+    "Can you tell us why you became an F-Zero racer? • To protect Jody Summer. (John Tanaka, Novice)",
+    "That's a great machine you've got there. • I built it to my own design. Each and every part was made by my own hands. *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (John Tanaka, Novice)",
+
+    "What was the key to your victory? • My energy. (John Tanaka, Standard)",
+    "Your rivals are howling for revenge! • Come on, then! But I'll show you no mercy! (John Tanaka, Standard)",
+    "A message for all your TV fans out there? • The Galactic Space Federation is recruiting now. Come help us protect the galaxy! (John Tanaka, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • Thank you! Thank you! Thank you! (John Tanaka, Expert)",
+    "What are your plans, now that you've won? • Reward my machine with a good polish. (John Tanaka, Expert)",
+    "How will you use the one billion space credits in prize money? • Put the lot of it in savings. (John Tanaka, Expert)",
+
+    "May I have your autograph, Champ? • Shall I write, 'with love'? *signs* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (John Tanaka, Master)",
+    "Are you confident of being able to defend this title? • I don't know if I'll win again, but I'll certainly be giving it my best shot. (John Tanaka, Master)",
+    "What do you think is important in F-Zero? • Love your machine. It's what gets you over the finish line. (John Tanaka, Master)",
+    "What should we do to get a physique like yours? • Sports. And martial arts. (John Tanaka, Master)",
+    "Your years as a hermit have paid off. • Yes. I only came down off that mountain one time. (John Tanaka, Master)",
+    "You're quite the gentleman. • The martial arts taught me good manners. I never really learned to fight, though... (John Tanaka, Master)",
+    "Any tips for drivers? • Always remember to fasten your seat belt! (John Tanaka, Master)",
+
+    // 27 - Draq (Mighty Typhoon)
+    "Congratulations on your stunning victory! • Did I really win? This isn't a dream? (Draq, Novice)",
+    "Can you tell us why you became an F-Zero racer? • Is there anyone who doesn't want to become an F-Zero racer? (Draq, Novice)",
+    "That's a great machine you've got there. • Beautiful form, isn't it? *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (Draq, Novice)",
+
+    "What was the key to your victory? • I love this race! Victory should go to someone who loves the race. (Draq, Standard)",
+    "Your rivals are howling for revenge! • Let's go one more lap. Anytime! (Draq, Standard)",
+    "A message for all your TV fans out there? • This is Draq, the new hero of the F-Zero. Remember the name! (Draq, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • This is like a dream! I'm so happy I could die! (Draq, Expert)",
+    "What are your plans, now that you've won? • Sign some autographs, shake some hands, give some lectures... (Draq, Expert)",
+    "How will you use the one billion space credits in prize money? • Buy up F-Zero machines, and open an F-Zero museum. (Draq, Expert)",
+
+    "May I have your autograph, Champ? • Oh, I'm nervous. My hand is shaking so much, I can't write on this. *signs, wipes out what he's written, then signs again* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (Draq, Master)",
+    "Is there anything you wish you'd done in the F-Zero? • I forgot to get Captain Falcon's autograph! (Draq, Master)",
+    "What kind of race training do you do? • I practice on the F-Zero computer game. (Draq, Master)",
+    "Who do you want to share your victory with? • My buddy, Roger Buster. (Draq, Master)",
+    "Have you thought of taking up racing full-time? • Mmm... Not a bad idea. I need to discuss it with my partner, Roger. (Draq, Master)",
+    "Do you have anything you pay attention to when you race? • Fighting clean! Muhahahaha! (Draq, Master)",
+    "What are you interested in lately? • Dieting. It's really hard getting in and out of the machine. (Draq, Master)",
+
+    // 28 - Roger Buster (Mighty Hurricane)
+    "Congratulations on your stunning victory! • Racing the F-Zero is no different from driving my truck! (Roger Buster, Novice)",
+    "Can you tell us why you became an F-Zero racer? • Draq made me do it. (Roger Buster, Novice)",
+    "That's a great machine you've got there. • Yeah. It's mine, until someone turns up to claim it. *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (Roger Buster, Novice)",
+
+    "What was the key to your victory? • I never give up. That's my only redeeming feature. (Roger Buster, Standard)",
+    "Your rivals are howling for revenge! • Come on, then! Show me what you've got! (Roger Buster, Standard)",
+    "A message for all your TV fans out there? • I heard your calls of support. Thank you all! (Roger Buster, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • I'm not just a delivery van driver! (Roger Buster, Expert)",
+    "What are your plans, now that you've won? • I'm really tired. I think I'll hit the sauna for a while, then rest. (Roger Buster, Expert)",
+    "How will you use the one billion space credits in prize money? • First of all, on a nice, cold beer! (Roger Buster, Expert)",
+
+    "May I have your autograph, Champ? • Me, giving autographs? I may even put out my own CD! *signs* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (Roger Buster, Master)",
+    "What does it take to be a good delivery van driver? • A delivery driver must put the safety of the cargo ahead of his own life! (Roger Buster, Master)",
+    "What will you do if someone turns up to claim the machine? • My job is to deliver it to them. (Roger Buster, Master)",
+    "Is being a delivery driver dangerous? • Once I messed up a job, and ended displaced, just drifting around the galaxy. (Roger Buster, Master)",
+    "How do you enjoy your life? • A drink after work! *shrugs* (Roger Buster, Master)",
+    "How was the race? • It was thrilling! (Roger Buster, Master)",
+    "Your driving technique is amazing! • I carry goods back and forth across the galaxy. The race was nothing by comparison. (Roger Buster, Master)",
+
+    // 29 - Dr. Clash (Crazy Bear)
+    "Congratulations on your stunning victory! • My machine is the greatest! (Dr. Clash, Novice)",
+    "Can you tell us why you became an F-Zero racer? • To test the success of my experiment. (Dr. Clash, Novice)",
+    "That's a great machine you've got there. • Ahahahaha! All my dreams are realized in this machine. *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (Dr. Clash, Novice)",
+
+    "What was the key to your victory? • This Crazy Bear of mine! My brain, that created it! (Dr. Clash, Standard)",
+    "Your rivals are howling for revenge! • Ahahahahaha! They're probably not happy at losing to a geriatric. (Dr. Clash, Standard)",
+    "A message for all your TV fans out there? • Why don't you become an F-Zero racer? Make it big, in one of my machines! (Dr. Clash, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • I'm so happy, I feel like skipping! (Dr. Clash, Expert)",
+    "What are your plans, now that you've won? • I'm really tired. I think I'll fit a massager to the seats of the Crazy Bear. (Dr. Clash, Expert)",
+    "How will you use the one billion space credits in prize money? • Hmm... I think I'll build a giant F-Zero machine. (Dr. Clash, Expert)",
+
+    "May I have your autograph, Champ? • You want my autograph? *his robotic hands hold the board, while he presses his face against it, making a faceprint* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (Dr. Clash, Master)",
+    "Have you ever been tempted to give up F-Zero racing? • My dreams of racing are the engine fuel that keeps me going. To give up would be to die! (Dr. Clash, Master)",
+    "There were a lot of dangerous racers out there today. • They needed the screws in their heads tightened. I did it for them! Ahahahahahaha! (Dr. Clash, Master)",
+    "Crazy Bear is a great machine! • No, it still needs work. The microwave is on the blink, and the TV doesn't work! (Dr. Clash, Master)",
+    "With all your skill as a racer, why have you chosen to be a mechanic? • Science. It can send us up into the sky, or out into space. (Dr. Clash, Master)",
+    "What do you think of the other machines? • Garbage should go in the garbage can, and those machines should go on the scrap heap! Hahahahahaha! (Dr. Clash, Master)",
+    "We hear rumors that a giant F-Zero has been completed! • This is it! My giant F-Zero machine, Big Bear! *camera pans to show a gigantic version of Crazy Bear towering over Dr. Clash* (Dr. Clash, Master)",
+
+    // 30 - Black Shadow (Black Bull)
+    "Congratulations on your stunning victory! • This is a victory for evil! (Black Shadow, Novice)",
+    "Can you tell us why you became an F-Zero racer? • To do away with that eyesore, Falcon. (Black Shadow, Novice)",
+    "That's a great machine you've got there. • Hahahaha. It helps me carry out my grudge. *close-up shot of the vehicle* (Black Shadow, Novice)",
+
+    "What was the key to your victory? • Are you prepared to die to find out? (Black Shadow, Standard)",
+    "Your rivals are howling for revenge! • I'll send you straight to hell! It will be painless, I promise you... (Black Shadow, Standard)",
+    "A message for all your TV fans out there? • This is the beginning of the reign of evil! (Black Shadow, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • Bow down before my power, Falcon! (Black Shadow, Expert)",
+    "What are your plans, now that you've won? • Burn this place to the ground! Hahahahaha! (Black Shadow, Expert)",
+    "How will you use the one billion space credits in prize money? • Did you really think I would accept this paltry sum? (Black Shadow, Expert)",
+
+    "May I have your autograph, Champ? • Hahaha. You've got courage. You want to come work for me? *signs* (Black Shadow, Master)",
+    "What words do you draw inspiration from? • 'Domination or death!' You hear that, Falcon? Ahahahahaha! (Black Shadow, Master)",
+    "Any message for your rivals? • There will be no mercy for those who oppose me! Hahahahaha! (Black Shadow, Master)",
+    "Do you have a message for Captain Falcon? • Take me on, Falcon! Or are you going to run away with your tail between your legs? (Black Shadow, Master)",
+    "The Galactic Space Federation is banding together to have you arrested!... • The Federation's control of the seven galaxies ends tonight! Hahahahaha!!! (Black Shadow, Master)",
+    "Will you take your mask off? • It's brave of you to even ask me that. • Th-thank you, Champion!... (Black Shadow, Master)",
+    "Would you share your future dreams with us? • World destruction! And then, building a new world the way I want it! Hahahahaha!",
+
+    // 31 - Don Genie (Fat Shark)
+    "Congratulations on your stunning victory! • It's not as exciting as it's rumored to be... (Don Genie, Novice)",
+    "Can you tell us why you became an F-Zero racer? • I don't think you poor folks could fully grasp my reasons. (Don Genie, Novice)",
+    "That's a great machine you've got there. • Of course it is! How much do you think I've spent on it?! *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (Don Genie, Novice)",
+
+    "What was the key to your victory? • My own judgment. I've defeated more rivals than there are stars in the sky! (Don Genie, Standard)",
+    "Your rivals are howling for revenge! • I'm used to the envy of the poorer classes. (Don Genie, Standard)",
+    "A message for all your TV fans out there? • Sit there all day watching TV, and you'll never be as successful as I am! (Don Genie, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • Those who should be at the top, get there. That's all there is to it. (Don Genie, Expert)",
+    "What are your plans, now that you've won? • I have to go to a very important meeting. It may even affect the F-Zero. (Don Genie, Expert)",
+    "How will you use the one billion space credits in prize money? • This won't even pay for my cigars! (Don Genie, Expert)",
+
+    "May I have your autograph, Champ? • *swats away the signature board* No, they're a complete waste of time! (Don Genie, Master)",
+    "It's common knowledge that you've never been beaten. • That's right! I've taken every chance that came my way, and clawed my way out of the slums. (Don Genie, Master)",
+    "What's the biggest thing you've ever spent money on? • Taking over the F-Zero will be my biggest financial commitment. (Don Genie, Master)",
+    "Are there any racers you'd definitely like to keep in the F-Zero? • None of them amount to much. But Falcon has potential. (Don Genie, Master)",
+    "Are you going to donate some of your prize money to charity? • I'm not going to waste even one credit on charity! (Don Genie, Master)",
+    "What are your total assets? • I get more interest per second than the prize money of this race! (Don Genie, Master)",
+    "How does one become a financier like yourself? • I've had to walk over the top of my opposition to get here. Could you do that?! (Don Genie, Master)",
+
+    // 32 - Digi-Boy (Cosmic Dolphin)
+    "Congratulations on your stunning victory! • Haha! Who can beat my brains? (Digi-Boy, Novice)",
+    "Can you tell us why you became an F-Zero racer? • It was to check whether my simulation of the F-Zero was accurate. (Digi-Boy, Novice)",
+    "That's a great machine you've got there. • The computer program does all the hard work. I can operate it one-handed. *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (Digi-Boy, Novice)",
+
+    "What was the key to your victory? • Everything went according to my simulation. (Digi-Boy, Standard)",
+    "Your rivals are howling for revenge! • Huh?! Uh... they think they can beat me? (Digi-Boy, Standard)",
+    "A message for all your TV fans out there? • Everyone in my class, are you watching? The machine I made won! (Digi-Boy, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • QED! This should prove that my simulations are always accurate! (Digi-Boy, Expert)",
+    "What are your plans, now that you've won? • I'm presenting an academic paper based on my research of the F-Zero. (Digi-Boy, Expert)",
+    "How will you use the one billion space credits in prize money? • Capital for my company. We're developing a system that will change history! (Digi-Boy, Expert)",
+
+    "May I have your autograph, Champ? • Handwriting is so primitive. *signs* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (Digi-Boy, Master)",
+    "Would you share your dreams with us? • Fieldwork is essential in research. I want to get out there and have adventures! *spins in place* (Digi-Boy, Master)",
+    "Is that your school badge? • It's from the Einstein Institute, where the brightest students in the galaxy go. I'm their number one! (Digi-Boy, Master)",
+    "Can you tell us what kind of things you're interested in? • I'd like to do some research into Samurai Goroh. He's intriguing. (Digi-Boy, Master)",
+    "What else are you interested in? • Astronomy. It's the cornerstone of all my scientific research. (Digi-Boy, Master)",
+    "Are you interested in girls? • There's a girl named Sharon in my class... But that's not quite going according to my simulation. (Digi-Boy, Master)",
+    "Do you believe in God? • Hahaha. Who believes in such illusions? (Digi-Boy, Master)",
+
+    // 33 - Dai San Gen (Pink Spider)
+    "Congratulations on your stunning victory! • Thank you! • We are Dai San Gen! • If we work together... • ...we can do anything! (Dai San Gen, Novice)",
+    "Can you tell us why you became an F-Zero racer? • Well... • We like to travel the galaxy... • ...and join in any parties going on when we get there! (Dai San Gen, Novice)",
+    "That's a great machine you've got there. • Dr. Reach made it! • 30,000 years of Chinul technology went into it! • It's unbeatable! *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (Dai San Gen, Novice)",
+
+    "What was the key to your victory? • Our secret... • ...is our relationship with each other! • Teamwork! (Dai San Gen, Standard)",
+    "Your rivals are howling for revenge! • They've got guts! • Who is it?! • Bring on all comers! (Dai San Gen, Standard)",
+    "A message for all your TV fans out there? • Two heads are better than one! • Three heads are better than two! • We're the cutest triplets in the galaxy! • Dai San Gen! (Dai San Gen, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • No one can match us! • Expert class wasn't so hard. • We're unbeatable! *all three put their hands to their cheeks and wriggle in a seemingly cute display* (Dai San Gen, Expert)",
+    "What are your plans, now that you've won? • Keep traveling, in search of a place of refuge. • For the displaced Chinul race! (Dai San Gen, Expert)",
+    "How will you use the one billion space credits in prize money? • We'll divide it evenly with the rest of the Chinul people. (Dai San Gen, Expert)",
+
+    "May I have your autograph, Champ? • I'll sign! • We'll all sign! • Shut up, you pig! • Stop fighting! *San signs* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (Dai San Gen, Master)",
+    "You have quite an aggressive race strategy. • We call it the Triple Attack! • Anything we hit... • ...blows up! *all three somersault in the air* (Dai San Gen, Master)",
+    "The winner only receives one trophy. Which one of you will take it? • It will belong to all of us. • Or better yet... • We'll win three races and each keep a trophy! (Dai San Gen, Master)",
+    "Which one of you is the fastest? • I handle the machine the best. • I am the strategy whiz. • I do speed control. • That's how we win! (Dai San Gen, Master)",
+    "Do you have any other skills? • Wanna see... • ...the gymnastics... • ...we learned with the National Troupe? *Dai and Gen stand with their heads and start to toss San into the air with their feet repeatedly* (Dai San Gen, Master)",
+    "Could you introduce yourselves? • I'm Dai. • I'm San. • I'm Gen. • We look alike. • Don't get us mixed up! (Dai San Gen, Master)",
+    "What else are you interested in? • Mahjong! • Mahjong with friends. (Dai San Gen, Master)",
+
+    // 34 - Spade (Magic Seagull)
+    "Congratulations on your stunning victory! • Did you see the trick I pulled during the race? (Spade, Novice)",
+    "Can you tell us why you became an F-Zero racer? • I wanted to put on a show on the greatest stage in the galaxy! (Spade, Novice)",
+    "That's a great machine you've got there. • It is beautiful, isn't it? I wouldn't trade it for the world. *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (Spade, Novice)",
+
+    "What was the key to your victory? • Strategy. Not even the seasoned racers could anticipate my strategy. (Spade, Standard)",
+    "Your rivals are howling for revenge! • Make sure you have life insurance. Next time, I raise the danger level! (Spade, Standard)",
+    "A message for all your TV fans out there? • All those crashes and explosions... we hope you enjoyed the show! (Spade, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • Even your most ambitious racers are mere children compared to me. (Spade, Expert)",
+    "What are your plans, now that you've won? • Have my splendid magic broadcast throughout the galaxy. (Spade, Expert)",
+    "How will you use the one billion space credits in prize money? • One billion? Mmhmm. A little magic, and I can triple that. (Spade, Expert)",
+
+    "May I have your autograph, Champ? • I don't usually give autographs... but okay. *signs* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (Spade, Master)",
+    "Tell us about your other interests. • I've experienced all the thrills the galaxy has to offer. But nothing beats magic. (Spade, Master)",
+    "What advice do you have for other racers? • Don't focus so much on the finish line that you miss the tricks I'm pulling right in front of you! (Spade, Master)",
+    "What did you think of the race? • Very underwhelming. None of my preparation was even necessary. (Spade, Master)",
+    "Were you born like this? • You mean my body? When I was born, I was enclosed in a globe. (Spade, Master)",
+    "Can you tell us what's important to you? • My three-year-old son. He's starting to look just like me. (Spade, Master)",
+    "What's your best magic trick? • Sawing bodies in half. *rotates the upper half of his body in place, while the lower half remains still* (Spade, Master)",
+
+    // 35 - Daigoroh (Silver Rat)
+
+    "Congratulations on your stunning victory! • Huh! It was nothing! (Daigoroh, Novice)",
+    "Can you tell us why you became an F-Zero racer? • Because I wanted to! Why do I need a reason? (Daigoroh, Novice)",
+    "That's a great machine you've got there. • It's wild, isn't it? I call it the Silver Rat. *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (Daigoroh, Novice)",
+
+    "What was the key to your victory? • Guts! And guts! (Daigoroh, Standard)",
+    "Your rivals are howling for revenge! • Ahaha! I'll beat you all again! (Daigoroh, Standard)",
+    "A message for all your TV fans out there? • Peace! Are you watching, Dad? *makes the V/peace sign with both hands, then starts waving at the camera* (Daigoroh, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • When I get serious, this is what I can do! (Daigoroh, Expert)",
+    "What are your plans, now that you've won? • Spend it before my old man gets hold of it!... Uh, Dad?... (Daigoroh, Expert)",
+    "How will you use the one billion space credits in prize money? • Buy a galactic cruiser and explore the galaxy! (Daigoroh, Expert)",
+
+    "May I have your autograph, Champ? • Autograph? I feel like a celebrity! *signs* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (Daigoroh, Master)",
+    "What are your plans for the future? • To be an even better thief than my old man! And to keep on beating Falcon. (Daigoroh, Master)",
+    "Have you had any fun lately? • I put a frog in my father's mouth while he was snoring! (Daigoroh, Master)",
+    "We've heard that you're a martial arts specialist. • Not just the martial arts! Soccer and baseball, too! But I'm not too good at math... (Daigoroh, Master)",
+    "Do you have something you treasure? • *pulls out a figurine* This Samurai Goroh plastic figure! I just got it! (Daigoroh, Master)",
+    "Who do you respect most? • My old man! He's the best thief in the whole world! (Daigoroh, Master)",
+    "Can you tell us about your father? • He's fat and he snores, but he's so good at what he does! He's the greatest! (Daigoroh, Master)",
+
+    // 36 - Princia Ramode (Spark Moon)
+    "Congratulations on your stunning victory! • It was so much fun! I'd love to do it again! (Princia Ramode, Novice)",
+    "Can you tell us why you became an F-Zero racer? • We never have this much fun in the Royal Palace. (Princia Ramode, Novice)",
+    "That's a great machine you've got there. • I had the Royal Research Institute make it. It wasn't easy keeping it a secret from my father. *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (Princia Ramode, Novice)",
+
+    "What was the key to your victory? • I was just lucky! All the drivers were evenly matched. (Princia Ramode, Standard)",
+    "Your rivals are howling for revenge! • Anytime! I look forward to racing them again! (Princia Ramode, Standard)",
+    "A message for all your TV fans out there? • Father, look at me. Isn't it time you started treating me as an adult? (Princia Ramode, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • It can't be over already! How about one more race? (Princia Ramode, Expert)",
+    "What are your plans, now that you've won? • This is my first taste of freedom, and I love it! Now I want to go somewhere else! (Princia Ramode, Expert)",
+    "How will you use the one billion space credits in prize money? • It's money I earned all by myself, so I'll think about it carefully. (Princia Ramode, Expert)",
+
+    "May I have your autograph, Champ? • Autograph?... What do you want me to write? *signs* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (Princia Ramode, Master)",
+    "You've got a fantastic body. How do you keep it so beautiful? • Heeheehee! That's classified Top Secret by my country! (Princia Ramode, Master)",
+    "What's your life like in the palace? • Private tutors, and parties with my friends. Dull, dull, dull! (Princia Ramode, Master)",
+    "How does it feel to win the Grand Prix? • It's even more exciting than I had imagined! (Princia Ramode, Master)",
+    "Isn't the F-Zero too hard for a princess? • I'm not the graceful type. I like the rough and tumble of a good fight! Heehee! (Princia Ramode, Master)",
+    "Can you say something to your fans? • I'll be back! *blows a kiss* (Princia Ramode, Master)",
+    "Any of the gentlemen racing take your fancy? • Samurai Goroh. I've never met anyone like him! (Princia Ramode, Master)",
+
+    // 37 - Lily Flyer (Bunny Flash)
+    "Congratulations on your stunning victory! • I want you to realize that I'm capable of even more than this. (Lily Flyer, Novice)",
+    "Can you tell us why you became an F-Zero racer? • It's my job. I do this as part of my fighter training. (Lily Flyer, Novice)",
+    "That's a great machine you've got there. • It's not fast. It's sturdy enough to stand up to front-line combat. *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (Lily Flyer, Novice)",
+
+    "What was the key to your victory? • The key? I haven't found a key yet. Or reached my full potential. (Lily Flyer, Standard)",
+    "Your rivals are howling for revenge! • Fine. I take that as a declaration of war against the organization! (Lily Flyer, Standard)",
+    "A message for all your TV fans out there? • I wish I were free to live and love like you all do. (Lily Flyer, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • For a trained expert, this was too easy. You have to wonder if there's something else to it. (Lily Flyer, Expert)",
+    "What are your plans, now that you've won? • Take a long vacation. (Lily Flyer, Expert)",
+    "How will you use the one billion space credits in prize money? • I'd love to spend it, but the organization will decide how to spend the money. It's not up to me. (Lily Flyer, Expert)",
+
+    "May I have your autograph, Champ? • This is the last of my duties. *signs* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (Lily Flyer, Master)",
+    "Tell us about the organization you belong to. • We support the efforts of the Galactic Space Federation. (Lily Flyer, Master)",
+    "What are your favorite foods? • Fruit parfait, but unfortunately the mess hall doesn't serve it very often. (Lily Flyer, Master)",
+    "And what else are you interested in? • Well, this is a little embarrassing, but I like to collect frog knick-knacks. (Lily Flyer, Master)",
+    "What do you consider to be your best features? • This great body. All of that training has paid off. (Lily Flyer, Master)",
+    "What do you do when you're not training? • More training! I never miss a day. (Lily Flyer, Master)",
+    "What kind of guys do you like? • The tall, handsome ones, of course! (Lily Flyer, Master)",
+
+    // 38 - PJ (Groovy Taxi)
+    "Congratulations on your stunning victory! • I'm faster than any other racer out there! (PJ, Novice)",
+    "Can you tell us why you became an F-Zero racer? • I want people to know just how good we taxi drivers are. (PJ, Novice)",
+    "That's a great machine you've got there. • I'm in it every day. It's like a part of my body. *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (PJ, Novice)",
+
+    "What was the key to your victory? • There are no speeding violations in this race. Speed wins the day! (PJ, Standard)",
+    "Your rivals are howling for revenge! • They have their pride as drivers. I have my pride as a taxi driver, so I won't let them beat me. (PJ, Standard)",
+    "A message for all your TV fans out there? • When you want to go out, call Galaxy Cabs! Starting at just 700 space credits! We promise you the ride of your life! (PJ, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • It's a great feeling to get behind the wheel and not worry about the fare meter! (PJ, Expert)",
+    "What are your plans, now that you've won? • Overhaul the wheels. Vehicle maintenance is a taxi driver's basic! (PJ, Expert)",
+    "How will you use the one billion space credits in prize money? • Well, before I answer that question... would you like a receipt for the one billion space credits? (PJ, Expert)",
+
+    "May I have your autograph, Champ? • At times like this, I'm glad I have a short name. *signs* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (PJ, Master)",
+    "Nice suit! • It's the Galaxy Cab uniform. This star is for being their best driver. (PJ, Master)",
+    "There must be a lot of people who want to ride in your cab. • I'd never refuse a passenger. But they should realize that my driving is very... uh... thrilling! (PJ, Master)",
+    "You've asked the boss of the cab company for a favor? • I want a bigger cab. Some of my passengers are 30 meters tall, you know! (PJ, Master)",
+    "What kind of passengers make your job difficult? • Drunks. And couples who can't keep their hands off each other. (PJ, Master)",
+    "What are a taxi driver's worst enemies? • Traffic jams, and the Galactic Space Federation. They're always after me for speeding violations, but so far they haven't been fast enough to catch me! (PJ, Master)",
+    "What's an important characteristic for a taxi driver? • Calm. There's no room to be calm in the F-Zero, though. (PJ, Master)",
+
+    // 39 - QQQ (Rolling Turtle)
+    "Congratulations on your stunning victory! • Thank you. It's hard to believe. (QQQ, Novice)",
+    "Can you tell us why you became an F-Zero racer? • I've been thrown out on the trash heap, but I wanted to show I wasn't done for yet. (QQQ, Novice)",
+    "That's a great machine you've got there. • It's my pride and joy. *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (QQQ, Novice)",
+
+    "What was the key to your victory? • I analyzed Falcon's style and used the data. (QQQ, Standard)",
+    "Your rivals are howling for revenge! • I'll take them on, as long as I have power left in my batteries. (QQQ, Standard)",
+    "A message for all your TV fans out there? • Dont get too excited! If I know you're cheering for me, I get nervous. (QQQ, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • The other racers were not in top form. And I was lucky. (QQQ, Expert)",
+    "What are your plans, now that you've won? • My battery... is... low... so... I... need to... recharge... *shuts down* (QQQ, Expert)",
+    "How will you use the one billion space credits in prize money? • I don't need so much money. Just give me enough to fix up my machine. (QQQ, Expert)",
+
+    "May I have your autograph, Champ? • Oh yes. I'll write it straight away. *signs* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (QQQ, Master)",
+    "Isn't racing frightening? • Now that you mention it, yes, it is! (QQQ, Master)",
+    "This is the birth of a new F-Zero hero! • A hero? Me? I'm just a robot. (QQQ, Master)",
+    "What do you do with your free time? • Shop for spare parts. I like to customize the machine. And my body. (QQQ, Master)",
+    "Your race showed your best robot qualities. • I didn't hit the walls, and I used the booster a lot. Not very difficult. (QQQ, Master)",
+    "What is your function as a robot? • I was originally designed for landmine detection and disposal. Hence, the shock-resistant body. (QQQ, Master)",
+    "What do you think of the Grand Prix? • It's a... very significant race. (QQQ, Master)",
+
+    // 40 - Phoenix (Rainbow Phoenix)
+    "Congratulations on your stunning victory! • I'll remember this all my life. (Phoenix, Novice)",
+    "Can you tell us why you became an F-Zero racer? • I came from the future. We heard there would be some criminals from the 29th century entering the race. (Phoenix, Novice)",
+    "That's a great machine you've got there. • This is the very best of 29th century technology. *close-up shot of the vehicle* • I'd love to ride in that kind of machine just once in my life! (Phoenix, Novice)",
+
+    "What was the key to your victory? • A famous racer of the 20th century taught me all his secrets. (Phoenix, Standard)",
+    "Your rivals are howling for revenge! • I'll see you in the 29th century, if you live that long! (Phoenix, Standard)",
+    "A message for all your TV fans out there? • The Time Patrol is fighting to protect your lives. Don't forget it. (Phoenix, Standard)",
+
+    "The winner of the Expert Class. Congratulations! • It's a privilege to have won such a prestigious race. (Phoenix, Expert)",
+    "What are your plans, now that you've won? • I have to say good-bye. There's a criminal I need to chase to the 32nd century. (Phoenix, Expert)",
+    "How will you use the one billion space credits in prize money? • I can't accept it. It's part of the Time Patrol credo. Use it for world peace. (Phoenix, Expert)",
+
+    "May I have your autograph, Champ? • Just one - I'm in a hurry. *signs* • I'd like to present this autograph to one lucky viewer on F-Zero TV! Here's the address! *points to some unintelligible symbols/coordinates* (Phoenix, Master)",
+    "Are you glad you joined the Time Patrol? • Yes. It's good to get back to the 29th century, and check that the history books haven't been rewritten. (Phoenix, Master)",
+    "Does the F-Zero still exist in the 29th century? • In a slightly different form, yes. I can't tell you any more than that. You'll just have to wait and see! (Phoenix, Master)",
+    "Could I join the Time Patrol? • Of course. The Patrol recruits from each century. (Phoenix, Master)",
+    "Who have the Time Patrol been chasing this time? • A crim. We almost had him... (Phoenix, Master)",
+    "Don't you want to stay in this century? • I like this century. But to protect it, I need to keep doing my job. (Phoenix, Master)",
+    "Can you tell us what's going to be in fashion in the 29th century? • I am not allowed to pass on information, unless it's vital to my duties. (Phoenix, Master)",
+]
+
+export const f_zero_gx_quotes = f_zero_gx_story_quotes.concat(f_zero_gx_interview_quotes);
