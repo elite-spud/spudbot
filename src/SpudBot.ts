@@ -1,10 +1,9 @@
 import { randomInt } from "crypto";
 import * as fs from "fs";
-import { JWT } from "google-auth-library";
-import { google, sheets_v4 } from "googleapis";
 import { ChannelPointRequests } from "./ChannelPointRequests";
 import { IChatWarriorState } from "./ChatWarrior";
 import { Future } from "./Future";
+import { GoogleAPI, GoogleAPIConfig } from "./GoogleAPI";
 import { IIrcBotAuxCommandGroupConfig, IPrivMessageDetail } from "./IrcBot";
 import { egadd_quotes, f_zero_gx_interview_quotes, f_zero_gx_quotes, f_zero_gx_story_quotes, luigi_quotes } from "./Quotes";
 import { ITwitchBotConfig, ITwitchBotConnectionConfig, ITwitchUserDetail, TwitchBotBase, TwitchEventSubSubscriptionType, TwitchEventSub_ChannelPointCustomRewardRedemptionAdd } from "./TwitchBot";
@@ -24,26 +23,7 @@ export interface ISpudBotConfig extends ITwitchBotConfig {
 }
 
 export interface ISpudBotConnectionConfig extends ITwitchBotConnectionConfig {
-    google: {
-        oauth: {
-            clientId: string;
-            clientSecret: string;
-            scope: string;
-        },
-        jwt: {
-			type: string,
-			project_id: string,
-			private_key_id: string,
-            private_key: string,
-            client_email: string,
-            client_id: string,
-            auth_uri: string,
-            token_uri: string,
-            auth_provider_x509_cert_url: string,
-            client_x509_cert_url: string,
-            universe_domain: string,
-        },
-    }
+    google: GoogleAPIConfig;
 }
 
 export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
@@ -54,8 +34,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
     protected _capsMessageWarnings: { [userName: string]: Date | undefined } = {};
 
     protected override getServiceName(): string { return "SpudBot" }
-    protected readonly _googleCredentialsKeyName = "googleCredentials";
-    protected readonly _googleAuthClient = new Future<JWT>();
+    protected readonly _googleApi = new Future<GoogleAPI>();
 
     public constructor(connection: ISpudBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], configDir: string) {
         super(connection, auxCommandGroups, configDir);
@@ -85,9 +64,11 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
     public override async _startup(): Promise<void> {
         await super._startup();
 
-        await this.loadGoogleAuth();
+        const googleApi = new GoogleAPI(this._config.connection.google);
+        await googleApi.startup();
+        this._googleApi.resolve(googleApi);
 
-        await this.testGoogleApi();
+        await googleApi.testGoogleApi();
     }
 
     protected override async getTwitchBroadcasterId(): Promise<string> {
@@ -185,64 +166,6 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
             numChatMessages: 0,
         };
         return twitchUserDetail;
-    }
-
-    protected async loadGoogleAuth(): Promise<void> {
-        const client = new JWT({
-            email: this._config.connection.google.jwt.client_email,
-            key: this._config.connection.google.jwt.private_key,
-            scopes: ["https://www.googleapis.com/auth/drive"],
-        });
-        this._googleAuthClient.resolve(client);
-    }
-
-    protected async testGoogleApi(): Promise<void> {
-        const sheets = google.sheets({
-            version: 'v4',
-            auth: await this._googleAuthClient,
-        });
-        const resource = await sheets.spreadsheets.values.get({
-            spreadsheetId: "1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY",
-            range: "A1:B2",
-        });
-        const rows = resource.data.values;
-        if (!rows) {
-            console.log("no rows found");
-            return;
-        }
-        for (const row of rows) {
-            for (const cell of row) {
-                console.log(cell);
-            }
-        }
-
-        const batchUpdateRequest: sheets_v4.Schema$BatchUpdateValuesRequest = {
-            valueInputOption: "RAW",
-            data: [
-                {
-                    range: "Sheet3!A1",
-                    values: [
-                        ["A1"],
-                    ]
-                },
-                {
-                    range: "Sheet3!A4:C4",
-                    values: [
-                        ["foo", "bar"],
-                    ]
-                },
-                {
-                    range: "Sheet3!A6:A10",
-                    values: [
-                        ["foo"], ["bar"],
-                    ]
-                },
-            ]
-        };
-        await sheets.spreadsheets.values.batchUpdate({
-            spreadsheetId: "1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY",
-            requestBody: batchUpdateRequest,
-        });
     }
 
     protected async handleEcho(messageDetail: IPrivMessageDetail): Promise<void> {
