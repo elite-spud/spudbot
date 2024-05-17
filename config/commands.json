@@ -1,498 +1,552 @@
 [
     {
-		"timerMinutesOffset": 15,
-		"timerMinutes": 90,
-		"random": true,
-		"commands": [
-			{
-				"name": "!therun",
-				"aliases": ["!therungg"],
-				"autoPostGameWhitelist": ["Luigi's Mansion"],
-				"responses": [
-					"Interested in seeing extra details and statistics about my splits as I speedrun? Check my profile on TheRun.gg, and click the live button to see realtime updates on my current run! https://therun.gg/live/Elite_Spud"
-				]
-			},
-			{
-				"name": "!blind_recurring",
-				"aliases": [],
-				"autoPostIfTitleContainsAny": ["!blind"],
-				"responses": [
-					"This is a blind playthrough, which means that I know nothing about this game want to keep it that way. Do not tell me how to play the game. Do not spoil. Do not fake spoil. Do not hint, backseat, advise, guide, remind, or warn me in any way, please. Consider all questions to be rhetorical. Revel in my ignorance, and enjoy my suffering."
-				]
-			},
-			{
-				"name": "!spoilerdiscord_recurring",
-				"aliases": [],
-				"autoPostIfTitleContainsAny": ["!blind"],
-				"responses": [
-					"Wanna talk spoilers without posting directly in twitch chat? I've got a dedicated channel for spoiler-y discussion in the Discord server! https://discord.gg/f4bhKYxPy8"
-				]
-			},
-			{
-				"name": "!crowdcontrol",
-				"aliases": ["!cc"],
-				"autoPostIfTitleContainsAny": ["!cc"],
-				"responses": [
-					"Crowd Control provides a way for viewers to interact with the game I'm playing on stream! The power is in your hands to help or hinder me in my journey... or just make things look a bit silly while I play! Everyone gets 50 free coins that they can use to power these effects, but you can also exchange channel points (or money) to get more! Visit https://interact.crowdcontrol.live/#/twitch/47243772 to spend coins, or try using the integrated twitch extension (it even works on mobile)!"
-				]
-			},
-			{
-				"name": "!crowdcontrolchallenge",
-				"aliases": ["!ccc", "!challenge", "!ccmax"],
-				"autoPostIfTitleContainsAny": ["!cc"],
-				"responses": [
-					"I'm attempting Luigi's Mansion Max% with Crowd Control active! For every death, I'll gift a sub (max 20), and for every 10 pieces of money missed at the end, I'll gift another (max 20 more). I fully expect everyone to make this as difficult as possible, so go ahead and hit me with your best shot"
-				]
-			},
-			{
-				"name": "!incentive",
-				"aliases": ["!incentives", "!goals", "!subgoals"],
-				"autoPostIfTitleContainsAny": ["!incentive", "!incentives"],
-				"responses": [
-					"Current subgoal incentives: https://docs.google.com/spreadsheets/d/1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY"
-				]
-			}
-		]
-	},
-	{
-		"timerMinutesOffset": 75,
-		"timerMinutes": 90,
-		"random": true,
-		"commands": [
-			{
-				"name": "!response",
-				"responses": [
-					"Ask a question but didn't get an answer? Feel free to ask again in a few minutes with an @ if I don't respond the first time!",
-					"I often get tunnel vision when playing video games on stream, so it's tough to keep up with chat sometimes. If your question isn't answered, please ask again after a little while!",
-					"Sorry if I miss any of your questions! I promise it's not intentional. Please @ me and ask again if I don't get around to your message the first time.",
-					"I'm easily distracted, and often go on tangents while in the middle of making a point. If I get sidetracked while talking about something you found interesting, please feel free to bring it up again so I can finish sharing my thoughts!"
-				]
-			},
-			{
-				"name": "!hydrate",
-				"aliases": ["!meds", "!vitamins"],
-				"responses": [
-					"Friendly reminder to take a sip of water, stretch your legs, take any meds or vitamins you need, and grab a snack if you're hungry."
-				]
-			}
-		]
-	},
-	{
-		"timerMinutesOffset": 90,
-		"timerMinutes": 90,
-		"random": true,
-		"commands": [
-		]
-	},
-	{
-		"timerMinutesOffset": 45,
-		"timerMinutes": 90,
-		"random": true,
-		"commands": [
-			{
-				"name": "!youtube",
-				"aliases": ["!vods", "!vod"],
-				"responses": [
-					"VODs get posted to Youtube (in higher quality than streams!): https://www.youtube.com/@elite_spud",
-					"Blind playthroughs and other interesting streams get uploaded to YouTube here: https://www.youtube.com/@elite_spud",
-					"Miss a playthrough you really wanted to catch? I archive my streams locally at 1440p and post them on YouTube! https://www.youtube.com/@elite_spud"
-				]
-			},
-			{
-				"name": "!discord",
-				"responses": [
-					"We have a Discord server! Join in and be a part of the community offstream! https://discord.gg/f4bhKYxPy8",
-					"Want consistent notifications when the stream is live? Join the Discord server and request a role to always get pinged! https://discord.gg/f4bhKYxPy8",
-					"Enjoy using my sub emotes? You can link your Twitch account with Discord to get access to them on other servers if you're a subscriber; no Nitro required! https://discord.gg/f4bhKYxPy8",
-					"Like seeing Loki and the other kitties on stream? You can see more of them and other folks' cats in the community Discord! https://discord.gg/f4bhKYxPy8",
-					"Wanna talk about music you love or discovered recently? We've got a Discord channel for that! https://discord.gg/f4bhKYxPy8"
-				]
-			},
-			{
-				"name": "!music",
-				"aliases": ["!rateyourmusic", "!musicratings", "!lastfm", "!songs"],
-				"responses": [
-					"I collect music CDs and keep track of what I listen to as a hobby. You can judge my music taste here https://rateyourmusic.com/~elite_spud and here https://www.last.fm/user/elite_spud",
-					"I've been building up a small collection of music CDs for a few years. See what I've got and what I've been listening to https://rateyourmusic.com/~elite_spud & https://www.last.fm/user/elite_spud",
-					"In my spare time, I curate a small music CD collection, mostly focused around heavy, progressive, dark, and ambient genres. Check out what I have at https://rateyourmusic.com/~elite_spud + https://www.last.fm/user/elite_spud and feel free to shoot me a recommendation (any genre) if you've got one!"
-				]
-			},
-			{
-				"name": "!instagram",
-				"aliases": ["!cats", "!insta", "!ig"],
-				"responses": [
-					"I have an instagram where I post pictures of my cats and also cool places I travel to https://www.instagram.com/elite.spud/",
-					"Hey, wanna see some cute cats? https://www.instagram.com/elite.spud/"
-				]
-			},
-			{
-				"name": "!av",
-				"aliases": ["!diagram"],
-				"responses": [
-					"Wanna know how many wires are in my AV setup? Or what it takes to play GameBoy games on a PC monitor? Check out the diagram I made to keep up with it all, and don't be afraid to ask me questions about any specific components: https://gist.github.com/elite-spud/6f82f3da9d586df553757fa134278845",
-					"Wondering what kind of hardware I use to stream/play console games? Take a look at my layout diagram to see how everything hooks together: https://gist.github.com/elite-spud/6f82f3da9d586df553757fa134278845. Don't be afraid to ask questions about how everything works!"
-				]
-			},
-			{
-				"name": "!hardware",
-				"aliases": ["!pc", "!equipment"],
-				"responses": [
-					"You can find a list of all the parts in my PC / stream setup here: https://pcpartpicker.com/user/ghetto_spud/saved/djj7RB"
-				]
-			},
-			{
-				"name": "!pendinggames",
-				"aliases": ["!streamgames", "!games"],
-				"responses": [
-					"I maintain a list of all the games I've streamed (and might stream) here: https://docs.google.com/spreadsheets/d/1JsdDfmdjaL3d-oGsuq38z_jhrvkhePF1LLz4W1dpzI4/edit?usp=sharing and keep a tier list of my blind playthroughs here: https://pastebin.com/fRPKHM7D You can also check my pastebin profile for some of my more substantial opinions on certain games: https://pastebin.com/u/ghetto_spud"
-				]
-			},
-			{
-				"name": "!github",
-				"aliases": ["!bot", "!chatbot", "!code", "!sourcecode"],
-				"responses": [
-					"I (Spud) wrote this chatbot myself because I'm a big nerd. If you fancy yourself a nerd too, you can peruse the source code on GitHub here: https://github.com/elite-spud/spudbot",
-					"This chatbot is © Spud Inc., which maintains an open policy of showcasing all the programming mistakes of the chatbot author for all to see here: https://github.com/elite-spud/spudbot",
-					"I'm a software engineer by day, and this chatbot is actually one of my side-projects! If you want to see how it works, you can find all the source code here: https://github.com/elite-spud/spudbot"
-				]
-			},
-			{
-				"name": "!glitchwave",
-				"aliases": ["!gameratings"],
-				"responses": [
-					"I took the time to catalog and rate all the games I've played over the years. Take a peek at my favorites and not-so-favorites here: https://glitchwave.com/user/elite_spud/",
-					"Curious if I've played your favorite game before, and/or what my opinions about it are? Look no further: https://glitchwave.com/user/elite_spud/",
-					"Got a favorite game? Me too: https://glitchwave.com/user/elite_spud/"
-				]
-			},
-			{
-				"name": "!twitchnotifications",
-				"responses": [
-					"Twitch notifications are sometimes inconsistent, but I try to include special little messages in my going live pings for each stream, so turn 'em on if you wanna be implicated in my goofin' around! You can manage your notifications in detail here: https://www.twitch.tv/settings/notifications"
-				]
-			},
-			{
-				"name": "!streamteam",
-				"aliases": ["!binarybreakers", "!bb"],
-				"responses": [
-					"I'm part of a stream team on Twitch now! If you're looking for some amazing nonbinary streamers to follow, check out the Binary Breakers! https://www.twitch.tv/team/binarybreakers"
-				]
-			}
-		]
-	},
-	{
-		"commands": [
-			{
-				"name": "!rules",
-				"aliases": ["!chatrules"],
-				"responses": [
-					"Chat Rules: • No bigotry, harassment, or intolerance allowed. Respect other folks or be banned • Don't spoil anything • Don't tell me how to play the game • Don't trauma dump. I want to cultivate a safe and positive space in my chat • Keep any political / religious discussions civil and infrequent • Stream is generally PG to PG-13. I prefer not to swear for my own reasons, but don't really care if you do (within reason) • No shortened hyperlinks • No self-promotion spam • Don't be a dingus"
-				]
-			},
-			{
-				"name": "!pronouns",
-				"responses": [
-					"Spud's pronouns are They/She. See other chatters' pronouns and set your own here: https://pronouns.alejo.io/"
-				]
-			},
-			{
-				"name": "!gender",
-				"aliases": ["!trans", "!nonbinary"],
-				"responses": [
-					"Non-binary transfeminine. They/She pronouns. Sapphic. Hormone therapy since Dec 2020."
-				]
-			},
-			{
-				"name": "!gay",
-				"responses": [
-					"As heck https://www.instagram.com/p/CvIRzIjPQY7"
-				]
-			},
-			{
-				"name": "!emotes",
-				"aliases": ["!emotelist", "!ffz", "!bttv"],
-				"responses": [
-					"Sub emotes: https://www.twitchemotes.com/channels/47243772 FFZ Emotes: https://www.frankerfacez.com/channel/elite_spud BTTV Emotes: https://betterttv.com/users/5ca587c9fc7c0646cddcd7a4"
-				]
-			},
-			{
-				"name": "!foo",
-				"responses": [
-					"bar"
-				]
-			},
-			{
-				"name": "!tomato",
-				"responses": [
-					"tomahto"
-				]
-			},
-			{
-				"name": "!potato",
-				"responses": [
-					"potahto"
-				]
-			},
-			{
-				"name": "!lurk",
-				"responses": [
-					"jrLurk"
-				]
-			},
-			{
-				"name": "!blind",
-				"aliases": [],
-				"responses": [
-					"Blind means that I know nothing about the game I'm playing and want to keep it that way."
-				]
-			},
-			{
-				"name": "!rhetorical",
-				"aliases": ["!blind", "!spoilers", "spoils", "!spoil", "!hint", "!hints", "!nohints", "!help", "!mints", "!nomints"],
-				"responses": [
-					"Do not tell me how to play the game. Do not spoil. Do not fake spoil. Do not hint, backseat, advise, guide, remind, or warn me in any way, please. Consider all questions to be rhetorical. If I am wrong about something, you don't have to be right. Revel in my ignorance, and enjoy my suffering."
-				]
-			},
-			{
-				"name": "!backseating",
-				"aliases": ["!backseat"],
-				"responses": [
-					"What is backseating?: https://pastebin.com/nBB1B3bD"
-				]
-			},
-			{
-				"name": "!commands",
-				"responses": [
-					"Available commands include: !commands    (note: list may be incomplete)"
-				]
-			},
-			{
-				"name": "!ta",
-				"aliases": ["!totalannihilation", "!totala"],
-				"responses": [
-					"To play Total Annihilation on Windows 10, I use a program called DXWND to run the game in a window that tricks the game into thinking it's fullscreen. My method for doing that is detailed here: https://pastebin.com/2jBtcvqt"
-				]
-			},
-			{
-				"name": "!angie",
-				"responses": [
-					"Angie the RNG mouse: https://i.imgur.com/YqBJbJX.jpeg"
-				]
-			},
-			{
-				"name": "!split",
-				"aliases": ["!splits"],
-				"responses": [
-					"Don't forget to split, ya dingus!"
-				]
-			},
-			{
-				"name": "!captions",
-				"aliases": ["!caption"],
-				"responses": [
-					"I use OBS-captions-plugin for my on-screen captions as well as the closed-captions offered through Twitch. Download it here: https://github.com/ratwithacompiler/OBS-captions-plugin/releases"
-				]
-			},
-			{
-				"name": "!franklin",
-				"responses": [
-					"https://i.imgur.com/uZtU5PY.png"
-				]
-			},
-			{
-				"name": "!bestwestern",
-				"aliases": ["!hotel", "!western"],
-				"responses": [
-					"https://i.imgur.com/4FIRGa0.png"
-				]
-			},
-			{
-				"name": "!frostfatales2023",
-				"responses": [
-					"I participated in Frost Fatales 2023 by running Luigi's Mansion 100%! Check out the VOD here if you missed it: https://youtu.be/hvXPqOkV9xU"
-				]
-			},
-			{
-				"name": "!frostfatales2024",
-				"aliases": ["!fatales", "!framefatales", "!frostfatales", "!gdq"],
-				"responses": [
-					"I'm participating in Frost Fatales 2024 this March by running Luigi's Mansion PAL 100%, and I'll be practicing all month ahead of the marathon. Check out the full schedule here: https://gamesdonequick.com/schedule/47"
-				]
-			},
-			{
-				"name": "!frightfatales",
-				"responses": [
-					"I'm participating in Frame Fatales' Halloween-themed event, Fright Fatales, this year! I'll be playing Luigi's Mansion Any% (No OoB) this Saturday at 1:15 CST. Going for a sub-hour run and maybe even a surprise PB!"
-				]
-			},
-			{
-				"name": "!TDoV",
-				"aliases": ["!transdayofvisibility", "!tdov"],
-				"responses": [
-					"March 31 is Transgender Day of Visibility! As a trans person who's also observable in the visible spectrum of electromagnetic radiation, I'm here playing games and being proud about myself in the most public way I can. Not every trans person has the privilege to make themselves visible, though, so I think it's important to stand in solidarity with those who aren't yet able. We exist, we are strong, and our voices will be heard."
-				]
-			},
-			{
-				"name": "!corathon",
-				"aliases": ["!marathon"],
-				"responses": [
-					"At 12:00 CST on April 8, I'll be taking part in Corathon, an upcoming speedrunning marathon, by showcasing Luigi's Mansion 100%! This event will benefit Cora, a friend-of-a-friend who's trying to move out of Texas to a more trans-friendly part of the US, a reality I'm all too familiar with. There's a lot of amazing games and amazing people featured in this marathon, so be sure to mark your calendars! To see the full schedule, please visit https://horaro.org/corathon/schedule."
-				]
-			},
-			{
-				"name": "!max%",
-				"aliases": ["!maxpercent"],
-				"responses": [
-					"Max% is: All Toads, All Gold Frames, & All Money (142,390,000G)"
-				]
-			},
-			{
-				"name": "!happy",
-				"responses": [
-					"Pride!"
-				]
-			},
-			{
-				"name": "!HAPPY",
-				"responses": [
-					"PRIDE!"
-				]
-			},
-			{
-				"name": "!tournament",
-				"aliases": ["!tourney", "!Tournament"],
-				"responses": [
-					"I'm participating in the annual Luigi's Mansion Any% No OoB tournament this year as both a runner and a commentator! Check out the bracket https://challonge.com/LMTournament2023 and schedule https://schedule.speedgaming.org/lm/#"
-				]
-			},
-			{
-				"name": "!fc",
-				"aliases": ["!friendcode"],
-				"responses": [
-					"SW-4503-0355-0916 • Please let me know if you send me a friend request so I can accept it!"
-				]
-			},
-			{
-				"name": "!pb",
-				"aliases": ["!personalbest"],
-				"responses": [
-					"Luigi's Mansion - Any% (No OoB): 58:41 - 100%: 1:14:43 - Max%: 3:01:05 - PAL 100%: 1:30:45"
-				]
-			},
-			{
-				"name": "!baby",
-				"aliases": ["!bebe"],
-				"responses": [
-					"We recently welcomed our new baby! Her name is Lilah and she's quite the handful right now, so expect the stream schedule to be a little sporadic for a while!"
-				]
-			},
-			{
-				"name": "!keys",
-				"responses": [
-					"On the wall behind me, you can see 3D printed replicas of the keys from Luigi's Mansion! The person who made them has a store on Etsy where they sell all sorts of Mario and video game related replicas https://www.etsy.com/listing/1388972794/luigis-mansion-key"
-				]
-			},
-			{
-				"name": "!ladyarcaders",
-				"aliases": ["!la"],
-				"responses": [
-					"Lady Arcaders is an all-women's gaming collective that organizes weekly showcases by members of the community as well as larger charity events throughout the year. If you're a woman in gaming, whether it be casual, speedrunning, or development, please consider joining in! https://ladyarcaders.com/"
-				]
-			},
-			{
-				"name": "!binarybreakers",
-				"aliases": ["!bb"],
-				"responses": [
-					"The Binary Breakers are a community of speedrunners who are between, outside, and beyond the gender binary. If that sounds like a space you'd like to be a part of, please don't hesitate to reach out about joining! https://binarybreakersspeedrunning.carrd.co/"
-				]
-			},
-			{
-				"name": "!laraidtrain",
-				"responses": [
-					"The Lady Arcaders are celebrating their 2 year anniversary, so the collective has organized a massive raid train event to mark the occasion! https://ladyarcaders.com/raid-train For a little more than 2 days, 25 streamers will take their viewers on a scenic tour through the LA community, and my channel is the first stop! I'm hoping to get this engine up to speed before I pass things off to @EikoTheBlue 4 hours in, so I hope you'll stick around! nevVERS"
-				]
-			},
-      {
-				"name": "!cutscenes",
-				"responses": [
-					"\"Why are you watching the cutscenes? I thought this was a speedrun! You've already seen them before!\" - Because I wanna lol"
-				]
-			},
-      {
-				"name": "!dvt",
-				"aliases": ["!clot", "!bloodclot"],
-				"responses": [
-					"In 2022, I developed a substantial deep vein thrombosis (blood clot) in my left leg following a major surgery. Because I suffered significant vascular scarring from that clot, I'll forever be at high risk of developing another one, which means that I need to take low-dose blood thinners for the rest of my life to reduce the chances of that happening. Staying active also helps, though, so I take regular breaks during streaming to walk around and stretch; I encourage you all to do the same!"
-				]
-			},
-      {
-				"name": "!fulltime",
-        "aliases": ["!hobby"],
-				"responses": [
-					"Streaming as a Job vs. Hobby: https://pastebin.com/uPRfD7QC"
-				]
-			}
-		]
-	},
-	{
-		"commands": [
-			{
-				"name": "git gud",
-				"responses": [
-					"git: 'gud' is not a git command. See 'git --help'"
-				]
-			},
-			{
-				"name": "git --help",
-				"responses": [
-					"usage: git [--help] <command> [<args>]     These are common Git commands used in various situations: add, google, pull, push, reset, status"
-				]
-			},
-			{
-				"name": "git add",
-				"strict": true,
-				"responses": [
-					"Your name has been added to the list. The FBI will be in contact with you shortly.",
-					"2+2=4",
-					"One of the four basic operations of arithmetic, adding was first invented on November 10, 1969 when the educational children's television series, Sesame Street, premiered on the American television station, PBS.",
-					"Adding has been deprecated. From now on, we recommend subtracting negative values instead",
-					"Nothing specified, nothing added.    hint: Maybe you wanted to say 'git add .'?"
-				]
-			},
-			{
-				"name": "git add .",
-				"strict": true,
-				"responses": [
-					"Your '.' has been received. We appreciate such generosity in these trying times."
-				]
-			},
-			{
-				"name": "git google",
-				"responses": [
-					"Step 1 of using git: google how to use git"
-				]
-			},
-			{
-				"name": "git pull",
-				"responses": [
-					"The gravity of Earth, denoted by g, is the net acceleration imparted to objects due to the combined effect of gravitational pull (from mass distribution within Earth) and the centrifugal force (from the Earth's rotation). Near the surface, the pull of Earth's gravity is approximately 9.81 meters per second per second.",
-					"pull (ˈpu̇l) v. 1: To exert force upon so as to cause or tend to cause motion toward the force    2: To extract    3: To draw the support or attraction of    [Middle English, from Old English pullian]"
-				]
-			},
-			{
-				"name": "git push",
-				"responses": [
-					"You extert as much force as you can, but nothing budges. It appears the chatbot is immovable."
-				]
-			},
-			{
-				"name": "git reset",
-				"responses": [
-					"Your progress has been reset, and your save file has been erased.",
-					"Manual override detected, Rebooting...",
-					"Resetting is impossible. There is no way out."
-				]
-			}
-		]
-	}
+        "timerMinutesOffset": 15,
+        "timerMinutes": 90,
+        "random": true,
+        "commands": [
+            {
+                "name": "!therun",
+                "aliases": ["!therungg"],
+                "autoPostGameWhitelist": ["Luigi's Mansion"],
+                "responses": [
+                    "Interested in seeing extra details and statistics about my splits as I speedrun? Check my profile on TheRun.gg, and click the live button to see realtime updates on my current run! https://therun.gg/live/Elite_Spud"
+                ]
+            },
+            {
+                "name": "!blind_recurring",
+                "aliases": [],
+                "autoPostIfTitleContainsAny": ["!blind"],
+                "responses": [
+                    "This is a blind playthrough, which means that I know nothing about this game want to keep it that way. Do not tell me how to play the game. Do not spoil. Do not fake spoil. Do not hint, backseat, advise, guide, remind, or warn me in any way, please. Consider all questions to be rhetorical. Revel in my ignorance, and enjoy my suffering."
+                ]
+            },
+            {
+                "name": "!spoilerdiscord_recurring",
+                "aliases": [],
+                "autoPostIfTitleContainsAny": ["!blind"],
+                "responses": [
+                    "Wanna talk spoilers without posting directly in twitch chat? I've got a dedicated channel for spoiler-y discussion in the Discord server! Consider telling the folks in here that you'll be talking there so that others can join in on the conversation! https://discord.gg/f4bhKYxPy8"
+                ]
+            },
+            {
+                "name": "!crowdcontrol",
+                "aliases": ["!cc"],
+                "autoPostIfTitleContainsAny": ["!cc"],
+                "responses": [
+                    "Crowd Control provides a way for viewers to interact with the game I'm playing on stream! The power is in your hands to help or hinder me in my journey... or just make things look a bit silly while I play! Everyone gets 50 free coins that they can use to power these effects, but you can also exchange channel points (or money) to get more! Visit https://interact.crowdcontrol.live/#/twitch/47243772 to spend coins, or try using the integrated twitch extension (it even works on mobile)!"
+                ]
+            },
+            {
+                "name": "!crowdcontrolchallenge",
+                "aliases": ["!ccc", "!challenge", "!ccmax"],
+                "autoPostIfTitleContainsAny": ["!cc"],
+                "responses": [
+                    "I'm attempting Luigi's Mansion Max% with Crowd Control active! For every death, I'll gift a sub (max 20), and for every 10 pieces of money missed at the end, I'll gift another (max 20 more). I fully expect everyone to make this as difficult as possible, so go ahead and hit me with your best shot"
+                ]
+            },
+            {
+                "name": "!incentive",
+                "aliases": ["!incentives", "!goals", "!subgoals"],
+                "autoPostIfTitleContainsAny": ["!incentive", "!incentives"],
+                "responses": [
+                    "Current subgoal incentives: https://docs.google.com/spreadsheets/d/1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY"
+                ]
+            },
+            {
+                "name": "!attractmode",
+                "aliases": ["!la", "!ladyarcaders"],
+                "autoPostIfTitleContainsAny": ["!attractmode"],
+                "responses": [
+                    "I'll be participating in the Lady Arcaders' Attract Mode once again on May 5th at 1:00 CST, by playing some F-Zero GX. The plan is to speedrun through the story mode on Very Hard difficulty, but if I finish that quickly, then I might have time for some other stuff!"
+                ]
+            }
+        ]
+    },
+    {
+        "timerMinutesOffset": 75,
+        "timerMinutes": 90,
+        "random": true,
+        "commands": [
+            {
+                "name": "!response",
+                "responses": [
+                    "Ask a question but didn't get an answer? Feel free to ask again in a few minutes with an @ if I don't respond the first time!",
+                    "I often get tunnel vision when playing video games on stream, so it's tough to keep up with chat sometimes. If your question isn't answered, please ask again after a little while!",
+                    "Sorry if I miss any of your questions! I promise it's not intentional. Please @ me and ask again if I don't get around to your message the first time.",
+                    "I'm easily distracted, and often go on tangents while in the middle of making a point. If I get sidetracked while talking about something you found interesting, please feel free to bring it up again so I can finish sharing my thoughts!"
+                ]
+            },
+            {
+                "name": "!hydrate",
+                "aliases": ["!meds", "!vitamins"],
+                "responses": [
+                    "Friendly reminder to take a sip of water, stretch your legs, take any meds or vitamins you need, and grab a snack if you're hungry."
+                ]
+            }
+        ]
+    },
+    {
+        "timerMinutesOffset": 90,
+        "timerMinutes": 90,
+        "random": true,
+        "commands": [
+        ]
+    },
+    {
+        "timerMinutesOffset": 45,
+        "timerMinutes": 90,
+        "random": true,
+        "commands": [
+            {
+                "name": "!youtube",
+                "aliases": ["!vods", "!vod"],
+                "responses": [
+                    "VODs get posted to Youtube (in higher quality than streams!): https://www.youtube.com/@elite_spud",
+                    "Blind playthroughs and other interesting streams get uploaded to YouTube here: https://www.youtube.com/@elite_spud",
+                    "Miss a playthrough you really wanted to catch? I archive my streams locally at 1440p and post them on YouTube! https://www.youtube.com/@elite_spud"
+                ]
+            },
+            {
+                "name": "!discord",
+                "responses": [
+                    "We have a Discord server! Join in and be a part of the community offstream! https://discord.gg/f4bhKYxPy8",
+                    "Want consistent notifications when the stream is live? Join the Discord server and request a role to always get pinged! https://discord.gg/f4bhKYxPy8",
+                    "Enjoy using my sub emotes? You can link your Twitch account with Discord to get access to them on other servers if you're a subscriber; no Nitro required! https://discord.gg/f4bhKYxPy8",
+                    "Like seeing Loki and the other kitties on stream? You can see more of them and other folks' cats in the community Discord! https://discord.gg/f4bhKYxPy8",
+                    "Wanna talk about music you love or discovered recently? We've got a Discord channel for that! https://discord.gg/f4bhKYxPy8"
+                ]
+            },
+            {
+                "name": "!music",
+                "aliases": ["!rateyourmusic", "!musicratings", "!lastfm", "!songs"],
+                "responses": [
+                    "I collect music CDs and keep track of what I listen to as a hobby. You can judge my music taste here https://rateyourmusic.com/~elite_spud and here https://www.last.fm/user/elite_spud",
+                    "I've been building up a small collection of music CDs for a few years. See what I've got and what I've been listening to https://rateyourmusic.com/~elite_spud & https://www.last.fm/user/elite_spud",
+                    "In my spare time, I curate a small music CD collection, mostly focused around heavy, progressive, dark, and ambient genres. Check out what I have at https://rateyourmusic.com/~elite_spud + https://www.last.fm/user/elite_spud and feel free to shoot me a recommendation (any genre) if you've got one!"
+                ]
+            },
+            {
+                "name": "!instagram",
+                "aliases": ["!cats", "!insta", "!ig"],
+                "responses": [
+                    "I have an instagram where I post pictures of my cats and also cool places I travel to https://www.instagram.com/elite.spud/",
+                    "Hey, wanna see some cute cats? https://www.instagram.com/elite.spud/"
+                ]
+            },
+            {
+                "name": "!av",
+                "aliases": ["!diagram"],
+                "responses": [
+                    "Wanna know how many wires are in my AV setup? Or what it takes to play GameBoy games on a PC monitor? Check out the diagram I made to keep up with it all, and don't be afraid to ask me questions about any specific components: https://gist.github.com/elite-spud/6f82f3da9d586df553757fa134278845",
+                    "Wondering what kind of hardware I use to stream/play console games? Take a look at my layout diagram to see how everything hooks together: https://gist.github.com/elite-spud/6f82f3da9d586df553757fa134278845. Don't be afraid to ask questions about how everything works!"
+                ]
+            },
+            {
+                "name": "!hardware",
+                "aliases": ["!pc", "!equipment"],
+                "responses": [
+                    "You can find a list of all the parts in my PC / stream setup here: https://pcpartpicker.com/user/ghetto_spud/saved/djj7RB"
+                ]
+            },
+            {
+                "name": "!pendinggames",
+                "aliases": ["!streamgames", "!games"],
+                "responses": [
+                    "I maintain a list of all the games I've streamed (and might stream) here: https://docs.google.com/spreadsheets/d/1JsdDfmdjaL3d-oGsuq38z_jhrvkhePF1LLz4W1dpzI4/edit?usp=sharing and keep a tier list of my blind playthroughs here: https://pastebin.com/fRPKHM7D You can also check my pastebin profile for some of my more substantial opinions on certain games: https://pastebin.com/u/ghetto_spud"
+                ]
+            },
+            {
+                "name": "!github",
+                "aliases": ["!bot", "!chatbot", "!code", "!sourcecode"],
+                "responses": [
+                    "I (Spud) wrote this chatbot myself because I'm a big nerd. If you fancy yourself a nerd too, you can peruse the source code on GitHub here: https://github.com/elite-spud/spudbot",
+                    "This chatbot is © Spud Inc., which maintains an open policy of showcasing all the programming mistakes of the chatbot author for all to see here: https://github.com/elite-spud/spudbot",
+                    "I'm a software engineer by day, and this chatbot is actually one of my side-projects! If you want to see how it works, you can find all the source code here: https://github.com/elite-spud/spudbot"
+                ]
+            },
+            {
+                "name": "!glitchwave",
+                "aliases": ["!gameratings"],
+                "responses": [
+                    "I took the time to catalog and rate all the games I've played over the years. Take a peek at my favorites and not-so-favorites here: https://glitchwave.com/user/elite_spud/",
+                    "Curious if I've played your favorite game before, and/or what my opinions about it are? Look no further: https://glitchwave.com/user/elite_spud/",
+                    "Got a favorite game? Me too: https://glitchwave.com/user/elite_spud/"
+                ]
+            },
+            {
+                "name": "!twitchnotifications",
+                "responses": [
+                    "Twitch notifications are sometimes inconsistent, but I try to include special little messages in my going live pings for each stream, so turn 'em on if you wanna be implicated in my goofin' around! You can manage your notifications in detail here: https://www.twitch.tv/settings/notifications"
+                ]
+            },
+            {
+                "name": "!streamteam",
+                "aliases": ["!binarybreakers", "!bb"],
+                "responses": [
+                    "I'm part of a stream team on Twitch now! If you're looking for some amazing nonbinary streamers to follow, check out the Binary Breakers! https://www.twitch.tv/team/binarybreakers"
+                ]
+            },
+            {
+                "name": "!gamesuggestions",
+                "aliases": ["!gamesuggestion", "!recommendation", "!request", "!requests", "!GameRequest", "!GameRequests"],
+                "responses": [
+                    "Channel points can be used to request games that you want me to play on stream! Submit your favorite title, challenge me with something super difficult, get weird or goofy with it, and more! — almost anything is fair game if you have enough points and I have the means to play it! (e.g. no VR, foreign visual novels, super expensive stuff, etc.)"
+                ]
+            }
+        ]
+    },
+    {
+        "commands": [
+            {
+                "name": "!rules",
+                "aliases": ["!chatrules"],
+                "responses": [
+                    "Chat Rules: • No bigotry, harassment, or intolerance allowed. Respect other folks or be banned • Don't spoil anything • Don't tell me how to play the game • Don't trauma dump. I want to cultivate a safe and positive space in my chat • Keep any political / religious discussions civil and infrequent • Stream is generally PG to PG-13. I prefer not to swear for my own reasons, but don't really care if you do (within reason) • No shortened hyperlinks • No self-promotion spam • Don't be a dingus"
+                ]
+            },
+            {
+                "name": "!pronouns",
+                "responses": [
+                    "Spud's pronouns are They/She. See other chatters' pronouns and set your own here: https://pronouns.alejo.io/"
+                ]
+            },
+            {
+                "name": "!trans",
+                "responses": [
+                    "Non-binary transfeminine. They/She pronouns. Sapphic. Hormone therapy since Dec 2020. Bottom surgery in 2022."
+                ]
+            },
+              {
+                "name": "!nonbinary",
+                "aliases": ["!nb", "!non-binary", "!trans", "!gender"],
+                "responses": [
+                    "Hi! I'm non-binary, which is a term that means a lot of different things to a lot of people. For me, it means that I identify more strongly with the general concept of being a human person than anything else. Despite presenting more femininely, I prefer to think of myself in a more neutral way, and for that reason, I prefer to be addressed with they/them pronouns, as it reinforces how I see myself! If you have any other questions about what it's like being NB, please don't hesitate to ask!"
+                ]
+            },
+            {
+                "name": "!gay",
+                "responses": [
+                    "As heck https://www.instagram.com/p/CvIRzIjPQY7"
+                ]
+            },
+            {
+                "name": "!emotes",
+                "aliases": ["!emotelist", "!ffz", "!bttv"],
+                "responses": [
+                    "Sub emotes: https://www.twitchemotes.com/channels/47243772 FFZ Emotes: https://www.frankerfacez.com/channel/elite_spud BTTV Emotes: https://betterttv.com/users/5ca587c9fc7c0646cddcd7a4"
+                ]
+            },
+            {
+                "name": "!foo",
+                "responses": [
+                    "bar"
+                ]
+            },
+            {
+                "name": "!tomato",
+                "responses": [
+                    "tomahto"
+                ]
+            },
+            {
+                "name": "!potato",
+                "responses": [
+                    "potahto"
+                ]
+            },
+            {
+                "name": "!lurk",
+                "responses": [
+                    "jrLurk"
+                ]
+            },
+            {
+                "name": "!blind",
+                "aliases": [],
+                "responses": [
+                    "Blind means that I know nothing about the game I'm playing and want to keep it that way."
+                ]
+            },
+            {
+                "name": "!rhetorical",
+                "aliases": ["!blind", "!spoilers", "spoils", "!spoil", "!hint", "!hints", "!nohints", "!help", "!mints", "!nomints"],
+                "responses": [
+                    "Do not tell me how to play the game. Do not spoil. Do not fake spoil. Do not hint, backseat, advise, guide, remind, or warn me in any way, please. Consider all questions to be rhetorical. If I am wrong about something, you don't have to be right. Revel in my ignorance, and enjoy my suffering."
+                ]
+            },
+            {
+                "name": "!backseating",
+                "aliases": ["!backseat"],
+                "responses": [
+                    "What is backseating?: https://pastebin.com/nBB1B3bD"
+                ]
+            },
+            {
+                "name": "!commands",
+                "responses": [
+                    "Available commands include: !commands    (note: list may be incomplete)"
+                ]
+            },
+            {
+                "name": "!ta",
+                "aliases": ["!totalannihilation", "!totala"],
+                "responses": [
+                    "To play Total Annihilation on Windows 10, I use a program called DXWND to run the game in a window that tricks the game into thinking it's fullscreen. My method for doing that is detailed here: https://pastebin.com/2jBtcvqt"
+                ]
+            },
+            {
+                "name": "!angie",
+                "responses": [
+                    "Angie the RNG mouse: https://i.imgur.com/YqBJbJX.jpeg"
+                ]
+            },
+            {
+                "name": "!split",
+                "aliases": ["!splits"],
+                "responses": [
+                    "Don't forget to split, ya dingus!"
+                ]
+            },
+            {
+                "name": "!captions",
+                "aliases": ["!caption"],
+                "responses": [
+                    "I use OBS-captions-plugin for my on-screen captions as well as the closed-captions offered through Twitch. Download it here: https://github.com/ratwithacompiler/OBS-captions-plugin/releases"
+                ]
+            },
+            {
+                "name": "!franklin",
+                "responses": [
+                    "https://i.imgur.com/uZtU5PY.png"
+                ]
+            },
+            {
+                "name": "!bestwestern",
+                "aliases": ["!hotel", "!western"],
+                "responses": [
+                    "https://i.imgur.com/4FIRGa0.png"
+                ]
+            },
+            {
+                "name": "!frostfatales2023",
+                "responses": [
+                    "I participated in Frost Fatales 2023 by running Luigi's Mansion 100%! Check out the VOD here if you missed it: https://youtu.be/hvXPqOkV9xU"
+                ]
+            },
+            {
+                "name": "!frostfatales2024",
+                "aliases": ["!fatales", "!framefatales", "!frostfatales", "!gdq"],
+                "responses": [
+                    "I'm participating in Frost Fatales 2024 this March by running Luigi's Mansion PAL 100%, and I'll be practicing all month ahead of the marathon. Check out the full schedule here: https://gamesdonequick.com/schedule/47"
+                ]
+            },
+            {
+                "name": "!frightfatales",
+                "responses": [
+                    "I'm participating in Frame Fatales' Halloween-themed event, Fright Fatales, this year! I'll be playing Luigi's Mansion Any% (No OoB) this Saturday at 1:15 CST. Going for a sub-hour run and maybe even a surprise PB!"
+                ]
+            },
+            {
+                "name": "!TDoV",
+                "aliases": ["!transdayofvisibility", "!tdov"],
+                "responses": [
+                    "March 31 is Transgender Day of Visibility! As a trans person who's also observable in the visible spectrum of electromagnetic radiation, I'm here playing games and being proud about myself in the most public way I can. Not every trans person has the privilege to make themselves visible, though, so I think it's important to stand in solidarity with those who aren't yet able. We exist, we are strong, and our voices will be heard."
+                ]
+            },
+            {
+                "name": "!corathon",
+                "aliases": ["!marathon"],
+                "responses": [
+                    "At 12:00 CST on April 8, I'll be taking part in Corathon, an upcoming speedrunning marathon, by showcasing Luigi's Mansion 100%! This event will benefit Cora, a friend-of-a-friend who's trying to move out of Texas to a more trans-friendly part of the US, a reality I'm all too familiar with. There's a lot of amazing games and amazing people featured in this marathon, so be sure to mark your calendars! To see the full schedule, please visit https://horaro.org/corathon/schedule."
+                ]
+            },
+            {
+                "name": "!max%",
+                "aliases": ["!maxpercent"],
+                "responses": [
+                    "Max% is: All Toads, All Gold Frames, & All Money (142,390,000G)"
+                ]
+            },
+            {
+                "name": "!happy",
+                "responses": [
+                    "Pride!"
+                ]
+            },
+            {
+                "name": "!HAPPY",
+                "responses": [
+                    "PRIDE!"
+                ]
+            },
+            {
+                "name": "!tournament",
+                "aliases": ["!tourney", "!Tournament"],
+                "responses": [
+                    "I'm participating in the annual Luigi's Mansion Any% No OoB tournament this year as both a runner and a commentator! Check out the bracket https://challonge.com/LMTournament2023 and schedule https://schedule.speedgaming.org/lm/#"
+                ]
+            },
+            {
+                "name": "!fc",
+                "aliases": ["!friendcode"],
+                "responses": [
+                    "SW-4503-0355-0916 • Please let me know if you send me a friend request so I can accept it!"
+                ]
+            },
+            {
+                "name": "!pb",
+                "aliases": ["!personalbest"],
+                "responses": [
+                    "Luigi's Mansion - Any% (No OoB): 58:41 - 100%: 1:14:43 - Max%: 3:01:05 - PAL 100%: 1:30:45"
+                ]
+            },
+            {
+                "name": "!baby",
+                "aliases": ["!bebe"],
+                "responses": [
+                    "We recently welcomed our new baby! Her name is Lilah and she's quite the handful right now, so expect the stream schedule to be a little sporadic for a while!"
+                ]
+            },
+            {
+                "name": "!keys",
+                "responses": [
+                    "On the wall behind me, you can see 3D printed replicas of the keys from Luigi's Mansion! The person who made them has a store on Etsy where they sell all sorts of Mario and video game related replicas https://www.etsy.com/listing/1388972794/luigis-mansion-key"
+                ]
+            },
+            {
+                "name": "!ladyarcaders",
+                "aliases": ["!la"],
+                "responses": [
+                    "Lady Arcaders is an all-women's gaming collective that organizes weekly showcases by members of the community as well as larger charity events throughout the year. If you're a woman in gaming, whether it be casual, speedrunning, or development, please consider joining in! https://ladyarcaders.com/"
+                ]
+            },
+            {
+                "name": "!binarybreakers",
+                "aliases": ["!bb"],
+                "responses": [
+                    "The Binary Breakers are a community of speedrunners who are between, outside, and beyond the gender binary. If that sounds like a space you'd like to be a part of, please don't hesitate to reach out about joining! https://binarybreakersspeedrunning.carrd.co/"
+                ]
+            },
+            {
+                "name": "!laraidtrain",
+                "responses": [
+                    "The Lady Arcaders are celebrating their 2 year anniversary, so the collective has organized a massive raid train event to mark the occasion! https://ladyarcaders.com/raid-train For a little more than 2 days, 25 streamers will take their viewers on a scenic tour through the LA community, and my channel is the first stop! I'm hoping to get this engine up to speed before I pass things off to @EikoTheBlue 4 hours in, so I hope you'll stick around! nevVERS"
+                ]
+            },
+            {
+                "name": "!cutscenes",
+                "responses": [
+                    "\"Why are you watching the cutscenes? I thought this was a speedrun! You've already seen them before!\" - Because I wanna lol"
+                ]
+            },
+            {
+                "name": "!dvt",
+                "aliases": ["!clot", "!bloodclot"],
+                "responses": [
+                    "In 2022, I developed a substantial deep vein thrombosis (blood clot) in my left leg following a major surgery. Because I suffered significant vascular scarring from that clot, I'll forever be at high risk of developing another one, which means that I need to take low-dose blood thinners for the rest of my life to reduce the chances of that happening. Staying active also helps, though, so I take regular breaks during streaming to walk around and stretch; I encourage you all to do the same!"
+                ]
+            },
+            {
+                "name": "!fulltime",
+                "aliases": ["!hobby"],
+                "responses": [
+                    "Streaming as a Job vs. Hobby: https://pastebin.com/uPRfD7QC"
+                ]
+            },
+            {
+                "name": "!earnings",
+                "aliases": ["!expenses", "!income", "!profit"],
+                "responses": [
+                    "My stream income / expenses: https://docs.google.com/spreadsheets/d/1kp56JNRRDxzYAIcYfTqVBWh1riNaE6dwDnrdX_8Gd2M/edit?usp=sharing"
+                ]
+            },
+            {
+                "name": "!posters",
+                "aliases": ["!poster"],
+                "responses": [
+                    "My F-Zero posters in the background were designed by Ivan García. I own Displate versions of his designs https://displate.com/ivngrcia, but they are also available through Redbubble https://www.redbubble.com/people/ivngrcia/shop."
+                ]
+            },
+            {
+                "name": "!GO",
+                "responses": [
+                    "FAST"
+                ]
+            },
+            {
+                "name": "!bidwar",
+                "aliases": ["!bits", "!incentive", "!incentives", "goals"],
+                "responses": [
+                    "View the active Bits bidwar here: https://docs.google.com/spreadsheets/d/1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY/edit#gid=877321766"
+                ]
+            },
+            {
+                "name": "!autosplitter",
+                "responses": [
+                    "I use Toufool's Autosplitter https://github.com/Toufool/AutoSplit to control LiveSplit by comparing my video capture feed against a set of reference frames. Because I made my own images for F-Zero GX, they're unlikely to work for everyone else out-of-the-box due to the specific way I capture my game. DM me if you want help setting it up, yourself, though!"
+                ]
+            }
+        ]
+    },
+    {
+        "commands": [
+            {
+                "name": "git gud",
+                "responses": [
+                    "git: 'gud' is not a git command. See 'git --help'"
+                ]
+            },
+            {
+                "name": "git --help",
+                "responses": [
+                    "usage: git [--help] <command> [<args>]     These are common Git commands used in various situations: add, google, pull, push, reset, status"
+                ]
+            },
+            {
+                "name": "git add",
+                "strict": true,
+                "responses": [
+                    "Your name has been added to the list. The FBI will be in contact with you shortly.",
+                    "2+2=4",
+                    "One of the four basic operations of arithmetic, adding was first invented on November 10, 1969 when the educational children's television series, Sesame Street, premiered on the American television station, PBS.",
+                    "Adding has been deprecated. From now on, we recommend subtracting negative values instead",
+                    "Nothing specified, nothing added.    hint: Maybe you wanted to say 'git add .'?"
+                ]
+            },
+            {
+                "name": "git add .",
+                "strict": true,
+                "responses": [
+                    "Your '.' has been received. We appreciate such generosity in these trying times."
+                ]
+            },
+            {
+                "name": "git google",
+                "responses": [
+                    "Step 1 of using git: google how to use git"
+                ]
+            },
+            {
+                "name": "git pull",
+                "responses": [
+                    "The gravity of Earth, denoted by g, is the net acceleration imparted to objects due to the combined effect of gravitational pull (from mass distribution within Earth) and the centrifugal force (from the Earth's rotation). Near the surface, the pull of Earth's gravity is approximately 9.81 meters per second per second.",
+                    "pull (ˈpu̇l) v. 1: To exert force upon so as to cause or tend to cause motion toward the force    2: To extract    3: To draw the support or attraction of    [Middle English, from Old English pullian]"
+                ]
+            },
+            {
+                "name": "git push",
+                "responses": [
+                    "You extert as much force as you can, but nothing budges. It appears the chatbot is immovable."
+                ]
+            },
+            {
+                "name": "git reset",
+                "responses": [
+                    "Your progress has been reset, and your save file has been erased.",
+                    "Manual override detected, Rebooting...",
+                    "Resetting is impossible. There is no way out."
+                ]
+            }
+        ]
+    }
 ]
