@@ -1,13 +1,15 @@
 import { randomInt } from "crypto";
 import * as fs from "fs";
+import puppeteer from "puppeteer";
 import { ChannelPointRequests } from "./ChannelPointRequests";
 import { IChatWarriorState } from "./ChatWarrior";
 import { Future } from "./Future";
 import { GoogleAPI, GoogleAPIConfig } from "./GoogleAPI";
 import { IIrcBotAuxCommandGroupConfig, IPrivMessageDetail } from "./IrcBot";
 import { egadd_quotes, f_zero_gx_interview_quotes, f_zero_gx_quotes, f_zero_gx_story_quotes, luigi_quotes } from "./Quotes";
-import { ITwitchBotConfig, ITwitchBotConnectionConfig, ITwitchUserDetail, TwitchBotBase, TwitchEventSubSubscriptionType, TwitchEventSub_ChannelPointCustomRewardRedemptionAdd } from "./TwitchBot";
+import { ITwitchBotConfig, ITwitchBotConnectionConfig, ITwitchUserDetail, TwitchBotBase, TwitchEventSubSubscriptionType, TwitchEventSub_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_SubscriptionGift } from "./TwitchBot";
 import { Utils } from "./Utils";
+import { channel } from "diagnostics_channel";
 
 export interface UserCommand {
     username: string,
@@ -29,7 +31,7 @@ export interface ISpudBotConnectionConfig extends ITwitchBotConnectionConfig {
 export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
     public declare readonly _config: ISpudBotConfig;
     protected readonly _bonkCountPath: string;
-    protected _firstName: string | undefined = undefined;
+    protected _firstChatterName: string | undefined = undefined;
     protected _recentMessageCapsPercentages: { [userName: string]: number[] } = {};
     protected _capsMessageWarnings: { [userName: string]: Date | undefined } = {};
 
@@ -68,11 +70,11 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
         await googleApi.startup();
         this._googleApi.resolve(googleApi);
 
-        await googleApi.testGoogleApi();
+        await googleApi.testGoogleApi(); // TODO: remove
     }
 
     protected override async getTwitchBroadcasterId(): Promise<string> {
-        return "47243772"; // TODO: make this dynamic
+        return "47243772"; // TODO: make this dynamic (i.e. not elite_spud)
     }
 
     protected override async getTwitchEventSubTopics(): Promise<TwitchEventSubSubscriptionType[]> {
@@ -101,6 +103,12 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
                 broadcaster_user_id: await this.getTwitchBroadcasterId(),
             }
         }, {
+            name: `channel.subscription.end`,
+            version: `1`,
+            condition: {
+                broadcaster_user_id: await this.getTwitchBroadcasterId(),
+            }
+        }, {
             name: `channel.subscription.gift`,
             version: `1`,
             condition: {
@@ -119,6 +127,10 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
                 to_broadcaster_user_id: await this.getTwitchBroadcasterId(),
             }
         }];
+    }
+
+    protected override async handleSubscriptionGift(event: TwitchEventSub_SubscriptionGift): Promise<void> {
+        // TODO implement this
     }
 
     protected override async handleChannelPointRewardRedeem(event: TwitchEventSub_ChannelPointCustomRewardRedemptionAdd): Promise<void> {
@@ -186,19 +198,19 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
 
     protected async handleFirst(messageDetail: IPrivMessageDetail): Promise<void> {
         const broadcasterName = this._config.connection.server.channel.substring(1);
-        if (!this._firstName && messageDetail.username !== broadcasterName) {
-            this._firstName = messageDetail.username;
+        if (!this._firstChatterName && messageDetail.username !== broadcasterName) {
+            this._firstChatterName = messageDetail.username;
         }
         
         const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
             let response: string;
-            const someoneWasAlreadyFirst = !!this._firstName;
-            if (this._firstName === messageDetail.username) {
-                response = `Congrats, ${this._firstName}, you${someoneWasAlreadyFirst ? "'re" : " were"} first today!`;
-            } else if (!this._firstName) {
+            const someoneWasAlreadyFirst = !!this._firstChatterName;
+            if (this._firstChatterName === messageDetail.username) {
+                response = `Congrats, ${this._firstChatterName}, you${someoneWasAlreadyFirst ? "'re" : " were"} first today!`;
+            } else if (!this._firstChatterName) {
                 response = `No one is first yet...`;
             } else {
-                response = `${this._firstName} was first today.`
+                response = `${this._firstChatterName} was first today.`
             }
             this.chat(messageDetail.respondTo, response);
         }
@@ -353,7 +365,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
 
     protected async handlePlay(messageDetail: IPrivMessageDetail): Promise<void> {
         const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
-            if (messageDetail.username !== "elite_spud") { // TODO: detect streamer's name from conifg or make this a basic configuration with a name/broadcaster option
+            if (messageDetail.username !== this.twitchChannelName) { // TODO: detect streamer's name from conifg or make this a basic configuration with a name/broadcaster option
                 return;
             }
             this.chat(messageDetail.respondTo, "!play");

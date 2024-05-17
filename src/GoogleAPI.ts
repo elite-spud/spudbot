@@ -24,8 +24,10 @@ export interface GoogleAPIConfig {
 }
 
 export class GoogleAPI {
+    public static readonly incentiveSheetId = "1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY";
+
     protected readonly _config: GoogleAPIConfig
-    protected readonly _sheets = new Future<sheets_v4.Sheets>();
+    protected readonly _googleSheets = new Future<sheets_v4.Sheets>();
 
     public constructor(config: GoogleAPIConfig) {
         this._config = config;
@@ -43,11 +45,11 @@ export class GoogleAPI {
             auth: await client,
         });
 
-        this._sheets.resolve(sheets);
+        this._googleSheets.resolve(sheets);
     }
 
     public async testGoogleApi(): Promise<void> {
-        const sheets = await this._sheets;
+        const sheets = await this._googleSheets;
 
         const resource = await sheets.spreadsheets.values.get({
             spreadsheetId: "1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY",
@@ -88,8 +90,49 @@ export class GoogleAPI {
             ]
         };
         await sheets.spreadsheets.values.batchUpdate({
-            spreadsheetId: "1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY",
+            spreadsheetId: GoogleAPI.incentiveSheetId,
             requestBody: batchUpdateRequest,
         });
+
+        await this.getSpreadsheetInfo(GoogleAPI.incentiveSheetId, ["General Incentives!A1:Z50"]);
+    }
+
+    public async getSpreadsheetInfo(spreadsheetId: string, ranges: string[]): Promise<void> {
+        const googleSheets = await this._googleSheets;
+
+        const spreadsheet = await googleSheets.spreadsheets.get({
+            includeGridData: true,
+            ranges: ranges,
+            spreadsheetId: spreadsheetId,
+        });
+
+        console.log(spreadsheet.data);
+        if (!spreadsheet.data.sheets) {
+            return;
+        }
+        for (const sheet of spreadsheet.data.sheets) {
+            if (!sheet.data) {
+                continue;
+            }
+            for (const window of sheet.data) {
+                if (!window.rowData) {
+                    continue;
+                }
+                for (const row of window.rowData) {
+                    if (!row.values) {
+                        continue;
+                    }
+                    let rowStr = "";
+                    for (const value of row.values) {
+                        rowStr += value.formattedValue + ",";
+                    }
+                    console.log(rowStr);
+                }
+            }
+        }
+    }
+
+    protected subIncentiveToChatMessage(currentSubPoints: number, requiredSubPoints: number, activity: string): void {
+        `We are currently at ${currentSubPoints}/${requiredSubPoints} towards the current subgoal incentive. If that goal is met, I'll ${activity}`;
     }
 }

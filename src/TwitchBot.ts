@@ -6,11 +6,18 @@ import { WebSocket } from "ws";
 import { ConsoleColors } from "./ConsoleColors";
 import { Future } from "./Future";
 import { IIrcBotAuxCommandConfig, IIrcBotAuxCommandGroupConfig, IIrcBotConfig, IIrcBotConnectionConfig, IJoinMessageDetail, IPartMessageDetail, IPrivMessageDetail, IUserDetail, IrcBotBase } from "./IrcBot";
+import puppeteer from "puppeteer";
 // import { randomInt } from "crypto";
 
 export interface ITwitchUserDetail extends IUserDetail {
     /** globally unique id for a twitch user (persists between username changes) */
     id: string;
+    monthsSubscribed?: number,
+    currentSubcriptionStreak?: number,
+    subscriptionTier?: string,
+    lastKnownSubscribedDate?: Date,
+    firstKnownSubscribedDate?: Date,
+    subsGifted?: number,
 }
 
 export interface ITwitchBotConfig extends IIrcBotConfig {
@@ -219,7 +226,7 @@ export interface TwitchEventSub_ChannelPointCustomRewardRedemptionAdd extends Tw
     redeemed_at: string,
 }
 
-export interface TwitchEventSub_SubscriptionMessage extends TwitchEventSub_Notification_Payload_Event {
+export interface TwitchEventSub_SubscriptionBase extends TwitchEventSub_Notification_Payload_Event {
     user_id: string,
     user_login: string,
     user_name: string,
@@ -227,20 +234,38 @@ export interface TwitchEventSub_SubscriptionMessage extends TwitchEventSub_Notif
     broadcaster_user_login: string,
     broadcaster_user_name: string,
     tier: string,
+}
+
+export interface TwitchEventSub_SubscriptionStart extends TwitchEventSub_SubscriptionBase {
+    is_gift: boolean;
+}
+
+export interface TwitchEventSub_SubscriptionEnd extends TwitchEventSub_SubscriptionBase {
+    is_gift: boolean;
+}
+
+export interface TwitchEventSub_SubscriptionGift extends TwitchEventSub_SubscriptionBase {
+    total: number;
+    /** null if anonymous or not shared by the user */
+    cumulative_total: number | null;
+    is_anonymous: boolean;
+}
+
+export interface TwitchEventSub_SubscriptionMessage extends TwitchEventSub_SubscriptionBase {
     message: {
-        text: string,
+        text: string;
         emotes: [
             {
-                begin: number,
-                end: number,
-                id: string
+                begin: number;
+                end: number;
+                id: string;
             }
         ]
     },
-    cumulative_months: number,
+    cumulative_months: number;
     /** null if not shared */
-    streak_months: number | null,
-    duration_months: number
+    streak_months: number | null;
+    duration_months: number;
 }
 
 /** https://dev.twitch.tv/docs/api/reference/#create-eventsub-subscription */
@@ -267,11 +292,31 @@ export interface TwitchEventSubSubscriptionType {
     }
 }
 
+export class SubTierPoints {
+    private constructor() {}
+
+    public static readonly Prime: number = 1;
+    public static readonly TierOne: number = 1;
+    public static readonly TierTwo: number = 2;
+    public static readonly TierThree: number = 6;
+
+    public static getPointsByTier(subTier: "1000" | "2000" | "3000" | string) {
+        if (subTier === "1000")
+            return SubTierPoints.TierOne;
+        if (subTier === "2000")
+            return SubTierPoints.TierTwo;
+        if (subTier === "3000")
+            return SubTierPoints.TierThree;
+        
+        throw new Error(`Unknown sub tier value: ${subTier}`)
+    }
+}
+
 export type TwitchPrivMessageTagKeys = "badge-info" | "badges" | "client-nonce" | "color" | "display-name" | "emotes" | "flags" | "id" | "mod" | "room-id" | "subscriber" | "tmi-sent-ts" | "turbo" | "user-id" | "user-type" | string;
 export type TwitchBadgeTagKeys = "admin" | "bits" | "broadcaster" | "global_mod" | "moderator" | "subscriber" | "staff" | "turbo" | string;
 
 export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwitchUserDetail> extends IrcBotBase<TUserDetail> {
-    public static readonly maxChatMessageLength = 500
+    public static readonly maxChatMessageLength = 500;
     protected static readonly _knownConfig: { encoding: "utf8" } = { encoding: "utf8" };
 
     public declare readonly _config: ITwitchBotConfig;
@@ -280,7 +325,9 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
     protected _twitchIdByUsername: { [key: string]: string } = {}
     protected readonly _userAccessTokenAccountName = "default"; // TODO: find a good replacement for this
     protected _twitchEventSub: WebSocket;
-    protected _twitchEventSubHeartbeatInterval: NodeJS.Timer; 
+    protected _twitchEventSubHeartbeatInterval: NodeJS.Timer;
+
+    protected _currentSubPoints?: number = undefined;
 
     public constructor(connection: ITwitchBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], configDir: string) {
         super(Object.assign(
@@ -726,8 +773,27 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         await open(url);
     }
 
+    protected async getCurrentTwitchSubPoints(channelName: string): Promise<number> {
+        const browser = await puppeteer.launch();
+        const page = await browser.newPage();
+        await page.goto(`https://www.twitch.tv/${channelName}/about`);
+        const textSelector = await page.waitForSelector(`text/Sub Points`);
+        if (!textSelector) {
+            throw new Error("Unable to locate current sub points element on about page");
+        }
+
+        const currentSubPoints = await textSelector.evaluate(element => element.previousElementSibling?.textContent) ?? undefined;
+        if (currentSubPoints === undefined) {
+            throw new Error("Unable to evaluate current sub points from selected element");
+        }
+
+        return parseInt(currentSubPoints);
+    }
+
     public override async _startup(): Promise<void> {
         await super._startup();
+
+        const subPointsPromise = this.getCurrentTwitchSubPoints(this.twitchChannelName);
 
         await this.loadAppAuthToken();
         await this.loadUserToken();
@@ -747,6 +813,8 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
 
         const subDetail = await this.getActiveBroadcasterSubcriptions();
         this.updateSubscribedUsers(subDetail);
+
+        this._currentSubPoints = await subPointsPromise;
     }
 
     protected abstract getTwitchBroadcasterId(): Promise<string>;
@@ -804,14 +872,32 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
     protected async handleEventSubNotification(notificationMessage: TwitchEventSub_Notification_Payload): Promise<void> {
         if (notificationMessage.subscription.type === "channel.channel_points_custom_reward_redemption.add") {
             await this.handleChannelPointRewardRedeem(notificationMessage.event as TwitchEventSub_ChannelPointCustomRewardRedemptionAdd);
+        } else if (notificationMessage.subscription.type === "channel.subscribe") {
+            await this.handleSubscriptionStart(notificationMessage.event as TwitchEventSub_SubscriptionStart);
+        } else if (notificationMessage.subscription.type === "channel.subscription.end") {
+            await this.handleSubscriptionEnd(notificationMessage.event as TwitchEventSub_SubscriptionEnd);
         } else if (notificationMessage.subscription.type === "channel.subscription.message") {
             await this.handleSubscriptionMessage(notificationMessage.event as TwitchEventSub_SubscriptionMessage);
         } else if (notificationMessage.subscription.type === "channel.subscription.gift") {
-            // TODO
+            await this.handleSubscriptionGift(notificationMessage.event as TwitchEventSub_SubscriptionGift);
         }
     }
 
     protected abstract handleChannelPointRewardRedeem(event: TwitchEventSub_ChannelPointCustomRewardRedemptionAdd): Promise<void>;
+
+    protected async handleSubscriptionStart(event: TwitchEventSub_SubscriptionStart): Promise<void> {
+        if (!this._currentSubPoints)
+            return;
+
+        this._currentSubPoints += SubTierPoints.getPointsByTier(event.tier);
+    }
+
+    protected async handleSubscriptionEnd(event: TwitchEventSub_SubscriptionEnd): Promise<void> {
+        if (!this._currentSubPoints)
+            return;
+
+        this._currentSubPoints -= SubTierPoints.getPointsByTier(event.tier);
+    }
 
     protected async handleSubscriptionMessage(event: TwitchEventSub_SubscriptionMessage): Promise<void> {
         const userDetail = await this.getUserDetailWithCache(event.user_login);
@@ -819,7 +905,19 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         userDetail.monthsSubscribed = event.cumulative_months;
         userDetail.currentSubcriptionStreak = event.streak_months ?? 0;
         userDetail.subscriptionTier = event.tier;
+
+        if (!userDetail.firstKnownSubscribedDate) {
+            userDetail.firstKnownSubscribedDate = new Date();
+        } else if (event.cumulative_months > 1) {
+            const earliestDate = new Date(userDetail.lastKnownSubscribedDate);
+            earliestDate.setMonth(userDetail.lastKnownSubscribedDate.getMonth() - (event.cumulative_months - 1));
+            if (userDetail.firstKnownSubscribedDate.getTime() > earliestDate.getTime()) {
+                userDetail.firstKnownSubscribedDate = earliestDate;
+            }
+        }
     }
+
+    protected abstract handleSubscriptionGift(event: TwitchEventSub_SubscriptionGift): Promise<void>;
 
     protected async getEventSubSubscriptions(): Promise<any[]> {
         const response = await fetch(`https://api.twitch.tv/helix/eventsub/subscriptions`, {
@@ -875,6 +973,10 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
             const userDetail = await this.getUserDetailWithCache(sub.user_login);
             userDetail.subscriptionTier = sub.tier;
             userDetail.lastKnownSubscribedDate = new Date();
+
+            if (!userDetail.firstKnownSubscribedDate) {
+                userDetail.firstKnownSubscribedDate = new Date(userDetail.lastKnownSubscribedDate);
+            }
         }
     }
 
