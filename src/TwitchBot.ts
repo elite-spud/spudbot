@@ -275,10 +275,10 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
     protected static readonly _knownConfig: { encoding: "utf8" } = { encoding: "utf8" };
 
     public declare readonly _config: ITwitchBotConfig;
-    protected _userAccessToken = new Future<TwitchUserToken>();
-    protected _twitchAppToken = new Future<TwitchAppToken>();
+    protected readonly _userAccessToken = new Future<TwitchUserToken>();
+    protected readonly _twitchAppToken = new Future<TwitchAppToken>();
     protected _twitchIdByUsername: { [key: string]: string } = {}
-    protected readonly userAccessTokenAccountName = "default"; // TODO: find a good replacement for this
+    protected readonly _userAccessTokenAccountName = "default"; // TODO: find a good replacement for this
     protected _twitchEventSub: WebSocket;
     protected _twitchEventSubHeartbeatInterval: NodeJS.Timer; 
 
@@ -653,7 +653,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
     }
 
     protected storeUserTokenResponse(tokenResponse: TwitchUserToken, ): void {
-        setPassword(this.getServiceName(), this.userAccessTokenAccountName, JSON.stringify(tokenResponse));
+        setPassword(this.getServiceName(), this._userAccessTokenAccountName, JSON.stringify(tokenResponse));
         this._userAccessToken.resolve(tokenResponse);
         console.log(`Successfully stored user token response`);
     }
@@ -663,7 +663,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         // Keep alphabetical for easier comparison against returned scope in refresh token
         const scope = `bits:read channel:read:redemptions channel:read:subscriptions moderator:manage:banned_users`;
 
-        const storedTokenString = await getPassword(this.getServiceName(), this.userAccessTokenAccountName);
+        const storedTokenString = await getPassword(this.getServiceName(), this._userAccessTokenAccountName);
         if (storedTokenString) {
             console.log(`Stored user access token found.`);
             // console.log(storedTokenString); // TODO: log this at Trace level

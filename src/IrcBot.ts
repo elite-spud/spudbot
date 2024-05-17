@@ -165,6 +165,7 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
     }
 
     protected async trackUsersInChat(secondsToAdd: number): Promise<void> {
+        // TODO: track daily / per-stream stats
         const userUpdatePromises: Promise<void>[] = [];
         for (const username of Object.keys(this._usernamesInChat)) {
             const userUpdatedPromise = this.getUserDetailWithCache(username).then((userDetail) => {
