@@ -1,32 +1,14 @@
 import { randomInt } from "crypto";
 import * as fs from "fs";
-import puppeteer from "puppeteer";
 import { ChannelPointRequests } from "./ChannelPointRequests";
-import { IChatWarriorState } from "./ChatWarrior";
 import { Future } from "./Future";
-import { GoogleAPI, GoogleAPIConfig } from "./GoogleAPI";
+import { GoogleAPI } from "./GoogleAPI";
 import { IIrcBotAuxCommandGroupConfig, IPrivMessageDetail } from "./IrcBot";
 import { egadd_quotes, f_zero_gx_interview_quotes, f_zero_gx_quotes, f_zero_gx_story_quotes, luigi_quotes } from "./Quotes";
-import { ITwitchBotConfig, ITwitchBotConnectionConfig, ITwitchUserDetail, TwitchBotBase, TwitchEventSubSubscriptionType, TwitchEventSub_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_SubscriptionGift } from "./TwitchBot";
+import { Bidwar_Spreadsheet, IChatWarriorUserDetail, ISpudBotConfig, ISpudBotConnectionConfig } from "./SpudBotTypes";
+import { TwitchBotBase } from "./TwitchBot";
+import { ITwitchUserDetail, TwitchEventSubSubscriptionType, TwitchEventSub_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Cheer, TwitchEventSub_SubscriptionGift } from "./TwitchBotTypes";
 import { Utils } from "./Utils";
-import { channel } from "diagnostics_channel";
-
-export interface UserCommand {
-    username: string,
-    command: (data: string) => void,
-}
-
-export interface IChatWarriorUserDetail extends ITwitchUserDetail {
-    chatWarriorState?: IChatWarriorState;
-}
-
-export interface ISpudBotConfig extends ITwitchBotConfig {
-    connection: ISpudBotConnectionConfig;
-}
-
-export interface ISpudBotConnectionConfig extends ITwitchBotConnectionConfig {
-    google: GoogleAPIConfig;
-}
 
 export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
     public declare readonly _config: ISpudBotConfig;
@@ -37,6 +19,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
 
     protected override getServiceName(): string { return "SpudBot" }
     protected readonly _googleApi = new Future<GoogleAPI>();
+    protected _bidwarSpreadsheet: Bidwar_Spreadsheet | undefined;
 
     public constructor(connection: ISpudBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], configDir: string) {
         super(connection, auxCommandGroups, configDir);
@@ -70,7 +53,8 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
         await googleApi.startup();
         this._googleApi.resolve(googleApi);
 
-        await googleApi.testGoogleApi(); // TODO: remove
+        this._bidwarSpreadsheet = await googleApi.getBidwarSpreadsheet(GoogleAPI.incentiveSheetId, "Sheet3");
+        console.log(JSON.stringify(this._bidwarSpreadsheet));
     }
 
     protected override async getTwitchBroadcasterId(): Promise<string> {
@@ -129,8 +113,20 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
         }];
     }
 
-    protected override async handleSubscriptionGift(event: TwitchEventSub_SubscriptionGift): Promise<void> {
-        // TODO implement this
+    protected override async handleSubscriptionGift(_event: TwitchEventSub_SubscriptionGift): Promise<void> {
+        throw new Error("Not Implemented");
+    }
+
+    protected override async handleCheer(_event: TwitchEventSub_Cheer): Promise<void> {
+        throw new Error("Not Implemented");
+    }
+
+    protected async addBitsToUser(): Promise<void> {
+        throw new Error("Not Implemented");
+    }
+
+    protected async getPendingBitsOfUser(): Promise<number> {
+        throw new Error("Not Implemented");
     }
 
     protected override async handleChannelPointRewardRedeem(event: TwitchEventSub_ChannelPointCustomRewardRedemptionAdd): Promise<void> {

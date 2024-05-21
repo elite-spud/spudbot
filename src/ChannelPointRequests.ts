@@ -1,4 +1,4 @@
-import { TwitchEventSub_ChannelPointCustomRewardRedemptionAdd } from "./TwitchBot";
+import { TwitchEventSub_ChannelPointCustomRewardRedemptionAdd } from "./TwitchBotTypes";
 
 export class ChannelPointRequests {
     protected static readonly baseHours = 3;

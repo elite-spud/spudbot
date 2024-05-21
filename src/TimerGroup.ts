@@ -35,7 +35,7 @@ export class TimerGroup {
 
             const startIndex = currentIndex;
             const callNextCommand = () => {
-                const commandWasSuccessfulPromise = intervalCommands[currentIndex]();
+                const commandWasSuccessfulPromise = intervalCommands[currentIndex](); // Don't send timer messages if stream isn't live / better yet, don't start the timers *until* the stream is live
                 currentIndex = currentIndex === intervalCommands.length - 1
                     ? 0
                     : currentIndex + 1;

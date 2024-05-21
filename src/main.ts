@@ -1,6 +1,7 @@
 import * as fs from "fs";
-import { ISpudBotConnectionConfig, SpudBotTwitch } from "./SpudBot";
+import { SpudBotTwitch } from "./SpudBot";
 import { IIrcBotAuxCommandGroupConfig } from "./IrcBot";
+import { ISpudBotConnectionConfig } from "./SpudBotTypes";
 
 const configDir = fs.realpathSync(`./config`);
 const connectionConfigPath = fs.realpathSync(`${configDir}/config.json`);
