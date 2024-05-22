@@ -45,19 +45,11 @@
                 ]
             },
             {
-                "name": "!subscribe",
-                "aliases": ["!incentives", "!incentive", "!goals", "!donate", "!subscriptions", "!sub", "!subgoals", "!subs"],
-                "autoPostIfTitleContainsAny": ["!incentive", "!incentives", "!goals", "!subgoals"],
+                "name": "!incentive",
+                "aliases": ["!incentives", "!goals", "!subgoals"],
+                "autoPostIfTitleContainsAny": ["!incentive", "!incentives"],
                 "responses": [
-                    "Current subgoal incentives: https://docs.google.com/spreadsheets/d/1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY If you're on mobile, I recommend purchasing subscriptions through the Twitch website instead of in the app: https://www.twitch.tv/subs/elite_spud"
-                ]
-            },
-            {
-                "name": "!bits",
-                "aliases": ["!incentives", "!incentive", "!goals", "!donate", "bitgoals"],
-                "autoPostIfTitleContainsAny": ["!incentive", "!incentives", "!goals", "!bitgoals"],
-                "responses": [
-                    "View the active Bits bidwar here: https://docs.google.com/spreadsheets/d/1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY/edit#gid=877321766 If you're on mobile, I recommend purchasing bits through the Twitch website instead of in the app: https://www.twitch.tv/subs/elite_spud"
+                    "Current subgoal incentives: https://docs.google.com/spreadsheets/d/1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY"
                 ]
             },
             {
@@ -482,10 +474,10 @@
                 ]
             },
             {
-                "name": "!subscribe",
-                "aliases": ["!subs", "!donate"],
+                "name": "!bidwar",
+                "aliases": ["!bits", "!incentive", "!incentives", "goals"],
                 "responses": [
-                    "View the active Bits bidwar here: https://docs.google.com/spreadsheets/d/1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY/edit#gid=877321766 If you're on mobile, I recommend purchasing bits through the Twitch website instead of in the app: https://www.twitch.tv/subs/elite_spud"
+                    "View the active Bits bidwar here: https://docs.google.com/spreadsheets/d/1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY/edit#gid=877321766"
                 ]
             },
             {
