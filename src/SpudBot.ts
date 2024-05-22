@@ -512,15 +512,15 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
         await func(messageDetail);
     }
 
-    protected async handleBidwarCommand(messageDetail: IPrivMessageDetail): Promise<void> {
+    protected async handleBidwarParseCommand(messageDetail: IPrivMessageDetail): Promise<void> {
         const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
-
+            // TODO: Implement this (and add a listener)
         }
         const func = this.getCommandFunc({
             messageHandler: messageHandler,
-            triggerPhrases: ["!bidwar", "!gxquote"],
+            triggerPhrases: ["!bidwar"],
             strictMatch: false,
-            commandId: "!fzerogxquote",
+            commandId: "!bidwarParse",
             globalTimeoutSeconds: 0,
             userTimeoutSeconds: 0,
         });
