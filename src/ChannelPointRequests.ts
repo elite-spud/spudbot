@@ -1,4 +1,4 @@
-import { TwitchEventSub_ChannelPointCustomRewardRedemptionAdd } from "./TwitchBotTypes";
+import { TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd } from "./TwitchBotTypes";
 
 export class ChannelPointRequests {
     protected static readonly baseHours = 3;
@@ -16,7 +16,7 @@ export class ChannelPointRequests {
         return nearestThousand;
     }
 
-    public static async handleChannelPointGameRequest(event: TwitchEventSub_ChannelPointCustomRewardRedemptionAdd): Promise<void> {
+    public static async handleChannelPointGameRequest(event: TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd): Promise<void> {
         const gameName = event.user_input;
         const gameHasBeenSuggestedBefore = await this.checkIfGameHasAlreadyBeenSuggested(gameName);
 

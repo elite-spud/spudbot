@@ -164,6 +164,16 @@ export interface TwitchEventSub_Welcome_Payload {
     }
 }
 
+export interface TwitchEventSub_Reconnect_Payload {
+    session: {
+        id: string;
+        status: string;
+        connected_at: string;
+        keepalive_timeout_seconds: null;
+        reconnect_url: string;
+    }
+}
+
 export interface TwitchEventSub_Websocket_Notification {
     metadata: {
         /** Guid */
@@ -177,26 +187,26 @@ export interface TwitchEventSub_Websocket_Notification {
 }
 
 export interface TwitchEventSub_Notification_Payload {
-    subscription: {
-        /** Guid */
-        id: string;
-        status: "enabled" | string;
-        type: string;
-        version: string;
-        condition: {
-        };
-        transport: {
-        };
-        created_at: string;
+    subscription: TwitchEventSub_Notification_Subscription;
+    event: TwitchEventSub_Notification_Event;
+}
+
+export interface TwitchEventSub_Notification_Subscription {
+    /** Guid */
+    id: string;
+    status: "enabled" | string;
+    type: string;
+    version: string;
+    condition: {
     };
-    event: TwitchEventSub_Notification_Payload_Event
+    created_at: string;
 }
 
-export interface TwitchEventSub_Notification_Payload_Event {
+export interface TwitchEventSub_Notification_Event {
 
 }
 
-export interface TwitchEventSub_ChannelPointCustomRewardRedemptionAdd extends TwitchEventSub_Notification_Payload_Event {
+export interface TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd extends TwitchEventSub_Notification_Event {
     /** Guid */
     id: string;
     broadcaster_user_id: string;
@@ -217,7 +227,7 @@ export interface TwitchEventSub_ChannelPointCustomRewardRedemptionAdd extends Tw
     redeemed_at: string;
 }
 
-export interface TwitchEventSub_SubscriptionBase extends TwitchEventSub_Notification_Payload_Event {
+export interface TwitchEventSub_Event_SubscriptionBase extends TwitchEventSub_Notification_Event {
     user_id: string;
     user_login: string;
     user_name: string;
@@ -227,22 +237,22 @@ export interface TwitchEventSub_SubscriptionBase extends TwitchEventSub_Notifica
     tier: string;
 }
 
-export interface TwitchEventSub_SubscriptionStart extends TwitchEventSub_SubscriptionBase {
+export interface TwitchEventSub_Event_SubscriptionStart extends TwitchEventSub_Event_SubscriptionBase {
     is_gift: boolean;
 }
 
-export interface TwitchEventSub_SubscriptionEnd extends TwitchEventSub_SubscriptionBase {
+export interface TwitchEventSub_Event_SubscriptionEnd extends TwitchEventSub_Event_SubscriptionBase {
     is_gift: boolean;
 }
 
-export interface TwitchEventSub_SubscriptionGift extends TwitchEventSub_SubscriptionBase {
+export interface TwitchEventSub_Event_SubscriptionGift extends TwitchEventSub_Event_SubscriptionBase {
     total: number;
     /** null if anonymous or not shared by the user */
     cumulative_total: number | null;
     is_anonymous: boolean;
 }
 
-export interface TwitchEventSub_SubscriptionMessage extends TwitchEventSub_SubscriptionBase {
+export interface TwitchEventSub_Event_SubscriptionMessage extends TwitchEventSub_Event_SubscriptionBase {
     message: {
         text: string;
         emotes: [
@@ -259,7 +269,7 @@ export interface TwitchEventSub_SubscriptionMessage extends TwitchEventSub_Subsc
     duration_months: number;
 }
 
-export interface TwitchEventSub_Cheer extends TwitchEventSub_Notification_Payload_Event {
+export interface TwitchEventSub_Event_Cheer extends TwitchEventSub_Notification_Event {
     is_anonymous: boolean;
     /** null if is_anonymous == true */
     user_id?: string;
@@ -275,7 +285,7 @@ export interface TwitchEventSub_Cheer extends TwitchEventSub_Notification_Payloa
 }
 
 /** https://dev.twitch.tv/docs/api/reference/#create-eventsub-subscription */
-export interface TwitchEventSubCreateSubscription {
+export interface TwitchEventSub_CreateSubscription {
     type: string;
     version: string;
     condition: {
@@ -291,7 +301,7 @@ export interface TwitchEventSubCreateSubscription {
     }
 }
 
-export interface TwitchEventSubSubscriptionType {
+export interface TwitchEventSub_SubscriptionType {
     name: string;
     version: string;
     condition: {

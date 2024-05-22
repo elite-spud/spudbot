@@ -5,10 +5,11 @@ import { Future } from "./Future";
 import { GoogleAPI } from "./GoogleAPI";
 import { IIrcBotAuxCommandGroupConfig, IPrivMessageDetail } from "./IrcBot";
 import { egadd_quotes, f_zero_gx_interview_quotes, f_zero_gx_quotes, f_zero_gx_story_quotes, luigi_quotes } from "./Quotes";
-import { Bidwar_Spreadsheet, IChatWarriorUserDetail, ISpudBotConfig, ISpudBotConnectionConfig } from "./SpudBotTypes";
+import { Bidwar_BankEntry, Bidwar_Spreadsheet, IChatWarriorUserDetail, ISpudBotConfig, ISpudBotConnectionConfig } from "./SpudBotTypes";
 import { TwitchBotBase } from "./TwitchBot";
-import { ITwitchUserDetail, TwitchEventSubSubscriptionType, TwitchEventSub_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Cheer, TwitchEventSub_SubscriptionGift } from "./TwitchBotTypes";
+import { ITwitchUserDetail, TwitchEventSub_SubscriptionType, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_SubscriptionGift, TwitchEventSub_Notification_Subscription } from "./TwitchBotTypes";
 import { Utils } from "./Utils";
+import { TaskQueue } from "./TaskQueue";
 
 export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
     public declare readonly _config: ISpudBotConfig;
@@ -19,7 +20,6 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
 
     protected override getServiceName(): string { return "SpudBot" }
     protected readonly _googleApi = new Future<GoogleAPI>();
-    protected _bidwarSpreadsheet: Bidwar_Spreadsheet | undefined;
 
     public constructor(connection: ISpudBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], configDir: string) {
         super(connection, auxCommandGroups, configDir);
@@ -52,16 +52,13 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
         const googleApi = new GoogleAPI(this._config.connection.google);
         await googleApi.startup();
         this._googleApi.resolve(googleApi);
-
-        this._bidwarSpreadsheet = await googleApi.getBidwarSpreadsheet(GoogleAPI.incentiveSheetId, "Sheet3");
-        console.log(JSON.stringify(this._bidwarSpreadsheet));
     }
 
     protected override async getTwitchBroadcasterId(): Promise<string> {
         return "47243772"; // TODO: make this dynamic (i.e. not elite_spud)
     }
 
-    protected override async getTwitchEventSubTopics(): Promise<TwitchEventSubSubscriptionType[]> {
+    protected override async getTwitchEventSubTopics(): Promise<TwitchEventSub_SubscriptionType[]> {
         return [{
             name: `channel.channel_points_custom_reward_redemption.add`,
             version: `1`,
@@ -113,23 +110,21 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
         }];
     }
 
-    protected override async handleSubscriptionGift(_event: TwitchEventSub_SubscriptionGift): Promise<void> {
+    protected override async handleSubscriptionGift(_event: TwitchEventSub_Event_SubscriptionGift): Promise<void> {
         throw new Error("Not Implemented");
     }
 
-    protected override async handleCheer(_event: TwitchEventSub_Cheer): Promise<void> {
-        throw new Error("Not Implemented");
+    protected override async handleCheer(event: TwitchEventSub_Event_Cheer, subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
+        if (event.is_anonymous || event.user_id === undefined || event.user_name === undefined) {
+            return;
+        }
+        const googleApi = await this._googleApi;
+        const bidwarSpreadsheet = await googleApi.getBidwarSpreadsheet(GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestSubSheet);
+        bidwarSpreadsheet.addBitsToUser(event.user_id, event.user_name, event.bits, new Date(subscription.created_at));
+        await googleApi.pushBidwarSpreadsheet(GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestSubSheet, bidwarSpreadsheet);
     }
 
-    protected async addBitsToUser(): Promise<void> {
-        throw new Error("Not Implemented");
-    }
-
-    protected async getPendingBitsOfUser(): Promise<number> {
-        throw new Error("Not Implemented");
-    }
-
-    protected override async handleChannelPointRewardRedeem(event: TwitchEventSub_ChannelPointCustomRewardRedemptionAdd): Promise<void> {
+    protected override async handleChannelPointRewardRedeem(event: TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd): Promise<void> {
         // TODO: Make this a config file
         if (event.reward.title === "Hi, I'm Lurking!") {
             this.chat(`#${event.broadcaster_user_name}`, `${event.user_name}, enjoy your lurk elites72Heart`);
@@ -137,6 +132,27 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
 
         if (event.reward.title.includes("Contribute to a !GameRequest")) {
             await ChannelPointRequests.handleChannelPointGameRequest(event);
+        }
+
+        if (event.reward.title === "Ultra Nice") {
+            await this.handleCheer({
+                is_anonymous: false,
+                user_id: "5",
+                user_name: "foo",
+                bits: 100,
+                broadcaster_user_id: "6",
+                broadcaster_user_name: "Elite_Spud",
+                broadcaster_user_login: "elite_spud",
+                message: "hello world!",
+            }, {
+                id: "",
+                status: "enabled",
+                type: "",
+                version: "",
+                condition: {
+                },
+                created_at: new Date().toISOString(),
+            });
         }
     }
 
@@ -488,6 +504,21 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
         const func = this.getCommandFunc({
             messageHandler: messageHandler,
             triggerPhrases: ["!fzerogxquote", "!gxquote"],
+            strictMatch: false,
+            commandId: "!fzerogxquote",
+            globalTimeoutSeconds: 0,
+            userTimeoutSeconds: 0,
+        });
+        await func(messageDetail);
+    }
+
+    protected async handleBidwarCommand(messageDetail: IPrivMessageDetail): Promise<void> {
+        const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
+
+        }
+        const func = this.getCommandFunc({
+            messageHandler: messageHandler,
+            triggerPhrases: ["!bidwar", "!gxquote"],
             strictMatch: false,
             commandId: "!fzerogxquote",
             globalTimeoutSeconds: 0,

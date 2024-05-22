@@ -2,6 +2,7 @@ import { JWT } from "google-auth-library";
 import { google, sheets_v4 } from "googleapis";
 import { Future } from "./Future";
 import { Bidwar_BankEntry, Bidwar_BankEntryBlock, Bidwar_Entry, Bidwar_EntryBlock, Bidwar_Spreadsheet, Bidwar_Spreadsheet_BlockOrder } from "./SpudBotTypes";
+import { TaskQueue } from "./TaskQueue";
 
 export interface GoogleAPIConfig {
     oauth: {
@@ -26,9 +27,12 @@ export interface GoogleAPIConfig {
 
 export class GoogleAPI {
     public static readonly incentiveSheetId = "1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY";
+    public static readonly bidwarTestSubSheet = "Sheet3"; 
 
     protected readonly _config: GoogleAPIConfig
     public readonly _googleSheets = new Future<sheets_v4.Sheets>();
+
+    protected _taskQueue: TaskQueue = new TaskQueue();
 
     public constructor(config: GoogleAPIConfig) { // TODO: make a singleton?
         this._config = config;
@@ -49,7 +53,77 @@ export class GoogleAPI {
         this._googleSheets.resolve(sheets);
     }
 
+    public async pushBidwarSpreadsheet(sheetId: string, subSheetName: string, bidwarSpreadsheet: Bidwar_Spreadsheet): Promise<void> {
+        const future = new Future<void>();
+        
+        const task = async (): Promise<void> => {
+            await this._pushBidwarSpreadsheet(sheetId, subSheetName, bidwarSpreadsheet);
+            future.resolve();
+        }
+        this._taskQueue.addTask(task);
+        this._taskQueue.startQueue();
+
+        return future;
+    }
+
+    protected async _pushBidwarSpreadsheet(sheetId: string, _subSheetName: string, bidwarSpreadsheet: Bidwar_Spreadsheet): Promise<void> {
+        const sheets = await this._googleSheets;
+
+        const pendingBlockHeaderValues: (string | number | undefined)[][] = [bidwarSpreadsheet.pendingBlock.header];
+        const pendingBlockEntryValues = bidwarSpreadsheet.pendingBlock.entries.map(n => [n.points, n.name]);
+        const pendingBlockFooterValues: (string | number | undefined)[][] = [bidwarSpreadsheet.pendingBlock.footer];
+        const pendingBlockValues = pendingBlockHeaderValues.concat(pendingBlockEntryValues).concat(pendingBlockFooterValues);
+
+        const activeBlockHeaderValues: (string | number | undefined)[][] = [bidwarSpreadsheet.activeBlock.header];
+        const activeBlockEntryValues = bidwarSpreadsheet.activeBlock.entries.map(n => [n.points, n.name]);
+        const activeBlockFooterValues: (string | number | undefined)[][] = [bidwarSpreadsheet.activeBlock.footer];
+        const activeBlockValues = activeBlockHeaderValues.concat(activeBlockEntryValues).concat(activeBlockFooterValues);
+
+        const bankBlockHeaderValues: (string | number | undefined)[][] = [bidwarSpreadsheet.bankBlock.header];
+        const bankBlockEntryValues = bidwarSpreadsheet.bankBlock.entries.map(n => [n.points, n.name, n.userId]);
+        const bankBlockFooterValues: (string | number | undefined)[][] = [bidwarSpreadsheet.bankBlock.footer];
+        const bankBlockValues = bankBlockHeaderValues.concat(bankBlockEntryValues).concat(bankBlockFooterValues);
+
+        console.log(JSON.stringify(bidwarSpreadsheet.bankBlock));
+        console.log(bankBlockValues);
+        
+        const batchUpdateRequest: sheets_v4.Schema$BatchUpdateValuesRequest = {
+            valueInputOption: "RAW",
+            data: [
+                {
+                    range: `Sheet4`,
+                    values: pendingBlockValues,
+                },
+                {
+                    range: `Sheet4!A${pendingBlockValues.length + 1}`,
+                    values: activeBlockValues,
+                },
+                {
+                    range: `Sheet4!A${pendingBlockValues.length + 1 + activeBlockValues.length + 1}`,
+                    values: bankBlockValues
+                }
+            ]
+        };
+        await sheets.spreadsheets.values.batchUpdate({
+            spreadsheetId: sheetId,
+            requestBody: batchUpdateRequest,
+        });
+    }
+
     public async getBidwarSpreadsheet(sheetId: string, subSheetName: string): Promise<Bidwar_Spreadsheet> {
+        const future = new Future<Bidwar_Spreadsheet>();
+        
+        const task = async (): Promise<void> => {
+            const bidwarSpreadsheet = await this._getBidwarSpreadsheet(sheetId, subSheetName);
+            future.resolve(bidwarSpreadsheet);
+        }
+        this._taskQueue.addTask(task);
+        this._taskQueue.startQueue();
+
+        return future;
+    }
+
+    protected async _getBidwarSpreadsheet(sheetId: string, subSheetName: string): Promise<Bidwar_Spreadsheet> {
         const googleSheets = await this._googleSheets;
 
         const spreadsheet = await googleSheets.spreadsheets.get({
@@ -104,11 +178,7 @@ export class GoogleAPI {
             throw new Error("Unable to parse discrete blocks from bidwar spreadsheet");
         }
 
-        const bidwarSpreadsheet: Bidwar_Spreadsheet = {
-            activeBlock: bidwarActiveBlock,
-            pendingBlock: bidwarPendingBlock,
-            bankBlock: bidwarBankBlock,
-        }
+        const bidwarSpreadsheet = new Bidwar_Spreadsheet(bidwarActiveBlock, bidwarPendingBlock, bidwarBankBlock);
         return bidwarSpreadsheet;
     }
 
