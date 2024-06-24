@@ -59,6 +59,14 @@
                 "responses": [
                     "I'll be participating in the Lady Arcaders' Attract Mode once again on May 5th at 1:00 CST, by playing some F-Zero GX. The plan is to speedrun through the story mode on Very Hard difficulty, but if I finish that quickly, then I might have time for some other stuff!"
                 ]
+            },
+            {
+                "name": "!gdqhotfix",
+                "aliases": ["!hotfix"],
+                "autoPostIfTitleContainsAny": ["!attractmode"],
+                "responses": [
+                    "I'll be appearing on @Mr_Shasta's GDQ Hotfix show, Do All the Things!, on June 27th at 7:00 PM EST where I'll playing some Luigi's Mansion 100% [PAL] in a race with @KaiiRunz!"
+                ]
             }
         ]
     },
@@ -207,7 +215,7 @@
             {
                 "name": "!pronouns",
                 "responses": [
-                    "Spud's pronouns are They/She. See other chatters' pronouns and set your own here: https://pronouns.alejo.io/"
+                    "Spud's pronouns are They/She. See other chatters' pronouns and set your own here (if you'd like others to know them): https://pronouns.alejo.io/"
                 ]
             },
             {
@@ -383,7 +391,7 @@
                 "name": "!tournament",
                 "aliases": ["!tourney", "!Tournament"],
                 "responses": [
-                    "I'm participating in the annual Luigi's Mansion Any% No OoB tournament this year as both a runner and a commentator! Check out the bracket https://challonge.com/LMTournament2023 and schedule https://schedule.speedgaming.org/lm/#"
+                    "I'm participating in the annual Luigi's Mansion Any% No OoB tournament this year as both a runner and a commentator! Check out the bracket https://challonge.com/LMTournament2024 and the schedule https://schedule.speedgaming.org/lm/ to keep up with the event!"
                 ]
             },
             {
@@ -484,6 +492,13 @@
                 "name": "!autosplitter",
                 "responses": [
                     "I use Toufool's Autosplitter https://github.com/Toufool/AutoSplit to control LiveSplit by comparing my video capture feed against a set of reference frames. Because I made my own images for F-Zero GX, they're unlikely to work for everyone else out-of-the-box due to the specific way I capture my game. DM me if you want help setting it up, yourself, though!"
+                ]
+            },
+            {
+                "name": "!wheeloffast",
+                "aliases": ["!wheel"],
+                "responses": [
+                    "Wanna spin the wheel of fast yourself? Try it here! https://wheelofnames.com/7xx-ect. The cups wheel can also be found here: https://wheelofnames.com/uyf-9ey"
                 ]
             }
         ]
