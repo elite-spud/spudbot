@@ -61,25 +61,35 @@ export class GoogleAPI {
     }
 
     public async handleGameRequestRedeem(event: TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd): Promise<void> {
-        await this.handleGameRequestFund(`#${event.broadcaster_user_name}`, event.user_input, event.user_name, event.reward.cost, new Date(event.redeemed_at));
-        await this._twitchBot.updateChannelPointRedemptions(event.id, event.reward.id, event.broadcaster_user_id, true); // TODO: test this
+        const pointsWereApplied = await this.handleGameRequestFund(`#${event.broadcaster_user_name}`, event.user_input, event.user_name, event.reward.cost, new Date(event.redeemed_at));
+        if (pointsWereApplied) {
+            await this._twitchBot.updateChannelPointRedemptions(event.id, event.reward.id, event.broadcaster_user_id, true);
+        }
     }
 
-    public async handleGameRequestFund(respondTo: string, gameName: string, username: string, points: number, timestamp: Date): Promise<void> {
-        const future = new Future<void>();
+    /**
+     * @param respondTo 
+     * @param gameName 
+     * @param username 
+     * @param points 
+     * @param timestamp 
+     * @returns whether or not the reward was successfully completed
+     */
+    public async handleGameRequestFund(respondTo: string, gameName: string, username: string, points: number, timestamp: Date): Promise<boolean> {
+        const future = new Future<boolean>();
         const task = async (): Promise<void> => {
             const gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestTestReadSubSheet);
             const existingEntry = gameRequestSpreadsheet.findEntry(gameName);
             if (!existingEntry) {
                 this._twitchBot.chat(respondTo, `@${username}, your game request detected as a new request; please allow an admin to add this game to the spreadsheet before adding any further points https://docs.google.com/spreadsheets/d/1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY/edit?gid=384782784#gid=384782784`);
-                future.resolve();
+                future.resolve(false);
                 return;
             }
 
             gameRequestSpreadsheet.addPointsToEntry(username, gameName, points, timestamp);
             await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestTestWriteSubSheet, gameRequestSpreadsheet);
             this._twitchBot.chat(respondTo, `@${username}, your points were successfully added to game request.`);
-            future.resolve();
+            future.resolve(true);
         }
         this._taskQueue.addTask(task);
         this._taskQueue.startQueue();

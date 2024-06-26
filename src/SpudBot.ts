@@ -36,6 +36,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleFZeroGXStoryQuote(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleFZeroGXInterviewQuote(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleFZeroGXQuote(detail));
+        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleCreateGameRequestRewards(detail));
 
         try {
             this._bonkCountPath = fs.realpathSync(`${this._config.configDir}/bonkCount.txt`);
@@ -561,6 +562,27 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
             triggerPhrases: ["!bidwar"],
             strictMatch: false,
             commandId: "!bidwarParse",
+            globalTimeoutSeconds: 0,
+            userTimeoutSeconds: 0,
+        });
+        await func(messageDetail);
+    }
+
+    protected async handleCreateGameRequestRewards(messageDetail: IPrivMessageDetail): Promise<void> {
+        const messageHandler = async (_messageDetail: IPrivMessageDetail): Promise<void> => {
+            await this.createChannelPointReward({
+                title: "Contribute to a !GameRequest (1K)",
+                cost: 1000,
+                prompt: "Please provide the name of the game you'd like me to play. Points will be automatically added toward any existing request matching that name, so please ensure correct spelling.",
+                background_color: "#FFFFFF",
+                is_user_input_required: true,
+            });
+        }
+        const func = this.getCommandFunc({
+            messageHandler: messageHandler,
+            triggerPhrases: ["!initGameRequests"],
+            strictMatch: false,
+            commandId: "!initGameRequests",
             globalTimeoutSeconds: 0,
             userTimeoutSeconds: 0,
         });

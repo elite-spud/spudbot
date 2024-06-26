@@ -6,7 +6,7 @@ import { WebSocket } from "ws";
 import { ConsoleColors } from "./ConsoleColors";
 import { Future } from "./Future";
 import { IIrcBotAuxCommandGroupConfig, IJoinMessageDetail, IPartMessageDetail, IPrivMessageDetail, IrcBotBase } from "./IrcBot";
-import { ITwitchBotAuxCommandConfig, ITwitchBotConfig, ITwitchBotConnectionConfig, ITwitchUserDetail, SubTierPoints, TwitchAppToken, TwitchBadgeTagKeys, TwitchBroadcasterSubscriptionsResponse, TwitchErrorResponse, TwitchEventSub_CreateSubscription, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_SubscriptionEnd, TwitchEventSub_Event_SubscriptionGift, TwitchEventSub_Event_SubscriptionMessage, TwitchEventSub_Event_SubscriptionStart, TwitchEventSub_Notification_Payload, TwitchEventSub_Notification_Subscription, TwitchEventSub_Reconnect_Payload, TwitchEventSub_SubscriptionType, TwitchEventSub_Welcome_Payload, TwitchGetChannelInfo, TwitchGetChannelInfoResponse, TwitchGetStreamInfo, TwitchGetStreamsResponse, TwitchPrivMessageTagKeys, TwitchUserInfoResponse, TwitchUserToken } from "./TwitchBotTypes";
+import { CreateCustomChannelPointRewardArgs, ITwitchBotAuxCommandConfig, ITwitchBotConfig, ITwitchBotConnectionConfig, ITwitchUserDetail, SubTierPoints, TwitchAppToken, TwitchBadgeTagKeys, TwitchBroadcasterSubscriptionsResponse, TwitchErrorResponse, TwitchEventSub_CreateSubscription, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_SubscriptionEnd, TwitchEventSub_Event_SubscriptionGift, TwitchEventSub_Event_SubscriptionMessage, TwitchEventSub_Event_SubscriptionStart, TwitchEventSub_Notification_Payload, TwitchEventSub_Notification_Subscription, TwitchEventSub_Reconnect_Payload, TwitchEventSub_SubscriptionType, TwitchEventSub_Welcome_Payload, TwitchGetChannelInfo, TwitchGetChannelInfoResponse, TwitchGetStreamInfo, TwitchGetStreamsResponse, TwitchPrivMessageTagKeys, TwitchUserInfoResponse, TwitchUserToken } from "./TwitchBotTypes";
 // import { randomInt } from "crypto";
 
 export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwitchUserDetail> extends IrcBotBase<TUserDetail> {
@@ -404,7 +404,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
     protected async loadUserToken(): Promise<void> {
         const clientId = this._config.connection.twitch.oauth.clientId;
         // Keep alphabetical for easier comparison against returned scope in refresh token
-        const scope = `bits:read channel:read:redemptions channel:read:subscriptions moderator:manage:banned_users`;
+        const scope = `bits:read channel:manage:redemptions channel:read:subscriptions moderator:manage:banned_users`;
 
         const storedTokenString = await getPassword(this.getServiceName(), this._userAccessTokenAccountName);
         if (storedTokenString) {
@@ -742,12 +742,28 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         super.chat(recipient, actualMessage);
     }
 
+    public async createChannelPointReward(body: CreateCustomChannelPointRewardArgs): Promise<void> {
+        const response = await fetch(`https://api.twitch.tv/helix/channel_points/custom_rewards?broadcaster_id=${await this.getTwitchBroadcasterId()}`, {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
+                "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
+                "Content-Type": `application/json`,
+            },
+            body: JSON.stringify(body),
+        });
+        if (response.status === 200) {
+            return;
+        }
+
+        throw new Error(`Unable to create new channel point reward: ${response.status} error (${(await response.json()).message})`);
+    }
+
     public async updateChannelPointRedemptions(redemption_id: string, reward_id: string, broadcaster_id: string, fulfill?: boolean): Promise<void> {
         const body = {
             status: fulfill ? "FULFILLED" : "CANCELED",
         };
-        // Websockets are read-only (aside from PONG responses), so subscriptions are set up via HTTP instead (just like webhooks)
-        const response = await fetch(`PATCH https://api.twitch.tv/helix/channel_points/custom_rewards/redemptions?broadcaster_id=${broadcaster_id}&reward_id=${reward_id}&id=${redemption_id}`, {
+        const response = await fetch(`https://api.twitch.tv/helix/channel_points/custom_rewards/redemptions?broadcaster_id=${broadcaster_id}&reward_id=${reward_id}&id=${redemption_id}`, {
             method: `PATCH`,
             headers: {
                 Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
@@ -761,6 +777,6 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
             // const json: TwitchUpdateChannelPointRedemptionStatusResponse = await response.json();
         }
 
-        throw new Error(`Unable to update redemption status: ${response.status} error`);
+        throw new Error(`Unable to update redemption status: ${response.status} error (${(await response.json()).message})`);
     }
 }
