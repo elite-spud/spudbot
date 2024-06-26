@@ -163,21 +163,26 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
                 return;
             }
 
-            switch (tokens[1]) {
-                case "add":
-                    const args = tokens.slice(2);
-                    if (args.length === 4) {
-                        (await this._googleApi).handleGameRequestAdd(messageDetail.respondTo, args[0], Number.parseInt(args[1]), undefined, args[2], Number.parseInt(args[3]), new Date());
-                    } else if (args.length === 5) {
-                        (await this._googleApi).handleGameRequestAdd(messageDetail.respondTo, args[0], Number.parseInt(args[1]), Number.parseInt(args[2]), args[3], Number.parseInt(args[4]), new Date());
-                    } else {
-                        this.chat(messageDetail.respondTo, `!gameRequest add command was malformed (expected at least 4 arguments, but found ${args.length})`);
-                    }
-                    break;
-                case "remove":
-                    break; // TODO
-                case "fund":
-                    break; // TODO
+            if (tokens[1] === "add") {
+                const args = tokens.slice(2);
+                const gameName = args[0].replaceAll("\"", "");
+                if (args.length === 4) {
+                    (await this._googleApi).handleGameRequestAdd(messageDetail.respondTo, gameName, Number.parseInt(args[1]), undefined, args[2], Number.parseInt(args[3]), new Date());
+                } else if (args.length === 5) {
+                    (await this._googleApi).handleGameRequestAdd(messageDetail.respondTo, gameName, Number.parseInt(args[1]), Number.parseInt(args[2]), args[3], Number.parseInt(args[4]), new Date());
+                } else {
+                    this.chat(messageDetail.respondTo, `!gameRequest add command was malformed (expected at least 4 arguments, but found ${args.length})`);
+                }
+            }
+            if (tokens[1] === "remove") {
+                // TODO
+            }
+            if (tokens[1] === "fund") {
+                const args = tokens.slice(2);
+                const gameName = args[0].replaceAll("\"", "");
+                if (args.length === 3) {
+                    (await this._googleApi).handleGameRequestFund(messageDetail.respondTo, gameName, args[1], Number.parseInt(args[2]), new Date());
+                }
             }
         }
         const func = this.getCommandFunc({

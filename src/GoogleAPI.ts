@@ -61,21 +61,24 @@ export class GoogleAPI {
     }
 
     public async handleGameRequestRedeem(event: TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd): Promise<void> {
+        await this.handleGameRequestFund(`#${event.broadcaster_user_name}`, event.user_input, event.user_name, event.reward.cost, new Date(event.redeemed_at));
+        await this._twitchBot.updateChannelPointRedemptions(event.id, event.reward.id, event.broadcaster_user_id, true); // TODO: test this
+    }
+
+    public async handleGameRequestFund(respondTo: string, gameName: string, username: string, points: number, timestamp: Date): Promise<void> {
         const future = new Future<void>();
         const task = async (): Promise<void> => {
             const gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestTestReadSubSheet);
-            const existingEntry = gameRequestSpreadsheet.findEntry(event.user_input);
+            const existingEntry = gameRequestSpreadsheet.findEntry(gameName);
             if (!existingEntry) {
-                this._twitchBot.chat(`#${event.broadcaster_user_name}`, `${event.user_name}, game request detected as a new request; please allow an admin to add this game to the spreadsheet before adding any further points https://docs.google.com/spreadsheets/d/1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY/edit?gid=384782784#gid=384782784`);
+                this._twitchBot.chat(respondTo, `@${username}, your game request detected as a new request; please allow an admin to add this game to the spreadsheet before adding any further points https://docs.google.com/spreadsheets/d/1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY/edit?gid=384782784#gid=384782784`);
                 future.resolve();
                 return;
             }
 
-            gameRequestSpreadsheet.addPointsToEntry(event.user_name, event.user_input, event.reward.cost, new Date(event.redeemed_at));
+            gameRequestSpreadsheet.addPointsToEntry(username, gameName, points, timestamp);
             await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestTestWriteSubSheet, gameRequestSpreadsheet);
-            // TODO: approve this redeem
-            await this._twitchBot.updateChannelPointRedemptions(event.id, event.reward.id, event.broadcaster_user_id, true);
-            this._twitchBot.chat(`#${event.broadcaster_user_name}`, `@${event.user_name}, your points were successfully added to game request.`);
+            this._twitchBot.chat(respondTo, `@${username}, your points were successfully added to game request.`);
             future.resolve();
         }
         this._taskQueue.addTask(task);

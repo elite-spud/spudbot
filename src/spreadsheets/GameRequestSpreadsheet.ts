@@ -39,7 +39,11 @@ export class GameRequest_Spreadsheet extends SpreadsheetBase {
     public addPointsToEntry(username: string, gamename: string, points: number, timestamp: Date): void {
         const activeEntry = this.activeBlock.entries.find(n => n.gameName.toLowerCase() === gamename.toLowerCase());
         if (activeEntry) {
-            const contribution = activeEntry.contributions.find(n => n.name === username) ?? { name: username, points: 0 };
+            let contribution = activeEntry.contributions.find(n => n.name === username);
+            if (!contribution) {
+                contribution = { name: username, points: 0 };
+                activeEntry.contributions.push(contribution);
+            }
             contribution.points += points;
             return;
         }
@@ -47,9 +51,14 @@ export class GameRequest_Spreadsheet extends SpreadsheetBase {
         const pendingEntryIndex = this.pendingBlock.entries.findIndex(n => n.gameName.toLowerCase() === gamename.toLowerCase());
         if (pendingEntryIndex !== -1) {
             const pendingEntry = this.pendingBlock.entries.at(pendingEntryIndex)!;
-            const contribution = pendingEntry.contributions.find(n => n.name === username) ?? { name: username, points: 0 };
+            let contribution = pendingEntry.contributions.find(n => n.name === username); // ?? { name: username, points: 0 };
+            if (!contribution) {
+                contribution = { name: username, points: 0 };
+                pendingEntry.contributions.push(contribution);
+            }
             contribution.points += points;
-            if (pendingEntry.pointsContributed >= pendingEntry.pointsToActivate) {
+
+            if (pendingEntry.pointsContributed >= pendingEntry.pointsToActivate) {         
                 const activeEntry = new GameRequest_ActiveEntry({ gameName: pendingEntry.gameName, gameLengthHours: pendingEntry.gameLengthHours, requestDate: timestamp, contributions: Array.from(pendingEntry.contributions) });
                 this.pendingBlock.entries.splice(pendingEntryIndex, 1);
                 this.activeBlock.entries.push(activeEntry);
@@ -61,9 +70,7 @@ export class GameRequest_Spreadsheet extends SpreadsheetBase {
     }
 
     public addEntry(gameName: string, gameLengthHours: number, pointsToActivate: number | undefined, username: string, points: number, timestamp: Date): void {
-        const contributions = [
-            { name: username, points: 0 }
-        ];
+        const contributions = [ { name: username, points: 0 } ];
         const pendingEntry = new GameRequest_PendingEntry({ gameName, gameLengthHours, pointsToActivate, contributions });
         this.pendingBlock.entries.push(pendingEntry);
         this.addPointsToEntry(username, gameName, points, timestamp);
@@ -272,7 +279,7 @@ export function parseGameRequestActiveEntry(row: sheets_v4.Schema$RowData): Game
 
     const contributionsString = row.values[2].note ?? "";
     const contributions = parseContributions(contributionsString);
-    
+
     const entry = new GameRequest_ActiveEntry({
         gameName: getEntryValue_String(row.values[0]),
         gameLengthHours: getEntryValue_Number(row.values[1]),
