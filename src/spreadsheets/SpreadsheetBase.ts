@@ -1,14 +1,16 @@
 import { sheets_v4 } from "googleapis";
+import { borderLeft, headerFormatCenter } from "./GameRequestSpreadsheetStyle";
 
 export type SpreadsheetRow = (string | number | undefined)[];
-export function simpleToRowData(row: SpreadsheetRow): sheets_v4.Schema$RowData {
+export function headerToRowData(row: SpreadsheetRow): sheets_v4.Schema$RowData {
     return {
-        values: row.map(n => {
+        values: row.map((n) => {
             const cellData: sheets_v4.Schema$CellData = {
                 userEnteredValue: { stringValue: n?.toString() },
+                userEnteredFormat: headerFormatCenter,
             }
             return cellData;
-        }),
+        }).concat({ userEnteredFormat: borderLeft }),
     };
 }
 

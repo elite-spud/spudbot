@@ -1,5 +1,5 @@
 import { sheets_v4 } from "googleapis";
-import { SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getEntryValue_Number, getEntryValue_String, parseHeaderFooterRow, simpleToRowData } from "./SpreadsheetBase";
+import { SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getEntryValue_Number, getEntryValue_String, headerToRowData, parseHeaderFooterRow } from "./SpreadsheetBase";
 
 export enum Bidwar_Spreadsheet_BlockOrder {
     Pending = 0,
@@ -77,7 +77,7 @@ export class Bidwar_PendingBlock extends SpreadsheetBlock {
     }
 
     public toRowData(): sheets_v4.Schema$RowData[] {
-        const headerRow = simpleToRowData(this.header);
+        const headerRow = headerToRowData(this.header);
         const entryRows = this.entries.map(n => {
             const rowData: sheets_v4.Schema$RowData = {
                 values: [
@@ -113,7 +113,7 @@ export class Bidwar_ActiveBlock extends SpreadsheetBlock {
     }
 
     public toRowData(): sheets_v4.Schema$RowData[] {
-        const headerRow = simpleToRowData(this.header);
+        const headerRow = headerToRowData(this.header);
         const entryRows = this.entries.map(n => {
             const rowData: sheets_v4.Schema$RowData = {
                 values: [
@@ -154,7 +154,7 @@ export class Bidwar_BankBlock extends SpreadsheetBlock {
     }
 
     public toRowData(): sheets_v4.Schema$RowData[] {
-        const headerRow = simpleToRowData(this.header);
+        const headerRow = headerToRowData(this.header);
         const entryRows = this.entries.map(n => {
             const rowData: sheets_v4.Schema$RowData = {
                 values: [

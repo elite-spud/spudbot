@@ -1,6 +1,7 @@
 import { sheets_v4 } from "googleapis";
 import { ChannelPointRequests } from "../ChannelPointRequests";
-import { SpreadsheetBase, SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getEntryValue_Date, getEntryValue_Number, getEntryValue_String, parseHeaderFooterRow, simpleToRowData } from "./SpreadsheetBase";
+import { borderLeft, getBorderRowBelow, pendingEntryFormat } from "./GameRequestSpreadsheetStyle";
+import { SpreadsheetBase, SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getEntryValue_Date, getEntryValue_Number, getEntryValue_String, headerToRowData, parseHeaderFooterRow } from "./SpreadsheetBase";
 
 export enum GameRequest_Spreadsheet_BlockOrder {
     Active = 0,
@@ -77,7 +78,7 @@ export class GameRequest_Spreadsheet extends SpreadsheetBase {
     }
 
     public toRowData(): sheets_v4.Schema$RowData[] {
-        return this.activeBlock.toRowData().concat({}).concat(this.pendingBlock.toRowData());
+        return this.activeBlock.toRowData().concat(this.pendingBlock.toRowData());
     }
 
     public static async getGameRequestSpreadsheet(sheetsApi: sheets_v4.Sheets, sheetId: string, subSheetId: number): Promise<GameRequest_Spreadsheet> {
@@ -129,31 +130,39 @@ export class GameRequest_ActiveBlock extends SpreadsheetBlock {
     }
 
     public toRowData(): sheets_v4.Schema$RowData[] {
-        const headerRow = simpleToRowData(this.header);
+        const headerRow = headerToRowData(this.header);
         const entryRows = this.entries.map(n => {
             const rowData: sheets_v4.Schema$RowData = {
                 values: [
                     {
                         userEnteredValue: { stringValue: n.gameName },
+                        userEnteredFormat: pendingEntryFormat,
                     },
                     {
                         userEnteredValue: { numberValue: n.gameLengthHours },
+                        userEnteredFormat: pendingEntryFormat,
                     },
                     {
                         userEnteredValue: { numberValue: n.pointsContributed },
                         note: n.contributions.sort((a, b) => b.points - a.points).map(c => `${c.name} - ${c.points}`).join("\n"),
+                        userEnteredFormat: pendingEntryFormat,
                     },
                     {
                         userEnteredValue: { stringValue: n.requestDate.toISOString(), },
+                        userEnteredFormat: pendingEntryFormat,
                     },
                     {
                         userEnteredValue: { numberValue: n.effectivePoints, },
+                        userEnteredFormat: pendingEntryFormat,
                     },
+                    {
+                        userEnteredFormat: borderLeft,
+                    }
                 ],
             };
             return rowData;
         });
-        return [headerRow].concat(entryRows);
+        return [headerRow].concat(entryRows).concat(getBorderRowBelow(5));
     }
 }
 
@@ -205,28 +214,35 @@ export class GameRequest_PendingBlock extends SpreadsheetBlock {
     }
 
     public toRowData(): sheets_v4.Schema$RowData[] {
-        const headerRow = simpleToRowData(this.header);
+        const headerRow = headerToRowData(this.header);
         const entryRows = this.entries.map(n => {
             const rowData: sheets_v4.Schema$RowData = {
                 values: [
                     {
                         userEnteredValue: { stringValue: n.gameName },
+                        userEnteredFormat: pendingEntryFormat,
                     },
                     {
                         userEnteredValue: { numberValue: n.gameLengthHours },
+                        userEnteredFormat: pendingEntryFormat,
                     },
                     {
                         userEnteredValue: { numberValue: n.pointsContributed },
                         note: n.contributions.sort((a, b) => b.points - a.points).map(c => `${c.name} - ${c.points}`).join("\n"),
+                        userEnteredFormat: pendingEntryFormat,
                     },
                     {
                         userEnteredValue: { numberValue: n.pointsToActivate, },
+                        userEnteredFormat: pendingEntryFormat,
+                    },
+                    {
+                        userEnteredFormat: borderLeft,
                     },
                 ],
             };
             return rowData;
         });
-        return [headerRow].concat(entryRows);
+        return [headerRow].concat(entryRows).concat([getBorderRowBelow(4)]);
     }
 }
 
