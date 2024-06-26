@@ -21,7 +21,11 @@ export class TaskQueue {
             if (task === undefined) {
                 return;
             }
-            await task();
+            try {
+                await task();
+            } catch (err) {
+                console.log(err); // TODO: pretty this up by passing the log function
+            }
         }
 
         this._runningFuture.resolve();

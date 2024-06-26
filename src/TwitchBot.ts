@@ -596,7 +596,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         }
     }
 
-    protected abstract handleChannelPointRewardRedeem(event: TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, _subscription: TwitchEventSub_Notification_Subscription): Promise<void>;
+    protected abstract handleChannelPointRewardRedeem(event: TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, subscription: TwitchEventSub_Notification_Subscription): Promise<void>;
 
     protected async handleSubscriptionStart(event: TwitchEventSub_Event_SubscriptionStart, _subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
         if (!this._currentSubPoints || !this._currentSubs)

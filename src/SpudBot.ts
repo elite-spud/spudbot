@@ -1,15 +1,13 @@
 import { randomInt } from "crypto";
 import * as fs from "fs";
-import { ChannelPointRequests } from "./ChannelPointRequests";
 import { Future } from "./Future";
 import { GoogleAPI } from "./GoogleAPI";
 import { IIrcBotAuxCommandGroupConfig, IPrivMessageDetail } from "./IrcBot";
 import { egadd_quotes, f_zero_gx_interview_quotes, f_zero_gx_quotes, f_zero_gx_story_quotes, luigi_quotes } from "./Quotes";
-import { Bidwar_BankEntry, Bidwar_Spreadsheet, IChatWarriorUserDetail, ISpudBotConfig, ISpudBotConnectionConfig } from "./SpudBotTypes";
+import { IChatWarriorUserDetail, ISpudBotConfig, ISpudBotConnectionConfig } from "./SpudBotTypes";
 import { TwitchBotBase } from "./TwitchBot";
-import { ITwitchUserDetail, TwitchEventSub_SubscriptionType, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_SubscriptionGift, TwitchEventSub_Notification_Subscription } from "./TwitchBotTypes";
+import { ITwitchUserDetail, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_SubscriptionGift, TwitchEventSub_Notification_Subscription, TwitchEventSub_SubscriptionType } from "./TwitchBotTypes";
 import { Utils } from "./Utils";
-import { TaskQueue } from "./TaskQueue";
 
 export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
     public declare readonly _config: ISpudBotConfig;
@@ -21,8 +19,10 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
     protected override getServiceName(): string { return "SpudBot" }
     protected readonly _googleApi = new Future<GoogleAPI>();
 
+
     public constructor(connection: ISpudBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], configDir: string) {
         super(connection, auxCommandGroups, configDir);
+        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleGameRequest(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleEcho(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleFirst(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleSlot(detail));
@@ -49,7 +49,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
     public override async _startup(): Promise<void> {
         await super._startup();
 
-        const googleApi = new GoogleAPI(this._config.connection.google);
+        const googleApi = new GoogleAPI(this._config.connection.google, this);
         await googleApi.startup();
         this._googleApi.resolve(googleApi);
     }
@@ -115,23 +115,17 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
     }
 
     protected override async handleCheer(event: TwitchEventSub_Event_Cheer, subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
-        if (event.is_anonymous || event.user_id === undefined || event.user_name === undefined) {
-            return;
-        }
-        const googleApi = await this._googleApi;
-        const bidwarSpreadsheet = await googleApi.getBidwarSpreadsheet(GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestSubSheet);
-        bidwarSpreadsheet.addBitsToUser(event.user_id, event.user_name, event.bits, new Date(subscription.created_at));
-        await googleApi.pushBidwarSpreadsheet(GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestSubSheet, bidwarSpreadsheet);
+        (await this._googleApi).handleCheer(event, subscription);
     }
 
-    protected override async handleChannelPointRewardRedeem(event: TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd): Promise<void> {
+    protected override async handleChannelPointRewardRedeem(event: TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, _subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
         // TODO: Make this a config file
         if (event.reward.title === "Hi, I'm Lurking!") {
             this.chat(`#${event.broadcaster_user_name}`, `${event.user_name}, enjoy your lurk elites72Heart`);
         }
 
         if (event.reward.title.includes("Contribute to a !GameRequest")) {
-            await ChannelPointRequests.handleChannelPointGameRequest(event);
+            (await this._googleApi).handleGameRequestRedeem(event);
         }
 
         if (event.reward.title === "Ultra Nice") {
@@ -154,6 +148,46 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
                 created_at: new Date().toISOString(),
             });
         }
+    }
+
+    protected async handleGameRequest(messageDetail: IPrivMessageDetail): Promise<void> {
+        const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
+            if (messageDetail.username !== this.twitchChannelName) { // TODO: detect streamer's name from config or make this a basic configuration with a name/broadcaster option
+                return;
+            }
+            const regex = /([^\s"]+|"[^"]*")+/g;
+            const tokens = messageDetail.message.match(regex) ?? [];
+            if (tokens.length < 3) {
+                this.chat(messageDetail.respondTo, `!gameRequest command was malformed (expected at least 3 arguments, but found ${tokens.length})`);
+                return;
+            }
+
+            switch (tokens[1]) {
+                case "add":
+                    const args = tokens.slice(2);
+                    if (args.length === 4) {
+                        (await this._googleApi).handleGameRequestAdd(messageDetail.respondTo, args[0], Number.parseInt(args[1]), undefined, args[2], Number.parseInt(args[3]), new Date());
+                    } else if (args.length === 5) {
+                        (await this._googleApi).handleGameRequestAdd(messageDetail.respondTo, args[0], Number.parseInt(args[1]), Number.parseInt(args[2]), args[3], Number.parseInt(args[4]), new Date());
+                    } else {
+                        this.chat(messageDetail.respondTo, `!gameRequest add command was malformed (expected at least 4 arguments, but found ${args.length})`);
+                    }
+                    break;
+                case "remove":
+                    break; // TODO
+                case "fund":
+                    break; // TODO
+            }
+        }
+        const func = this.getCommandFunc({
+            messageHandler: messageHandler,
+            triggerPhrases: ["!gamerequest"],
+            strictMatch: false, // requesting a game requires input after the command
+            commandId: "!gamerequest",
+            globalTimeoutSeconds: 0,
+            userTimeoutSeconds: 0,
+        });
+        await func(messageDetail);
     }
 
     /**
@@ -377,7 +411,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
 
     protected async handlePlay(messageDetail: IPrivMessageDetail): Promise<void> {
         const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
-            if (messageDetail.username !== this.twitchChannelName) { // TODO: detect streamer's name from conifg or make this a basic configuration with a name/broadcaster option
+            if (messageDetail.username !== this.twitchChannelName) { // TODO: detect streamer's name from config or make this a basic configuration with a name/broadcaster option
                 return;
             }
             this.chat(messageDetail.respondTo, "!play");
@@ -513,7 +547,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
     }
 
     protected async handleBidwarParseCommand(messageDetail: IPrivMessageDetail): Promise<void> {
-        const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
+        const messageHandler = async (_messageDetail: IPrivMessageDetail): Promise<void> => {
             // TODO: Implement this (and add a listener)
         }
         const func = this.getCommandFunc({
