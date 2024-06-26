@@ -153,6 +153,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
     protected async handleGameRequest(messageDetail: IPrivMessageDetail): Promise<void> {
         const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
             if (messageDetail.username !== this.twitchChannelName) { // TODO: detect streamer's name from config or make this a basic configuration with a name/broadcaster option
+                this.chat(messageDetail.respondTo, `only the broadcaster can use this command`);
                 return;
             }
             const regex = /([^\s"]+|"[^"]*")+/g;

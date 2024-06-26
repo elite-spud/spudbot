@@ -92,6 +92,30 @@ export interface TwitchGetStreamsResponse {
     };
 }
 
+/** https://dev.twitch.tv/docs/api/reference/#update-redemption-status */
+export interface TwitchUpdateChannelPointRedemptionStatusResponse {
+    data: TwitchUpdateChannelPointRedemptionStatusInfo[];
+}
+
+export interface TwitchUpdateChannelPointRedemptionStatusInfo {
+    broadcaster_name: string,
+    broadcaster_login: string,
+    broadcaster_id: string,
+    id: string,
+    user_id: string,
+    user_name: string,
+    user_login: string,
+    user_input: string,
+    status: "CANCELED" | "FULFILLED" | "UNFULFILLED",
+    redeemed_at: string,
+    reward: {
+      id: string,
+      title: string,
+      prompt: string,
+      cost: number
+    }
+}
+
 export interface TwitchErrorResponse {
     error: string;
     status: number; // HTTP status code

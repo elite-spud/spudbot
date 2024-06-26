@@ -3,7 +3,6 @@ import { Future } from "./Future";
 export class TaskQueue {
     protected _tasks: (() => void)[] = [];
 
-    public get isRunning() { return this._runningFuture !== undefined; }
     protected _runningFuture: Future<void> | undefined;
 
     public addTask(task: () => Promise<void>): void {
@@ -11,7 +10,7 @@ export class TaskQueue {
     }
 
     public async startQueue(): Promise<void> {
-        if (this.isRunning) {
+        if (this._runningFuture) {
             return this._runningFuture;
         }
 
@@ -29,6 +28,7 @@ export class TaskQueue {
         }
 
         this._runningFuture.resolve();
+        this._runningFuture = undefined;
         return;
     }
 }

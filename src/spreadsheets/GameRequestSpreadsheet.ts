@@ -1,19 +1,25 @@
 import { sheets_v4 } from "googleapis";
 import { ChannelPointRequests } from "../ChannelPointRequests";
-import { SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getEntryValue_Number, getEntryValue_String, parseHeaderFooterRow } from "./SpreadsheetBase";
+import { SpreadsheetBase, SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getEntryValue_Date, getEntryValue_Number, getEntryValue_String, parseHeaderFooterRow, simpleToRowData } from "./SpreadsheetBase";
 
 export enum GameRequest_Spreadsheet_BlockOrder {
     Active = 0,
     Pending = 1,
 }
 
-export class GameRequest_Spreadsheet {
+export class GameRequest_Spreadsheet extends SpreadsheetBase {
     public readonly activeBlock: GameRequest_ActiveBlock;
     public readonly pendingBlock: GameRequest_PendingBlock;
 
-    public constructor(activeBlock: GameRequest_ActiveBlock, pendingBlock: GameRequest_PendingBlock) {
-        this.activeBlock = activeBlock;
-        this.pendingBlock = pendingBlock;
+    public constructor(args: {
+        sheetId: string,
+        subSheetId: number,
+        activeBlock: GameRequest_ActiveBlock,
+        pendingBlock: GameRequest_PendingBlock
+    }) {
+        super();
+        this.activeBlock = args.activeBlock;
+        this.pendingBlock = args.pendingBlock;
     }
 
     public findEntry(gamename: string): GameRequestEntry | undefined {
@@ -38,12 +44,14 @@ export class GameRequest_Spreadsheet {
             return;
         }
         
-        const pendingEntry = this.pendingBlock.entries.find(n => n.gameName.toLowerCase() === gamename.toLowerCase());
-        if (pendingEntry) {
+        const pendingEntryIndex = this.pendingBlock.entries.findIndex(n => n.gameName.toLowerCase() === gamename.toLowerCase());
+        if (pendingEntryIndex !== -1) {
+            const pendingEntry = this.pendingBlock.entries.at(pendingEntryIndex)!;
             const contribution = pendingEntry.contributions.find(n => n.name === username) ?? { name: username, points: 0 };
             contribution.points += points;
-            if (pendingEntry.pointsContributed > pendingEntry.pointsToActivate) {
+            if (pendingEntry.pointsContributed >= pendingEntry.pointsToActivate) {
                 const activeEntry = new GameRequest_ActiveEntry({ gameName: pendingEntry.gameName, gameLengthHours: pendingEntry.gameLengthHours, requestDate: timestamp, contributions: Array.from(pendingEntry.contributions) });
+                this.pendingBlock.entries.splice(pendingEntryIndex, 1);
                 this.activeBlock.entries.push(activeEntry);
             }
             return;
@@ -59,6 +67,44 @@ export class GameRequest_Spreadsheet {
         const pendingEntry = new GameRequest_PendingEntry({ gameName, gameLengthHours, pointsToActivate, contributions });
         this.pendingBlock.entries.push(pendingEntry);
         this.addPointsToEntry(username, gameName, points, timestamp);
+    }
+
+    public toRowData(): sheets_v4.Schema$RowData[] {
+        return this.activeBlock.toRowData().concat({}).concat(this.pendingBlock.toRowData());
+    }
+
+    public static async getGameRequestSpreadsheet(sheetsApi: sheets_v4.Sheets, sheetId: string, subSheetId: number): Promise<GameRequest_Spreadsheet> {
+        const apiSpreadsheet = await sheetsApi.spreadsheets.getByDataFilter({
+            spreadsheetId: sheetId,
+            requestBody: {
+                includeGridData: true,
+                dataFilters: [
+                    { gridRange: { sheetId: subSheetId } }
+                ]
+            }
+        });
+    
+        if (!apiSpreadsheet.data || !apiSpreadsheet.data.sheets) {
+            throw new Error("Unable to retrieve game request spreadsheet: sheet is empty");
+        }
+    
+        const blockArray = extractBlockArray(apiSpreadsheet.data.sheets[0]);
+        let activeBlock: GameRequest_ActiveBlock | undefined = undefined;
+        let pendingBlock: GameRequest_PendingBlock | undefined = undefined;
+        for (let i = 0; i < 3; i++) {
+            if (i === GameRequest_Spreadsheet_BlockOrder.Active) {
+                activeBlock = parseGameRequestActiveBlock(blockArray[i]);
+            } else if (i === GameRequest_Spreadsheet_BlockOrder.Pending) {
+                pendingBlock = parseGameRequestPendingBlock(blockArray[i]);
+            }
+        }
+    
+        if (!activeBlock || !pendingBlock) {
+            throw new Error("Unable to parse discrete blocks from game request spreadsheet");
+        }
+    
+        const gameRequestSpreadsheet = new GameRequest_Spreadsheet({ sheetId, subSheetId, activeBlock, pendingBlock });
+        return gameRequestSpreadsheet;
     }
 }
 
@@ -76,28 +122,31 @@ export class GameRequest_ActiveBlock extends SpreadsheetBlock {
     }
 
     public toRowData(): sheets_v4.Schema$RowData[] {
-        const headerRow: sheets_v4.Schema$RowData = {
-            
-        };
-        const entryRows = this.entries.map(_n => {
+        const headerRow = simpleToRowData(this.header);
+        const entryRows = this.entries.map(n => {
             const rowData: sheets_v4.Schema$RowData = {
                 values: [
-                    // { userEnteredValue: { stringValue: n.gameName } },
-                    {},
-                    {},
-                    { note: "foo" },
-                    {},
+                    {
+                        userEnteredValue: { stringValue: n.gameName },
+                    },
+                    {
+                        userEnteredValue: { numberValue: n.gameLengthHours },
+                    },
+                    {
+                        userEnteredValue: { numberValue: n.pointsContributed },
+                        note: n.contributions.map(c => `${c.name} - ${c.points}`).join("\n"),
+                    },
+                    {
+                        userEnteredValue: { stringValue: n.requestDate.toISOString(), },
+                    },
+                    {
+                        userEnteredValue: { numberValue: n.effectivePoints, },
+                    },
                 ],
             };
             return rowData;
         });
         return [headerRow].concat(entryRows);
-    }
-
-    public override toGridData(): SpreadsheetRow[] {
-        const headerValues = [this.header];
-        const entryValues = this.entries.map(n => [n.gameName, n.gameLengthHours, n.pointsContributed, n.requestDate.toISOString(), n.effectivePoints] );
-        return headerValues.concat(entryValues);
     }
 }
 
@@ -143,16 +192,35 @@ export class GameRequest_PendingBlock extends SpreadsheetBlock {
         header: SpreadsheetRow,
         entries: GameRequest_PendingEntry[],
     }) {
-    super();
-    this.header = args.header;
-    this.entries = args.entries;
-}
+        super();
+        this.header = args.header;
+        this.entries = args.entries;
+    }
 
-public override toGridData(): SpreadsheetRow[] {
-    const headerValues = [this.header];
-    const entryValues = this.entries.map(n => [n.gameName, n.gameLengthHours, n.pointsContributed, n.pointsToActivate] );
-    return headerValues.concat(entryValues);
-}
+    public toRowData(): sheets_v4.Schema$RowData[] {
+        const headerRow = simpleToRowData(this.header);
+        const entryRows = this.entries.map(n => {
+            const rowData: sheets_v4.Schema$RowData = {
+                values: [
+                    {
+                        userEnteredValue: { stringValue: n.gameName },
+                    },
+                    {
+                        userEnteredValue: { numberValue: n.gameLengthHours },
+                    },
+                    {
+                        userEnteredValue: { numberValue: n.pointsContributed },
+                        note: n.contributions.map(c => `${c.name} - ${c.points}`).join("\n"),
+                    },
+                    {
+                        userEnteredValue: { numberValue: n.pointsToActivate, },
+                    },
+                ],
+            };
+            return rowData;
+        });
+        return [headerRow].concat(entryRows);
+    }
 }
 
 export class GameRequest_PendingEntry extends GameRequestEntry {
@@ -184,7 +252,7 @@ export function parseGameRequestActiveBlock(rows: sheets_v4.Schema$RowData[]): G
     const headerRow = parseHeaderFooterRow(rows[0]);
 
     const entries: GameRequest_ActiveEntry[] = [];
-    for (let i = 1; i < rows.length - 1; i++) {
+    for (let i = 1; i < rows.length; i++) {
         const entry = parseGameRequestActiveEntry(rows[i]);
         entries.push(entry);
     }
@@ -203,17 +271,13 @@ export function parseGameRequestActiveEntry(row: sheets_v4.Schema$RowData): Game
     // TODO: enforce a length at least as long as is required
 
     const contributionsString = row.values[2].note ?? "";
-    const contributions = contributionsString.split("\n").map(n => { 
-        const tokens = n.split(" ");
-        const name = tokens[0];
-        const points = Number.parseInt(tokens[2]);
-        return { name: name, points: points };
-    });
+    const contributions = parseContributions(contributionsString);
+    
     const entry = new GameRequest_ActiveEntry({
         gameName: getEntryValue_String(row.values[0]),
         gameLengthHours: getEntryValue_Number(row.values[1]),
         contributions: contributions,
-        requestDate: new Date(getEntryValue_String(row.values[3])),
+        requestDate: getEntryValue_Date(row.values[3]),
     });
 
     return entry;
@@ -223,7 +287,7 @@ export function parseGameRequestPendingBlock(rows: sheets_v4.Schema$RowData[]): 
     const headerRow = parseHeaderFooterRow(rows[0]);
 
     const entries: GameRequest_PendingEntry[] = [];
-    for (let i = 1; i < rows.length - 1; i++) {
+    for (let i = 1; i < rows.length; i++) {
         const entry = parseGameRequestPendingEntry(rows[i]);
         entries.push(entry);
     }
@@ -242,12 +306,8 @@ export function parseGameRequestPendingEntry(row: sheets_v4.Schema$RowData): Gam
     // TODO: enforce a length at least as long as is required
 
     const contributionsString = row.values[2].note ?? "";
-    const contributions = contributionsString.split("\n").map(n => { 
-        const tokens = n.split(" ");
-        const name = tokens[0];
-        const points = Number.parseInt(tokens[2]);
-        return { name: name, points: points };
-    });
+    const contributions = parseContributions(contributionsString);
+    
     const entry = new GameRequest_PendingEntry({
         gameName: getEntryValue_String(row.values[0]),
         gameLengthHours: getEntryValue_Number(row.values[1]),
@@ -258,65 +318,16 @@ export function parseGameRequestPendingEntry(row: sheets_v4.Schema$RowData): Gam
     return entry;
 }
 
-export async function getGameRequestSpreadsheet(sheetsApi: sheets_v4.Sheets, sheetId: string, subSheetName: string): Promise<GameRequest_Spreadsheet> {
-    const apiSpreadsheet = await sheetsApi.spreadsheets.get({
-        includeGridData: true,
-        ranges: [subSheetName],
-        spreadsheetId: sheetId,
-    });
-
-    if (!apiSpreadsheet.data || !apiSpreadsheet.data.sheets) {
-        throw new Error("Unable to retrieve game request spreadsheet: sheet is empty");
+export function parseContributions(contributionsString: string): { name: string, points: number }[] {
+    if (!contributionsString) {
+        return [];
     }
 
-    const blockArray = extractBlockArray(apiSpreadsheet.data.sheets[0]);
-    let activeBlock: GameRequest_ActiveBlock | undefined = undefined;
-    let pendingBlock: GameRequest_PendingBlock | undefined = undefined;
-    for (let i = 0; i < 3; i++) {
-        if (i === GameRequest_Spreadsheet_BlockOrder.Active) {
-            activeBlock = parseGameRequestActiveBlock(blockArray[i]);
-        } else if (i === GameRequest_Spreadsheet_BlockOrder.Pending) {
-            pendingBlock = parseGameRequestPendingBlock(blockArray[i]);
-        }
-    }
-
-    if (!activeBlock || !pendingBlock) {
-        throw new Error("Unable to parse discrete blocks from game request spreadsheet");
-    }
-
-    const gameRequestSpreadsheet = new GameRequest_Spreadsheet(activeBlock, pendingBlock);
-    return gameRequestSpreadsheet;
-}
-
-export async function pushGameRequestSpreadsheet(sheetsApi: sheets_v4.Sheets, sheetId: string, _subSheetName: string, gameRequestSpreadsheet: GameRequest_Spreadsheet): Promise<void> {    
-    const pendingBlockValues = gameRequestSpreadsheet.pendingBlock.toGridData();
-    const activeBlockValues = gameRequestSpreadsheet.activeBlock.toGridData();
-    
-    const batchUpdateRequest: sheets_v4.Schema$BatchUpdateValuesRequest = {
-        valueInputOption: "RAW",
-        data: [
-            {
-                range: `Sheet4`,
-                values: pendingBlockValues,
-            },
-            {
-                range: `Sheet4!A${pendingBlockValues.length + 1}`,
-                values: activeBlockValues,
-            },
-        ]
-    };
-    await sheetsApi.spreadsheets.values.batchUpdate({
-        spreadsheetId: sheetId,
-        requestBody: batchUpdateRequest,
+    const contributions = contributionsString.split("\n").map(n => { 
+        const tokens = n.split(" ");
+        const name = tokens[0];
+        const points = Number.parseInt(tokens[2]);
+        return { name: name, points: points };
     });
-
-    const batchSheetUpdateRequest: sheets_v4.Schema$Request = {
-        updateCells: {
-            rows: gameRequestSpreadsheet.activeBlock.toRowData(),
-        }
-    };
-    await sheetsApi.spreadsheets.batchUpdate({
-        spreadsheetId: sheetId,
-        requestBody: { requests: [batchSheetUpdateRequest] },
-    });
+    return contributions;
 }

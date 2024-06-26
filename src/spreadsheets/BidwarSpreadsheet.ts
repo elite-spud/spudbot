@@ -1,5 +1,5 @@
 import { sheets_v4 } from "googleapis";
-import { SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getEntryValue_Number, getEntryValue_String, parseHeaderFooterRow } from "./SpreadsheetBase";
+import { SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getEntryValue_Number, getEntryValue_String, parseHeaderFooterRow, simpleToRowData } from "./SpreadsheetBase";
 
 export enum Bidwar_Spreadsheet_BlockOrder {
     Pending = 0,
@@ -76,10 +76,24 @@ export class Bidwar_PendingBlock extends SpreadsheetBlock {
         this.entries = args.entries;
     }
 
-    public override toGridData(): SpreadsheetRow[] {
-        const headerValues = [this.header];
-        const entryValues = this.entries.map(n => [n.points, n.name]);
-        return headerValues.concat(entryValues);
+    public toRowData(): sheets_v4.Schema$RowData[] {
+        const headerRow = simpleToRowData(this.header);
+        const entryRows = this.entries.map(n => {
+            const rowData: sheets_v4.Schema$RowData = {
+                values: [
+                    {
+                        userEnteredValue: { numberValue: n.points },
+                        note: n.pointsNote,
+                    },
+                    {
+                        userEnteredValue: { stringValue: n.name },
+                        note: n.nameNote,
+                    },
+                ],
+            };
+            return rowData;
+        });
+        return [headerRow].concat(entryRows);
     }
 }
 
@@ -98,11 +112,24 @@ export class Bidwar_ActiveBlock extends SpreadsheetBlock {
         this.entries = args.entries;
     }
 
-    public override toGridData(): SpreadsheetRow[] {
-        const headerValues = [this.header];
-        const entryValues = this.entries.map(n => [n.points, n.name]);
-        const footerValues = [this.footer];
-        return headerValues.concat(entryValues).concat(footerValues);
+    public toRowData(): sheets_v4.Schema$RowData[] {
+        const headerRow = simpleToRowData(this.header);
+        const entryRows = this.entries.map(n => {
+            const rowData: sheets_v4.Schema$RowData = {
+                values: [
+                    {
+                        userEnteredValue: { numberValue: n.points },
+                        note: n.pointsNote,
+                    },
+                    {
+                        userEnteredValue: { stringValue: n.name },
+                        note: n.nameNote,
+                    },
+                ],
+            };
+            return rowData;
+        });
+        return [headerRow].concat(entryRows);
     }
 }
 
@@ -126,10 +153,24 @@ export class Bidwar_BankBlock extends SpreadsheetBlock {
         this.entries = args.entries;
     }
 
-    public override toGridData(): SpreadsheetRow[] {
-        const headerValues = [this.header];
-        const entryValues = this.entries.map(n => [n.points, n.name]);
-        return headerValues.concat(entryValues);
+    public toRowData(): sheets_v4.Schema$RowData[] {
+        const headerRow = simpleToRowData(this.header);
+        const entryRows = this.entries.map(n => {
+            const rowData: sheets_v4.Schema$RowData = {
+                values: [
+                    {
+                        userEnteredValue: { numberValue: n.points },
+                        note: n.pointsNote,
+                    },
+                    {
+                        userEnteredValue: { stringValue: n.name },
+                        note: n.userId,
+                    },
+                ],
+            };
+            return rowData;
+        });
+        return [headerRow].concat(entryRows);
     }
 }
 
@@ -262,30 +303,30 @@ export async function getBidwarSpreadsheet(sheetsApi: sheets_v4.Sheets, sheetId:
     return bidwarSpreadsheet;
 }
 
-export async function pushBidwarSpreadsheet(sheetsApi: sheets_v4.Sheets, sheetId: string, _subSheetName: string, bidwarSpreadsheet: Bidwar_Spreadsheet): Promise<void> {    
-    const pendingBlockValues = bidwarSpreadsheet.pendingBlock.toGridData();
-    const activeBlockValues = bidwarSpreadsheet.activeBlock.toGridData();
-    const bankBlockValues = bidwarSpreadsheet.bankBlock.toGridData();
+// export async function pushBidwarSpreadsheet(sheetsApi: sheets_v4.Sheets, sheetId: string, _subSheetName: string, bidwarSpreadsheet: Bidwar_Spreadsheet): Promise<void> {    
+//     const pendingBlockValues = bidwarSpreadsheet.pendingBlock.toGridData();
+//     const activeBlockValues = bidwarSpreadsheet.activeBlock.toGridData();
+//     const bankBlockValues = bidwarSpreadsheet.bankBlock.toGridData();
     
-    const batchUpdateRequest: sheets_v4.Schema$BatchUpdateValuesRequest = {
-        valueInputOption: "RAW",
-        data: [
-            {
-                range: `Sheet4`,
-                values: pendingBlockValues,
-            },
-            {
-                range: `Sheet4!A${pendingBlockValues.length + 1}`,
-                values: activeBlockValues,
-            },
-            {
-                range: `Sheet4!A${pendingBlockValues.length + 1 + activeBlockValues.length + 1}`,
-                values: bankBlockValues,
-            },
-        ],
-    };
-    await sheetsApi.spreadsheets.values.batchUpdate({
-        spreadsheetId: sheetId,
-        requestBody: batchUpdateRequest,
-    });
-}
+//     const batchUpdateRequest: sheets_v4.Schema$BatchUpdateValuesRequest = {
+//         valueInputOption: "RAW",
+//         data: [
+//             {
+//                 range: `Sheet4`,
+//                 values: pendingBlockValues,
+//             },
+//             {
+//                 range: `Sheet4!A${pendingBlockValues.length + 2}`,
+//                 values: activeBlockValues,
+//             },
+//             {
+//                 range: `Sheet4!A${pendingBlockValues.length + 2 + activeBlockValues.length + 2}`,
+//                 values: bankBlockValues,
+//             },
+//         ],
+//     };
+//     await sheetsApi.spreadsheets.values.batchUpdate({
+//         spreadsheetId: sheetId,
+//         requestBody: batchUpdateRequest,
+//     });
+// }

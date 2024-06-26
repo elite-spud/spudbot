@@ -4,8 +4,8 @@ import { Future } from "./Future";
 import { TaskQueue } from "./TaskQueue";
 import { TwitchBotBase } from "./TwitchBot";
 import { ITwitchUserDetail, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Notification_Subscription } from "./TwitchBotTypes";
-import { getBidwarSpreadsheet, pushBidwarSpreadsheet } from "./spreadsheets/BidwarSpreadsheet";
-import { getGameRequestSpreadsheet, pushGameRequestSpreadsheet } from "./spreadsheets/GameRequestSpreadsheet";
+import { GameRequest_Spreadsheet } from "./spreadsheets/GameRequestSpreadsheet";
+import { pushSpreadsheet } from "./spreadsheets/SpreadsheetBase";
 
 export interface GoogleAPIConfig {
     oauth: {
@@ -31,7 +31,8 @@ export interface GoogleAPIConfig {
 export class GoogleAPI {
     public static readonly incentiveSheetId = "1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY";
     public static readonly bidwarTestSubSheet = "Sheet3";
-    public static readonly gameRequestTestSubSheet = "Sheet4";
+    public static readonly gameRequestTestReadSubSheet = 1313890864;
+    public static readonly gameRequestTestWriteSubSheet = 1834520193;
 
     protected readonly _config: GoogleAPIConfig
     protected readonly _twitchBot: TwitchBotBase<ITwitchUserDetail>;
@@ -62,7 +63,7 @@ export class GoogleAPI {
     public async handleGameRequestRedeem(event: TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd): Promise<void> {
         const future = new Future<void>();
         const task = async (): Promise<void> => {
-            const gameRequestSpreadsheet = await getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestTestSubSheet);
+            const gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestTestReadSubSheet);
             const existingEntry = gameRequestSpreadsheet.findEntry(event.user_input);
             if (!existingEntry) {
                 this._twitchBot.chat(`#${event.broadcaster_user_name}`, `${event.user_name}, game request detected as a new request; please allow an admin to add this game to the spreadsheet before adding any further points https://docs.google.com/spreadsheets/d/1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY/edit?gid=384782784#gid=384782784`);
@@ -71,7 +72,10 @@ export class GoogleAPI {
             }
 
             gameRequestSpreadsheet.addPointsToEntry(event.user_name, event.user_input, event.reward.cost, new Date(event.redeemed_at));
-            await pushGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestTestSubSheet, gameRequestSpreadsheet);
+            await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestTestWriteSubSheet, gameRequestSpreadsheet);
+            // TODO: approve this redeem
+            await this._twitchBot.updateChannelPointRedemptions(event.id, event.reward.id, event.broadcaster_user_id, true);
+            this._twitchBot.chat(`#${event.broadcaster_user_name}`, `@${event.user_name}, your points were successfully added to game request.`);
             future.resolve();
         }
         this._taskQueue.addTask(task);
@@ -83,7 +87,7 @@ export class GoogleAPI {
     public async handleGameRequestAdd(respondTo: string, gameName: string, gameLengthHours: number, pointsToActivate: number | undefined, username: string, points: number, timestamp: Date): Promise<void> {
         const future = new Future<void>();
         const task = async (): Promise<void> => {
-            const gameRequestSpreadsheet = await getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestTestSubSheet);
+            const gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestTestReadSubSheet);
             const existingEntry = gameRequestSpreadsheet.findEntry(gameName);
             if (existingEntry) {
                 this._twitchBot.chat(respondTo, `Game request already present in spreadsheet.`);
@@ -92,6 +96,7 @@ export class GoogleAPI {
             }
             
             gameRequestSpreadsheet.addEntry(gameName, gameLengthHours, pointsToActivate, username, points, timestamp);
+            await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestTestWriteSubSheet, gameRequestSpreadsheet);
             this._twitchBot.chat(respondTo, `Game request successfully added.`);
             future.resolve();
         }
@@ -101,20 +106,20 @@ export class GoogleAPI {
         return future;
     }
 
-    public async handleCheer(event: TwitchEventSub_Event_Cheer, subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
-        const future = new Future<void>();
-        const task = async (): Promise<void> => {
-            if (event.is_anonymous || event.user_id === undefined || event.user_name === undefined) {
-                return;
-            }
-            const bidwarSpreadsheet = await getBidwarSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestSubSheet);
-            bidwarSpreadsheet.addBitsToUser(event.user_id, event.user_name, event.bits, new Date(subscription.created_at));
-            await pushBidwarSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestSubSheet, bidwarSpreadsheet);
-        }
-        this._taskQueue.addTask(task);
-        this._taskQueue.startQueue();
+    public async handleCheer(_event: TwitchEventSub_Event_Cheer, _subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
+        // const future = new Future<void>();
+        // const task = async (): Promise<void> => {
+        //     if (event.is_anonymous || event.user_id === undefined || event.user_name === undefined) {
+        //         return;
+        //     }
+        //     const bidwarSpreadsheet = await getBidwarSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestSubSheet);
+        //     bidwarSpreadsheet.addBitsToUser(event.user_id, event.user_name, event.bits, new Date(subscription.created_at));
+        //     await pushBidwarSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestSubSheet, bidwarSpreadsheet);
+        // }
+        // this._taskQueue.addTask(task);
+        // this._taskQueue.startQueue();
 
-        return future;
+        // return future;
     }
 
     protected subIncentiveToChatMessage(currentSubPoints: number, requiredSubPoints: number, activity: string): void {
