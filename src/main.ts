@@ -1,13 +1,13 @@
 import * as fs from "fs";
 import { SpudBotTwitch } from "./SpudBot";
 import { IIrcBotAuxCommandGroupConfig } from "./IrcBot";
-import { ITwitchBotConnectionConfig } from "./TwitchBot";
+import { ISpudBotConnectionConfig } from "./SpudBotTypes";
 
 const configDir = fs.realpathSync(`./config`);
 const connectionConfigPath = fs.realpathSync(`${configDir}/config.json`);
 const commandConfigPath = fs.realpathSync(`${configDir}/commands.json`);
 
-const connectionConfig = loadJsonFile<ITwitchBotConnectionConfig>(connectionConfigPath);
+const connectionConfig = loadJsonFile<ISpudBotConnectionConfig>(connectionConfigPath);
 const commands = loadJsonFile<IIrcBotAuxCommandGroupConfig[]>(commandConfigPath);
 
 const bot = new SpudBotTwitch(connectionConfig, commands, configDir);
