@@ -221,7 +221,7 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
             if (this._userDetailByUserId[userId]) {
                 return this._userDetailByUserId[userId];
             }
-            
+
             const userDetail = this.createFreshUserDetail(username, userId);
             this._userDetailByUserId[userId] = userDetail;
 

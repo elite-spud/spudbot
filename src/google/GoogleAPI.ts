@@ -83,14 +83,14 @@ export class GoogleAPI {
             const gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestTestReadSubSheet);
             const existingEntry = gameRequestSpreadsheet.findEntry(gameName);
             if (!existingEntry) {
-                this._twitchBot.chat(respondTo, `@${username}, your game request detected as a new request; please allow an admin to add this game to the spreadsheet before adding any further points https://docs.google.com/spreadsheets/d/1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY/edit?gid=384782784#gid=384782784`);
+                this._twitchBot.chat(respondTo, `@${username}, your game request was detected as a new request; please wait until an admin adds this game to the spreadsheet before adding any further points`);
                 future.resolve(false);
                 return;
             }
 
             gameRequestSpreadsheet.addPointsToEntry(username, gameName, points, timestamp);
             await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestTestWriteSubSheet, gameRequestSpreadsheet);
-            this._twitchBot.chat(respondTo, `@${username}, your points were successfully added to game request.`);
+            this._twitchBot.chat(respondTo, `@${username}, your points were successfully added to requesting ${gameName} on stream!`);
             future.resolve(true);
         }
         this._taskQueue.addTask(task);
@@ -131,6 +131,41 @@ export class GoogleAPI {
             const bidwarSpreadsheet = await Bidwar_Spreadsheet.getBidwarSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestReadSubSheet);
             bidwarSpreadsheet.addBitsToUser(event.user_id, event.user_name, event.bits, new Date(subscription.created_at));
             await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestWriteSubSheet, bidwarSpreadsheet);
+        }
+        this._taskQueue.addTask(task);
+        this._taskQueue.startQueue();
+
+        return future;
+    }
+
+    public async handleBidwarContribute(respondTo: string, userId: string, username: string, gameName: string, bits: number, timestamp: Date): Promise<void> {
+        const future = new Future<void>();
+        const task = async (): Promise<void> => {
+            // TODO: try-catch this and report if the bits were not contributed
+            const bidwarSpreadsheet = await Bidwar_Spreadsheet.getBidwarSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestReadSubSheet);
+            const status = bidwarSpreadsheet.spendBitsOnEntry(userId, username, gameName, bits, timestamp);
+            if (status.message) {
+                this._twitchBot.chat(respondTo, status.message);
+            }
+            if (!status.success) {
+                return;
+            }
+            await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestWriteSubSheet, bidwarSpreadsheet);
+            this._twitchBot.chat(respondTo, `@${username}, your bits were successfully contributed to ${gameName}.`);
+        }
+        this._taskQueue.addTask(task);
+        this._taskQueue.startQueue();
+
+        return future;
+    }
+
+    public async handleBidwarAddEntry(respondTo: string, gameName: string): Promise<void> {
+        const future = new Future<void>();
+        const task = async (): Promise<void> => {
+            const bidwarSpreadsheet = await Bidwar_Spreadsheet.getBidwarSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestReadSubSheet);
+            bidwarSpreadsheet.addEntry(gameName);
+            await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestWriteSubSheet, bidwarSpreadsheet);
+            this._twitchBot.chat(respondTo, `Bidwar entry ${gameName} was successfully added.`);
         }
         this._taskQueue.addTask(task);
         this._taskQueue.startQueue();

@@ -8,6 +8,11 @@ export enum Bidwar_Spreadsheet_BlockOrder {
     Bank = 2,
 }
 
+export interface BidwarOperationStatus {
+    success: boolean;
+    message?: string;
+}
+
 export class Bidwar_Spreadsheet extends SpreadsheetBase {
     public readonly awaitingBlock: Bidwar_AwaitingBlock;
     public readonly activeBlock: Bidwar_ActiveBlock;
@@ -36,30 +41,41 @@ export class Bidwar_Spreadsheet extends SpreadsheetBase {
         user.contributions.push({ amount: bits, timestamp: timestamp, detail: source });
     }
     
-    public spendBitsOnEntry(userId: string, username: string, gamename: string, bits: number, timestamp: Date): void {
+    public spendBitsOnEntry(userId: string, username: string, gameName: string, bits: number, timestamp: Date): BidwarOperationStatus {
         if (bits === 0) {
-            return;
+            return { success: false } ;
         }
 
-        const entry = this.activeBlock.entries.find(n => n.name.toLowerCase() === gamename.toLowerCase());
+        const entry = this.activeBlock.entries.find(n => n.name.toLowerCase() === gameName.toLowerCase());
         const user = this.bankBlock.entries.find(n => n.userId === userId);
 
         if (!entry) {
-            throw new Error(`Unable to find entry ${entry} in bidwar list`);
+            return { success: false, message: `Unable to find entry ${gameName} in bidwar list. No bits added.` };
         }
         if (!user) {
-            throw new Error(`User ${username} does not have enough points to fund the request (${0} / ${bits})`);
+            return { success: false, message: `User ${username} does not have enough points to fund the request (${0} / ${bits})` };
         }
         if (user.currentBalance < bits) {
-            throw new Error(`User ${username} does not have enough points to fund the request (${user.currentBalance} / ${bits})`);
+            return { success: false, message: `User ${username} does not have enough points to fund the request (${user.currentBalance} / ${bits})` };
         }
 
         entry.contributions.push({ name: username, amount: bits });
-        user.contributions.push({ amount: -bits, timestamp: timestamp, detail: `-> ${gamename}` });
+        user.contributions.push({ amount: -bits, timestamp: timestamp, detail: `-> ${gameName}` });
+
+        return { success: true };
+    }
+
+    public addEntry(gamename: string): void {
+        const entry = new Bidwar_Entry({
+            name: gamename,
+            nameNote: undefined,
+            contributions: [],
+        });
+        this.activeBlock.entries.push(entry);
     }
 
     public toRowData(): sheets_v4.Schema$RowData[] {
-        return this.awaitingBlock.toRowData().concat(this.activeBlock.toRowData()).concat(this.awaitingBlock.toRowData());
+        return this.awaitingBlock.toRowData().concat(this.activeBlock.toRowData()).concat(this.bankBlock.toRowData());
     }
 
     public static async getBidwarSpreadsheet(sheetsApi: sheets_v4.Sheets, sheetId: string, subSheetId: number): Promise<Bidwar_Spreadsheet> {
@@ -349,7 +365,6 @@ export function parseBidwarPendingBlock(rows: sheets_v4.Schema$RowData[]): Bidwa
 
     const entries: Bidwar_Entry[] = [];
     for (let i = 1; i < rows.length; i++) {
-        console.log(i);
         const entry = parseBidwarEntry(rows[i]);
         entries.push(entry);
     }

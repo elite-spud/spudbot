@@ -478,7 +478,7 @@
                 "strict": true,
                 "aliases": ["!bits", "!incentive", "!incentives", "!goals"],
                 "responses": [
-                    "View the active Bits bidwar here: https://docs.google.com/spreadsheets/d/1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY/edit#gid=877321766. Contribute to specific bidwar choices with !bidwar add"
+                    "View the active Bits bidwar here: https://docs.google.com/spreadsheets/d/1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY/edit#gid=877321766. Contribute to specific bidwar choices with !bidwar contribute"
                 ]
             },
             {
