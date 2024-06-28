@@ -1,5 +1,6 @@
 import { sheets_v4 } from "googleapis";
-import { SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getEntryValue_Number, getEntryValue_String, headerToRowData, parseHeaderFooterRow } from "./SpreadsheetBase";
+import { borderLeft, headerFormatCenter, pendingEntryFormat } from "./GameRequestSpreadsheetStyle";
+import { SpreadsheetBase, SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getEntryValue_String, headerToRowData, parseHeaderFooterRow } from "./SpreadsheetBase";
 
 export enum Bidwar_Spreadsheet_BlockOrder {
     Pending = 0,
@@ -7,37 +8,35 @@ export enum Bidwar_Spreadsheet_BlockOrder {
     Bank = 2,
 }
 
-export class Bidwar_Spreadsheet {
+export class Bidwar_Spreadsheet extends SpreadsheetBase {
+    public readonly awaitingBlock: Bidwar_AwaitingBlock;
     public readonly activeBlock: Bidwar_ActiveBlock;
-    public readonly pendingBlock: Bidwar_PendingBlock;
     public readonly bankBlock: Bidwar_BankBlock;
 
-    public constructor(activeBlock: Bidwar_ActiveBlock, pendingBlock: Bidwar_PendingBlock, bankBlock: Bidwar_BankBlock) {
+    public constructor(pendingBlock: Bidwar_AwaitingBlock, activeBlock: Bidwar_ActiveBlock, bankBlock: Bidwar_BankBlock) {
+        super();
         this.activeBlock = activeBlock;
-        this.pendingBlock = pendingBlock;
+        this.awaitingBlock = pendingBlock;
         this.bankBlock = bankBlock;
     }
 
-    public addBitsToUser(userId: string, username: string, bits: number, timestamp: Date): void {
+    public addBitsToUser(userId: string, username: string, bits: number, timestamp: Date, source?: string): void {
         const user = this.bankBlock.entries.find(n => n.userId === userId);
         if (user === undefined) {
-            const newBankUser: Bidwar_BankEntry = {
+            const newBankUser = new Bidwar_BankEntry({
                 userId: userId,
                 name: username,
-                points: bits,
-                pointsNote: `${bits} - ${timestamp.toISOString()}`,
-            };
+                contributions: [{ amount: bits, timestamp: timestamp, detail: source }],
+            });
             this.bankBlock.entries.push(newBankUser);
             return;
         }
 
         user.name = username;
-        user.points = user.points += bits;
-        user.pointsNote = `+ ${bits} - ${timestamp.toISOString()}\n${user.pointsNote}`;
+        user.contributions.push({ amount: bits, timestamp: timestamp, detail: source });
     }
-
     
-    public addBitsToEntry(userId: string, username: string, gamename: string, bits: number, timestamp: Date): void {
+    public spendBitsOnEntry(userId: string, username: string, gamename: string, bits: number, timestamp: Date): void {
         if (bits === 0) {
             return;
         }
@@ -51,19 +50,57 @@ export class Bidwar_Spreadsheet {
         if (!user) {
             throw new Error(`User ${username} does not have enough points to fund the request (${0} / ${bits})`);
         }
-
-        if (user.points < bits) {
-            throw new Error(`User ${username} does not have enough points to fund the request (${user.points} / ${bits})`);
+        if (user.currentBalance < bits) {
+            throw new Error(`User ${username} does not have enough points to fund the request (${user.currentBalance} / ${bits})`);
         }
 
-        entry.points += bits;
-        user.points -= bits;
-        entry.pointsNote = `+ ${bits} - ${timestamp.toISOString()}\n${entry.pointsNote}`;
-        user.pointsNote = `- ${bits} - ${timestamp.toISOString()}\n${user.pointsNote}`;
+        entry.contributions.push({ name: username, amount: bits });
+        user.contributions.push({ amount: -bits, timestamp: timestamp, detail: `-> ${gamename}` });
+    }
+
+    public toRowData(): sheets_v4.Schema$RowData[] {
+        return this.awaitingBlock.toRowData().concat(this.activeBlock.toRowData()).concat(this.awaitingBlock.toRowData());
+    }
+
+    public static async getBidwarSpreadsheet(sheetsApi: sheets_v4.Sheets, sheetId: string, subSheetId: number): Promise<Bidwar_Spreadsheet> {
+        const apiSpreadsheet = await sheetsApi.spreadsheets.getByDataFilter({
+            spreadsheetId: sheetId,
+            requestBody: {
+                includeGridData: true,
+                dataFilters: [
+                    { gridRange: { sheetId: subSheetId } }
+                ]
+            }
+        });
+    
+        if (!apiSpreadsheet.data || !apiSpreadsheet.data.sheets) {
+            throw new Error("Unable to retrieve bidwar spreadsheet: sheet is empty");
+        }
+    
+        const blockArray = extractBlockArray(apiSpreadsheet.data.sheets[0]);
+        let pendingBlock: Bidwar_AwaitingBlock | undefined = undefined;
+        let activeBlock: Bidwar_ActiveBlock | undefined = undefined;
+        let bankBlock: Bidwar_BankBlock | undefined = undefined;
+        for (let i = 0; i < 3; i++) {
+            if (i === Bidwar_Spreadsheet_BlockOrder.Pending) {
+                pendingBlock = parseBidwarPendingBlock(blockArray[i]);
+            } else if (i === Bidwar_Spreadsheet_BlockOrder.Active) {
+                activeBlock = parseBidwarActiveBlock(blockArray[i]);
+            } else if (i === Bidwar_Spreadsheet_BlockOrder.Bank) {
+                bankBlock = parseBidwarBankBlock(blockArray[i]);
+            }
+        }
+    
+        if (!pendingBlock || !activeBlock || !bankBlock) {
+            throw new Error("Unable to parse discrete blocks from bidwar spreadsheet");
+        }
+    
+        const bidwarSpreadsheet = new Bidwar_Spreadsheet(pendingBlock, activeBlock, bankBlock);
+        return bidwarSpreadsheet;
     }
 }
 
-export class Bidwar_PendingBlock extends SpreadsheetBlock {
+export class Bidwar_AwaitingBlock extends SpreadsheetBlock {
     public header: SpreadsheetRow;
     public entries: Bidwar_Entry[];
 
@@ -82,12 +119,14 @@ export class Bidwar_PendingBlock extends SpreadsheetBlock {
             const rowData: sheets_v4.Schema$RowData = {
                 values: [
                     {
-                        userEnteredValue: { numberValue: n.points },
-                        note: n.pointsNote,
+                        userEnteredValue: { numberValue: n.amountContributed },
+                        note: n.contributions.sort((a, b) => b.amount - a.amount).map(c => `${c.name} - ${c.amount}`).join("\n"),
+                        userEnteredFormat: pendingEntryFormat,
                     },
                     {
                         userEnteredValue: { stringValue: n.name },
                         note: n.nameNote,
+                        userEnteredFormat: pendingEntryFormat,
                     },
                 ],
             };
@@ -118,26 +157,80 @@ export class Bidwar_ActiveBlock extends SpreadsheetBlock {
             const rowData: sheets_v4.Schema$RowData = {
                 values: [
                     {
-                        userEnteredValue: { numberValue: n.points },
-                        note: n.pointsNote,
+                        userEnteredValue: { numberValue: n.amountContributed },
+                        note: n.contributions.sort((a, b) => b.amount - a.amount).map(c => `${c.name} - ${c.amount}`).join("\n"),
+                        userEnteredFormat: pendingEntryFormat,
                     },
                     {
                         userEnteredValue: { stringValue: n.name },
                         note: n.nameNote,
+                        userEnteredFormat: pendingEntryFormat,
                     },
                 ],
             };
             return rowData;
         });
-        return [headerRow].concat(entryRows);
+        const totalContributions = this.entries.reduce<number>((prev, current, _index) => {
+            return prev + current.amountContributed;
+        }, 0);
+        const footerRow: sheets_v4.Schema$RowData = {
+            values: [
+                {
+                    userEnteredValue: { stringValue: `Total Bits: ${totalContributions}` },
+                    userEnteredFormat: headerFormatCenter,
+                },
+                {
+                    userEnteredFormat: headerFormatCenter,
+                },
+                {
+                    userEnteredFormat: borderLeft,
+                },
+            ]
+        }
+        return [headerRow].concat(entryRows).concat(footerRow);
     }
 }
 
-export interface Bidwar_Entry {
+export interface Bidwar_EntryContribution {
     name: string;
-    points: number;
-    pointsNote?: string;
-    nameNote?: string;
+    amount: number;
+}
+
+export class Bidwar_Entry {
+    public readonly name: string;
+    public readonly nameNote?: string;
+    public readonly contributions: Bidwar_EntryContribution[];
+
+    public constructor(args: {
+        name: string,
+        nameNote: string | undefined,
+        contributions: { name: string, amount: number }[]
+    }) {
+        this.name = args.name;
+        this.nameNote = args.nameNote;
+        this.contributions = Array.from(args.contributions);
+    }
+
+    public get amountContributed(): number {
+        return this.contributions.reduce<number>((prev, current, _index) => {
+            return prev + current.amount;
+        }, 0);
+    }
+
+    public static parseContributions(contributionsString: string): Bidwar_EntryContribution[] {
+        if (!contributionsString) {
+            return [];
+        }
+    
+        const contributions = contributionsString.split("\n").map(n => { 
+            const tokens = n.split(" ");
+            const amount = Number.parseInt(tokens[0]);
+            const name = tokens[2];
+            const contribution: Bidwar_EntryContribution = { amount, name };
+            return contribution;
+        });
+        return contributions;
+    }
 }
 
 export class Bidwar_BankBlock extends SpreadsheetBlock {
@@ -159,12 +252,14 @@ export class Bidwar_BankBlock extends SpreadsheetBlock {
             const rowData: sheets_v4.Schema$RowData = {
                 values: [
                     {
-                        userEnteredValue: { numberValue: n.points },
-                        note: n.pointsNote,
+                        userEnteredValue: { numberValue: n.currentBalance },
+                        note: n.contributions.sort((a, b) => b.amount - a.amount).map(c => `${c.timestamp} - ${c.amount} - ${c.detail}`).join("\n"),
+                        userEnteredFormat: pendingEntryFormat,
                     },
                     {
                         userEnteredValue: { stringValue: n.name },
                         note: n.userId,
+                        userEnteredFormat: pendingEntryFormat,
                     },
                 ],
             };
@@ -174,11 +269,48 @@ export class Bidwar_BankBlock extends SpreadsheetBlock {
     }
 }
 
-export interface Bidwar_BankEntry {
-    userId: string;
-    name: string;
-    points: number;
-    pointsNote?: string;
+export interface Bidwar_BankEntryContribution {
+    amount: number,
+    timestamp?: Date,
+    detail?: string
+};
+
+export class Bidwar_BankEntry {
+    public readonly userId: string;
+    public name: string;
+    public readonly contributions: Bidwar_BankEntryContribution[];
+    
+    public constructor(args: {
+        userId: string,
+        name: string,
+        contributions: Bidwar_BankEntryContribution[]
+    }) {
+        this.userId = args.userId;
+        this.name = args.name;
+        this.contributions = Array.from(args.contributions);
+    }
+
+    public get currentBalance(): number {
+        return this.contributions.reduce<number>((prev, current, _index) => {
+            return prev + current.amount;
+        }, 0);
+    }
+
+    public static parseContributions(contributionsString: string): Bidwar_BankEntryContribution[] {
+        if (!contributionsString) {
+            return [];
+        }
+    
+        const contributions = contributionsString.split("\n").map(n => { 
+            const tokens = n.split(" ");
+            const amount = Number.parseInt(tokens[0]);
+            const timestamp = tokens.length >= 5 ? new Date(tokens[2]) : undefined;
+            let detail = tokens.length >= 5 ? tokens[4] : undefined;
+            const contribution: Bidwar_BankEntryContribution = { amount, timestamp, detail };
+            return contribution;
+        });
+        return contributions;
+    }
 }
 
 export function parseBidwarEntry(row: sheets_v4.Schema$RowData): Bidwar_Entry {
@@ -187,12 +319,13 @@ export function parseBidwarEntry(row: sheets_v4.Schema$RowData): Bidwar_Entry {
     }
     // TODO: enforce a length at least as long as is required
 
-    const entry: Bidwar_Entry = {
-        points: getEntryValue_Number(row.values[0]),
-        pointsNote: row.values[0].note ?? undefined,
+    const contributionsString = row.values[0].note ?? "";
+    const contributions = Bidwar_Entry.parseContributions(contributionsString);
+    const entry = new Bidwar_Entry({
+        contributions: contributions,
         name: getEntryValue_String(row.values[1]),
         nameNote: row.values[1].note ?? undefined,
-    };
+    });
     return entry;
 }
 
@@ -200,25 +333,18 @@ export function parseBidwarBankEntry(row: sheets_v4.Schema$RowData): Bidwar_Bank
     if (!row.values) {
         throw new Error("Expected bank entry row to have values");
     }
-    // TODO: enforce a length at least as long as is required
 
-    let userId: string;
-    try { // Twitch ids are numbers, but are always conveyed as strings. This is a sanity check against Google Sheets' auto-assuming that fields containing numbers are typed as such
-        userId = String(getEntryValue_Number(row.values[2]));
-    } catch (err) {
-        userId = getEntryValue_String(row.values[2]);
-    }        
-
-    const bankEntry: Bidwar_BankEntry = {
-        points: getEntryValue_Number(row.values[0]),
+    const contributionsString = row.values[0].note ?? "";
+    const contributions = Bidwar_BankEntry.parseContributions(contributionsString);
+    const bankEntry = new Bidwar_BankEntry({
+        userId: row.values[1].note ?? "",
         name: getEntryValue_String(row.values[1]),
-        pointsNote: row.values[1].note ?? undefined,
-        userId: userId,
-    }
+        contributions: contributions,
+    });
     return bankEntry;
 }
 
-export function parseBidwarPendingBlock(rows: sheets_v4.Schema$RowData[]): Bidwar_PendingBlock {
+export function parseBidwarPendingBlock(rows: sheets_v4.Schema$RowData[]): Bidwar_AwaitingBlock {
     const headerRow = parseHeaderFooterRow(rows[0]);
 
     const entries: Bidwar_Entry[] = [];
@@ -228,7 +354,7 @@ export function parseBidwarPendingBlock(rows: sheets_v4.Schema$RowData[]): Bidwa
         entries.push(entry);
     }
     
-    const pendingBlock = new Bidwar_PendingBlock({
+    const pendingBlock = new Bidwar_AwaitingBlock({
         header: headerRow,
         entries: entries,
     });
@@ -269,64 +395,3 @@ export function parseBidwarBankBlock(rows: sheets_v4.Schema$RowData[]): Bidwar_B
     });
     return bankBlock;
 }
-
-export async function getBidwarSpreadsheet(sheetsApi: sheets_v4.Sheets, sheetId: string, subSheetName: string): Promise<Bidwar_Spreadsheet> {
-    const spreadsheet = await sheetsApi.spreadsheets.get({
-        includeGridData: true,
-        ranges: [subSheetName],
-        spreadsheetId: sheetId,
-    });
-
-    if (!spreadsheet.data || !spreadsheet.data.sheets) {
-        throw new Error("Unable to retrieve bidwar spreadsheet: sheet is empty");
-    }
-
-    const blockArray = extractBlockArray(spreadsheet.data.sheets[0]);
-    let bidwarPendingBlock: Bidwar_PendingBlock | undefined = undefined;
-    let bidwarActiveBlock: Bidwar_ActiveBlock | undefined = undefined;
-    let bidwarBankBlock: Bidwar_BankBlock | undefined = undefined;
-    for (let i = 0; i < 3; i++) {
-        if (i === Bidwar_Spreadsheet_BlockOrder.Pending) {
-            bidwarPendingBlock = parseBidwarPendingBlock(blockArray[i]);
-        } else if (i === Bidwar_Spreadsheet_BlockOrder.Active) {
-            bidwarActiveBlock = parseBidwarActiveBlock(blockArray[i]);
-        } else if (i === Bidwar_Spreadsheet_BlockOrder.Bank) {
-            bidwarBankBlock = parseBidwarBankBlock(blockArray[i]);
-        }
-    }
-
-    if (!bidwarPendingBlock || !bidwarActiveBlock || !bidwarBankBlock) {
-        throw new Error("Unable to parse discrete blocks from bidwar spreadsheet");
-    }
-
-    const bidwarSpreadsheet = new Bidwar_Spreadsheet(bidwarActiveBlock, bidwarPendingBlock, bidwarBankBlock);
-    return bidwarSpreadsheet;
-}
-
-// export async function pushBidwarSpreadsheet(sheetsApi: sheets_v4.Sheets, sheetId: string, _subSheetName: string, bidwarSpreadsheet: Bidwar_Spreadsheet): Promise<void> {    
-//     const pendingBlockValues = bidwarSpreadsheet.pendingBlock.toGridData();
-//     const activeBlockValues = bidwarSpreadsheet.activeBlock.toGridData();
-//     const bankBlockValues = bidwarSpreadsheet.bankBlock.toGridData();
-    
-//     const batchUpdateRequest: sheets_v4.Schema$BatchUpdateValuesRequest = {
-//         valueInputOption: "RAW",
-//         data: [
-//             {
-//                 range: `Sheet4`,
-//                 values: pendingBlockValues,
-//             },
-//             {
-//                 range: `Sheet4!A${pendingBlockValues.length + 2}`,
-//                 values: activeBlockValues,
-//             },
-//             {
-//                 range: `Sheet4!A${pendingBlockValues.length + 2 + activeBlockValues.length + 2}`,
-//                 values: bankBlockValues,
-//             },
-//         ],
-//     };
-//     await sheetsApi.spreadsheets.values.batchUpdate({
-//         spreadsheetId: sheetId,
-//         requestBody: batchUpdateRequest,
-//     });
-// }

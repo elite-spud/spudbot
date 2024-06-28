@@ -12,15 +12,10 @@ export class GameRequest_Spreadsheet extends SpreadsheetBase {
     public readonly activeBlock: GameRequest_ActiveBlock;
     public readonly pendingBlock: GameRequest_PendingBlock;
 
-    public constructor(args: {
-        sheetId: string,
-        subSheetId: number,
-        activeBlock: GameRequest_ActiveBlock,
-        pendingBlock: GameRequest_PendingBlock
-    }) {
+    public constructor(activeBlock: GameRequest_ActiveBlock, pendingBlock: GameRequest_PendingBlock) {
         super();
-        this.activeBlock = args.activeBlock;
-        this.pendingBlock = args.pendingBlock;
+        this.activeBlock = activeBlock;
+        this.pendingBlock = pendingBlock;
     }
 
     public findEntry(gamename: string): GameRequestEntry | undefined {
@@ -99,7 +94,7 @@ export class GameRequest_Spreadsheet extends SpreadsheetBase {
         const blockArray = extractBlockArray(apiSpreadsheet.data.sheets[0]);
         let activeBlock: GameRequest_ActiveBlock | undefined = undefined;
         let pendingBlock: GameRequest_PendingBlock | undefined = undefined;
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 2; i++) {
             if (i === GameRequest_Spreadsheet_BlockOrder.Active) {
                 activeBlock = parseGameRequestActiveBlock(blockArray[i]);
             } else if (i === GameRequest_Spreadsheet_BlockOrder.Pending) {
@@ -111,7 +106,7 @@ export class GameRequest_Spreadsheet extends SpreadsheetBase {
             throw new Error("Unable to parse discrete blocks from game request spreadsheet");
         }
     
-        const gameRequestSpreadsheet = new GameRequest_Spreadsheet({ sheetId, subSheetId, activeBlock, pendingBlock });
+        const gameRequestSpreadsheet = new GameRequest_Spreadsheet(activeBlock, pendingBlock);
         return gameRequestSpreadsheet;
     }
 }

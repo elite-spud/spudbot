@@ -6,6 +6,7 @@ import { TwitchBotBase } from "../TwitchBot";
 import { ITwitchUserDetail, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Notification_Subscription } from "../TwitchBotTypes";
 import { GameRequest_Spreadsheet } from "./spreadsheets/GameRequestSpreadsheet";
 import { pushSpreadsheet } from "./spreadsheets/SpreadsheetBase";
+import { Bidwar_Spreadsheet } from "./spreadsheets/BidwarSpreadsheet";
 
 export interface GoogleAPIConfig {
     oauth: {
@@ -30,7 +31,8 @@ export interface GoogleAPIConfig {
 
 export class GoogleAPI {
     public static readonly incentiveSheetId = "1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY";
-    public static readonly bidwarTestSubSheet = "Sheet3";
+    public static readonly bidwarTestReadSubSheet = 877321766;
+    public static readonly bidwarTestWriteSubSheet = 1036115869;
     public static readonly gameRequestTestReadSubSheet = 1313890864;
     public static readonly gameRequestTestWriteSubSheet = 1834520193;
 
@@ -119,20 +121,21 @@ export class GoogleAPI {
         return future;
     }
 
-    public async handleCheer(_event: TwitchEventSub_Event_Cheer, _subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
-        // const future = new Future<void>();
-        // const task = async (): Promise<void> => {
-        //     if (event.is_anonymous || event.user_id === undefined || event.user_name === undefined) {
-        //         return;
-        //     }
-        //     const bidwarSpreadsheet = await getBidwarSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestSubSheet);
-        //     bidwarSpreadsheet.addBitsToUser(event.user_id, event.user_name, event.bits, new Date(subscription.created_at));
-        //     await pushBidwarSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestSubSheet, bidwarSpreadsheet);
-        // }
-        // this._taskQueue.addTask(task);
-        // this._taskQueue.startQueue();
+    public async handleCheer(event: TwitchEventSub_Event_Cheer, subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
+        const future = new Future<void>();
+        const task = async (): Promise<void> => {
+            if (event.is_anonymous || event.user_id === undefined || event.user_name === undefined) {
+                future.resolve();
+                return;
+            }
+            const bidwarSpreadsheet = await Bidwar_Spreadsheet.getBidwarSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestReadSubSheet);
+            bidwarSpreadsheet.addBitsToUser(event.user_id, event.user_name, event.bits, new Date(subscription.created_at));
+            await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestWriteSubSheet, bidwarSpreadsheet);
+        }
+        this._taskQueue.addTask(task);
+        this._taskQueue.startQueue();
 
-        // return future;
+        return future;
     }
 
     protected subIncentiveToChatMessage(currentSubPoints: number, requiredSubPoints: number, activity: string): void {
