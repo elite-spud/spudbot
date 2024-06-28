@@ -290,7 +290,7 @@ export class Bidwar_BankBlock extends SpreadsheetBlock {
                             const timeString = c.timestamp
                                 ? formatTimestampForSpreadsheet(c.timestamp)
                                 : undefined
-                            let contributionString = `${c.amount}`;
+                            let contributionString = `${c.amount >= 0 ? "+" : ""}${c.amount}`;
                             if (timeString) {
                                 contributionString += ` - ${timeString}`;
                             }

@@ -694,7 +694,13 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
                 }
                 const amount = Number.parseInt(args[1]);
                 const username = args[0];
-                const userId = await this.getUserIdForUsername(username);
+                let userId = "";
+                try {
+                    userId = await this.getUserIdForUsername(username);
+                } catch (err) {
+                    this.chat(messageDetail.respondTo, `Error retrieving username info for ${username}. Was the command formatted correctly?`);
+                    return;
+                }
                 const source = args.length >= 3
                     ? args[2].replaceAll("\"", "")
                     : undefined;
