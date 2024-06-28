@@ -306,6 +306,9 @@ export class Bidwar_BankBlock extends SpreadsheetBlock {
                         note: n.userId,
                         userEnteredFormat: pendingEntryFormat,
                     },
+                    {
+                        userEnteredFormat: borderLeft,
+                    },
                 ],
             };
             return rowData;
