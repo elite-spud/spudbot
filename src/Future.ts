@@ -28,7 +28,7 @@ export class Future<T> implements PromiseLike<T> {
         return new Future(this.promise.catch(onrejected));
     }
 
-    public resolve(value?: T | PromiseLike<T>) {
+    public resolve(value: T | PromiseLike<T>) {
         this.resolveFunction(value);
     }
 
