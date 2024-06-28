@@ -143,7 +143,7 @@ export class GameRequest_ActiveBlock extends SpreadsheetBlock {
                         userEnteredFormat: pendingEntryFormat,
                     },
                     {
-                        userEnteredValue: { stringValue: n.requestDate.toISOString(), },
+                        userEnteredValue: { stringValue: n.requestDate..toISOString(), }, // TODO: format this and start working on calculating the effective cost formula
                         userEnteredFormat: pendingEntryFormat,
                     },
                     {
