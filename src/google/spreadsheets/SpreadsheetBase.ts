@@ -123,33 +123,35 @@ export function parseHeaderFooterRow(row: sheets_v4.Schema$RowData): (string | u
 
 export function extractBlockArray(sheet: sheets_v4. Schema$Sheet): sheets_v4.Schema$RowData[][] {
     const blockArray: sheets_v4.Schema$RowData[][] = [];
+    let rows: sheets_v4.Schema$RowData[] = [];
+
     for (const gridData of sheet.data!) {
-        let gridHasData = false;
-        let rowArray: sheets_v4.Schema$RowData[] = [];
         for (const row of gridData.rowData!) {
             let rowHasData = false;
             if (row.values) {
                 for (const value of row.values) {
                     if (value.userEnteredValue) {
                         rowHasData = true;
-                        gridHasData = true;
                         break;
                     }
                 }
             }
 
-            if (rowHasData) {
-                rowArray.push(row);
-            } else {
-                blockArray.push(rowArray);
-                rowArray = [];
+            if (!rowHasData) { // empty row
+                if (rows.length > 0) { // block is done
+                    blockArray.push(rows);
+                    rows = [];
+                }
+                continue;
             }
-        }
 
-        if (gridHasData) {
-            blockArray.push(rowArray);
+            rows.push(row);
         }
     }
 
+    if (rows.length > 0) {
+        blockArray.push(rows);
+    }
     return blockArray;
+
 }

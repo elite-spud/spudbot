@@ -162,10 +162,15 @@ export class GoogleAPI {
     public async handleBidwarAddEntry(respondTo: string, gameName: string): Promise<void> {
         const future = new Future<void>();
         const task = async (): Promise<void> => {
-            const bidwarSpreadsheet = await Bidwar_Spreadsheet.getBidwarSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestReadSubSheet);
-            bidwarSpreadsheet.addEntry(gameName);
-            await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestWriteSubSheet, bidwarSpreadsheet);
-            this._twitchBot.chat(respondTo, `Bidwar entry ${gameName} was successfully added.`);
+            try {
+                const bidwarSpreadsheet = await Bidwar_Spreadsheet.getBidwarSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestReadSubSheet);
+                bidwarSpreadsheet.addEntry(gameName);
+                await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestWriteSubSheet, bidwarSpreadsheet);
+                this._twitchBot.chat(respondTo, `Bidwar entry ${gameName} was successfully added.`);
+            } catch (err) {
+                this._twitchBot.chat(respondTo, `Error adding entry.`);
+                console.log(err);
+            }
         }
         this._taskQueue.addTask(task);
         this._taskQueue.startQueue();

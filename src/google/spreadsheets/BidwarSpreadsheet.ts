@@ -1,5 +1,5 @@
 import { sheets_v4 } from "googleapis";
-import { borderLeft, headerFormatCenter, pendingEntryFormat } from "./GameRequestSpreadsheetStyle";
+import { borderLeft, getBorderRowBelow, headerFormatCenter, pendingEntryFormat } from "./GameRequestSpreadsheetStyle";
 import { SpreadsheetBase, SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getEntryValue_String, headerToRowData, parseHeaderFooterRow } from "./SpreadsheetBase";
 
 export enum Bidwar_Spreadsheet_BlockOrder {
@@ -75,7 +75,12 @@ export class Bidwar_Spreadsheet extends SpreadsheetBase {
     }
 
     public toRowData(): sheets_v4.Schema$RowData[] {
-        return this.awaitingBlock.toRowData().concat(this.activeBlock.toRowData()).concat(this.bankBlock.toRowData());
+        let rowData: sheets_v4.Schema$RowData[] = [];
+        if (this.awaitingBlock.entries.length !== 0) {
+            rowData = rowData.concat(this.awaitingBlock.toRowData());
+        }
+        rowData = rowData.concat(this.activeBlock.toRowData()).concat(this.bankBlock.toRowData());
+        return rowData;
     }
 
     public static async getBidwarSpreadsheet(sheetsApi: sheets_v4.Sheets, sheetId: string, subSheetId: number): Promise<Bidwar_Spreadsheet> {
@@ -94,12 +99,12 @@ export class Bidwar_Spreadsheet extends SpreadsheetBase {
         }
     
         const blockArray = extractBlockArray(apiSpreadsheet.data.sheets[0]);
-        let pendingBlock: Bidwar_AwaitingBlock | undefined = undefined;
+        let awaitingBlock: Bidwar_AwaitingBlock | undefined = undefined;
         let activeBlock: Bidwar_ActiveBlock | undefined = undefined;
         let bankBlock: Bidwar_BankBlock | undefined = undefined;
         for (let i = 0; i < 3; i++) {
             if (i === Bidwar_Spreadsheet_BlockOrder.Pending) {
-                pendingBlock = parseBidwarPendingBlock(blockArray[i]);
+                awaitingBlock = parseBidwarAwaitingBlock(blockArray[i]);
             } else if (i === Bidwar_Spreadsheet_BlockOrder.Active) {
                 activeBlock = parseBidwarActiveBlock(blockArray[i]);
             } else if (i === Bidwar_Spreadsheet_BlockOrder.Bank) {
@@ -107,11 +112,11 @@ export class Bidwar_Spreadsheet extends SpreadsheetBase {
             }
         }
     
-        if (!pendingBlock || !activeBlock || !bankBlock) {
+        if (!awaitingBlock || !activeBlock || !bankBlock) {
             throw new Error("Unable to parse discrete blocks from bidwar spreadsheet");
         }
     
-        const bidwarSpreadsheet = new Bidwar_Spreadsheet(pendingBlock, activeBlock, bankBlock);
+        const bidwarSpreadsheet = new Bidwar_Spreadsheet(awaitingBlock, activeBlock, bankBlock);
         return bidwarSpreadsheet;
     }
 }
@@ -144,11 +149,14 @@ export class Bidwar_AwaitingBlock extends SpreadsheetBlock {
                         note: n.nameNote,
                         userEnteredFormat: pendingEntryFormat,
                     },
+                    {
+                        userEnteredFormat: borderLeft,
+                    }
                 ],
             };
             return rowData;
         });
-        return [headerRow].concat(entryRows);
+        return [headerRow].concat(entryRows).concat(getBorderRowBelow(2));
     }
 }
 
@@ -182,6 +190,9 @@ export class Bidwar_ActiveBlock extends SpreadsheetBlock {
                         note: n.nameNote,
                         userEnteredFormat: pendingEntryFormat,
                     },
+                    {
+                        userEnteredFormat: borderLeft,
+                    },
                 ],
             };
             return rowData;
@@ -203,7 +214,7 @@ export class Bidwar_ActiveBlock extends SpreadsheetBlock {
                 },
             ]
         }
-        return [headerRow].concat(entryRows).concat(footerRow);
+        return [headerRow].concat(entryRows).concat(footerRow).concat(getBorderRowBelow(2));
     }
 }
 
@@ -360,7 +371,7 @@ export function parseBidwarBankEntry(row: sheets_v4.Schema$RowData): Bidwar_Bank
     return bankEntry;
 }
 
-export function parseBidwarPendingBlock(rows: sheets_v4.Schema$RowData[]): Bidwar_AwaitingBlock {
+export function parseBidwarAwaitingBlock(rows: sheets_v4.Schema$RowData[]): Bidwar_AwaitingBlock {
     const headerRow = parseHeaderFooterRow(rows[0]);
 
     const entries: Bidwar_Entry[] = [];
