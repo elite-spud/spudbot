@@ -1,5 +1,5 @@
 import { sheets_v4 } from "googleapis";
-import { ChannelPointRequests } from "../ChannelPointRequests";
+import { ChannelPointRequests } from "../../ChannelPointRequests";
 import { borderLeft, getBorderRowBelow, pendingEntryFormat } from "./GameRequestSpreadsheetStyle";
 import { SpreadsheetBase, SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getEntryValue_Date, getEntryValue_Number, getEntryValue_String, headerToRowData, parseHeaderFooterRow } from "./SpreadsheetBase";
 

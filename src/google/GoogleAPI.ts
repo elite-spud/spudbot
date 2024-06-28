@@ -1,9 +1,9 @@
 import { JWT } from "google-auth-library";
 import { google, sheets_v4 } from "googleapis";
-import { Future } from "./Future";
-import { TaskQueue } from "./TaskQueue";
-import { TwitchBotBase } from "./TwitchBot";
-import { ITwitchUserDetail, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Notification_Subscription } from "./TwitchBotTypes";
+import { Future } from "../Future";
+import { TaskQueue } from "../TaskQueue";
+import { TwitchBotBase } from "../TwitchBot";
+import { ITwitchUserDetail, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Notification_Subscription } from "../TwitchBotTypes";
 import { GameRequest_Spreadsheet } from "./spreadsheets/GameRequestSpreadsheet";
 import { pushSpreadsheet } from "./spreadsheets/SpreadsheetBase";
 

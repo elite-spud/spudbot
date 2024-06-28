@@ -1,7 +1,7 @@
 import { randomInt } from "crypto";
 import * as fs from "fs";
 import { Future } from "./Future";
-import { GoogleAPI } from "./GoogleAPI";
+import { GoogleAPI } from "./google/GoogleAPI";
 import { IIrcBotAuxCommandGroupConfig, IPrivMessageDetail } from "./IrcBot";
 import { egadd_quotes, f_zero_gx_interview_quotes, f_zero_gx_quotes, f_zero_gx_story_quotes, luigi_quotes } from "./Quotes";
 import { IChatWarriorUserDetail, ISpudBotConfig, ISpudBotConnectionConfig } from "./SpudBotTypes";

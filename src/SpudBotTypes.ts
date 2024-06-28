@@ -1,5 +1,5 @@
 import { IChatWarriorState } from "./ChatWarrior";
-import { GoogleAPIConfig } from "./GoogleAPI";
+import { GoogleAPIConfig } from "./google/GoogleAPI";
 import { ITwitchBotConfig, ITwitchBotConnectionConfig, ITwitchUserDetail } from "./TwitchBotTypes";
 
 export interface UserCommand {

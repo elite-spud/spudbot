@@ -18,7 +18,7 @@ export class TaskQueue {
         while (this._tasks.length > 0) {
             const task = this._tasks.shift();
             if (task === undefined) {
-                return;
+                break;
             }
             try {
                 await task();
