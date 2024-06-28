@@ -1,6 +1,6 @@
 import { sheets_v4 } from "googleapis";
 import { borderLeft, getBorderRowBelow, headerFormatCenter, pendingEntryFormat } from "./GameRequestSpreadsheetStyle";
-import { SpreadsheetBase, SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getEntryValue_String, headerToRowData, parseHeaderFooterRow } from "./SpreadsheetBase";
+import { SpreadsheetBase, SpreadsheetBlock, SpreadsheetRow, extractBlockArray, formatTimestampForSpreadsheet, getEntryValue_String, headerToRowData, parseHeaderFooterRow } from "./SpreadsheetBase";
 
 export enum Bidwar_Spreadsheet_BlockOrder {
     Pending = 0,
@@ -38,7 +38,7 @@ export class Bidwar_Spreadsheet extends SpreadsheetBase {
         }
 
         user.name = username;
-        user.contributions.push({ amount: bits, timestamp: timestamp, detail: source });
+        user.contributions.unshift({ amount: bits, timestamp: timestamp, detail: source });
     }
     
     public spendBitsOnEntry(userId: string, username: string, gameName: string, bits: number, timestamp: Date): BidwarOperationStatus {
@@ -59,19 +59,25 @@ export class Bidwar_Spreadsheet extends SpreadsheetBase {
             return { success: false, message: `User ${username} does not have enough points to fund the request (${user.currentBalance} / ${bits})` };
         }
 
-        entry.contributions.push({ name: username, amount: bits });
-        user.contributions.push({ amount: -bits, timestamp: timestamp, detail: `-> ${gameName}` });
+        entry.contributions.unshift({ name: username, amount: bits });
+        user.contributions.unshift({ amount: -bits, timestamp: timestamp, detail: `-> ${gameName}` });
 
         return { success: true };
     }
 
-    public addEntry(gamename: string): void {
+    public addEntry(gameName: string): BidwarOperationStatus {
+        const existingEntry = this.activeBlock.entries.some(n => n.name === gameName);
+        if (existingEntry) {
+            return { success: false, message: `Existing entry found for game ${gameName} No new entry added.`};
+        }
+        
         const entry = new Bidwar_Entry({
-            name: gamename,
+            name: gameName,
             nameNote: undefined,
             contributions: [],
         });
         this.activeBlock.entries.push(entry);
+        return { success: true };
     }
 
     public toRowData(): sheets_v4.Schema$RowData[] {
@@ -250,7 +256,7 @@ export class Bidwar_Entry {
         }
     
         const contributions = contributionsString.split("\n").map(n => { 
-            const tokens = n.split(" ");
+            const tokens = n.trim().split(/\s+/);
             const amount = Number.parseInt(tokens[0]);
             const name = tokens[2];
             const contribution: Bidwar_EntryContribution = { amount, name };
@@ -280,7 +286,19 @@ export class Bidwar_BankBlock extends SpreadsheetBlock {
                 values: [
                     {
                         userEnteredValue: { numberValue: n.currentBalance },
-                        note: n.contributions.sort((a, b) => b.amount - a.amount).map(c => `${c.timestamp} - ${c.amount} - ${c.detail}`).join("\n"),
+                        note: n.contributions.map(c => {
+                            const timeString = c.timestamp
+                                ? formatTimestampForSpreadsheet(c.timestamp)
+                                : undefined
+                            let contributionString = `${c.amount}`;
+                            if (timeString) {
+                                contributionString += ` - ${timeString}`;
+                            }
+                            if (c.detail) {
+                                contributionString += ` - ${c.detail}`;
+                            }
+                            return contributionString;
+                        }).join("\n"),
                         userEnteredFormat: pendingEntryFormat,
                     },
                     {
@@ -292,7 +310,7 @@ export class Bidwar_BankBlock extends SpreadsheetBlock {
             };
             return rowData;
         });
-        return [headerRow].concat(entryRows);
+        return [headerRow].concat(entryRows).concat(getBorderRowBelow(2));
     }
 }
 
@@ -329,9 +347,9 @@ export class Bidwar_BankEntry {
         }
     
         const contributions = contributionsString.split("\n").map(n => { 
-            const tokens = n.split(" ");
+            const tokens = n.trim().split(/\s+/);
             const amount = Number.parseInt(tokens[0]);
-            const timestamp = tokens.length >= 5 ? new Date(tokens[2]) : undefined;
+            const timestamp = tokens.length >= 3 ? new Date(tokens[2]) : undefined;
             let detail = tokens.length >= 5 ? tokens[4] : undefined;
             const contribution: Bidwar_BankEntryContribution = { amount, timestamp, detail };
             return contribution;

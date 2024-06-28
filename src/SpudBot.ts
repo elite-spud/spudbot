@@ -678,25 +678,27 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
                 await (await this._googleApi).handleBidwarAddEntry(messageDetail.respondTo, gameName);
                 return;
             }
-            if (tokens[1] === "fund") {
+            if (tokens[1] === "addFunds") {
                 if (!userIsBroadcaster) {
                     this.chat(messageDetail.respondTo, `only the broadcaster can use this command`);
                     return;
                 }
                 const args = tokens.slice(2);
                 if (args.length === 0) {
-                    this.chat(messageDetail.respondTo, `!bidwar fund <gamename> <amount> <username>`);
+                    this.chat(messageDetail.respondTo, `!bidwar addFunds <username> <amount> <reason?>`);
                     return;
                 }
-                if (args.length !== 3) {
-                    this.chat(messageDetail.respondTo, `!bidwar add was malformed (expected at least 3 arguments, but found ${args.length})`);
+                if (args.length < 2 || args.length > 3) {
+                    this.chat(messageDetail.respondTo, `!bidwar addFunds was malformed (expected 2-3 arguments, but found ${args.length})`);
                     return;
                 }
-                const gameName = args[0].replaceAll("\"", "");
                 const amount = Number.parseInt(args[1]);
-                const username = args[2];
+                const username = args[0];
                 const userId = await this.getUserIdForUsername(username);
-                await (await this._googleApi).handleBidwarContribute(messageDetail.respondTo, userId, username, gameName, amount, new Date());
+                const source = args.length >= 3
+                    ? args[2].replaceAll("\"", "")
+                    : undefined;
+                await (await this._googleApi).handleBidwarAddFunds(messageDetail.respondTo, userId, username, amount, source, new Date());
                 return;
             }
         }

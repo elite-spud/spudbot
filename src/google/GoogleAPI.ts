@@ -164,9 +164,32 @@ export class GoogleAPI {
         const task = async (): Promise<void> => {
             try {
                 const bidwarSpreadsheet = await Bidwar_Spreadsheet.getBidwarSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestReadSubSheet);
-                bidwarSpreadsheet.addEntry(gameName);
+                const status = bidwarSpreadsheet.addEntry(gameName);
+                if (!status.success && status.message) {
+                    this._twitchBot.chat(respondTo, status.message);
+                    return;
+                }
                 await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestWriteSubSheet, bidwarSpreadsheet);
                 this._twitchBot.chat(respondTo, `Bidwar entry ${gameName} was successfully added.`);
+            } catch (err) {
+                this._twitchBot.chat(respondTo, `Error adding entry.`);
+                console.log(err);
+            }
+        }
+        this._taskQueue.addTask(task);
+        this._taskQueue.startQueue();
+
+        return future;
+    }
+
+    public async handleBidwarAddFunds(respondTo: string, userId: string, username: string, amount: number, source: string | undefined, timestamp: Date): Promise<void> {
+        const future = new Future<void>();
+        const task = async (): Promise<void> => {
+            try {
+                const bidwarSpreadsheet = await Bidwar_Spreadsheet.getBidwarSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestReadSubSheet);
+                bidwarSpreadsheet.addBitsToUser(userId, username, amount, timestamp, source ?? `manually added by admin`);
+                await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestWriteSubSheet, bidwarSpreadsheet);
+                this._twitchBot.chat(respondTo, `User ${username} had ${amount} added to their bidwar bank balance.`);
             } catch (err) {
                 this._twitchBot.chat(respondTo, `Error adding entry.`);
                 console.log(err);

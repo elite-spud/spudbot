@@ -153,5 +153,11 @@ export function extractBlockArray(sheet: sheets_v4. Schema$Sheet): sheets_v4.Sch
         blockArray.push(rows);
     }
     return blockArray;
+}
 
+export function formatTimestampForSpreadsheet(date: Date, excludeTime: boolean = false): string {
+    const timeStr = date.toISOString() // of the form 2012-11-04T14:51:06.157Z
+        .replace(/T/, " ") // delete the T
+        .substring(0, excludeTime ? 10 : 16);
+    return timeStr;
 }
