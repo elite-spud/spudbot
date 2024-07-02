@@ -155,7 +155,16 @@ export function extractBlockArray(sheet: sheets_v4. Schema$Sheet): sheets_v4.Sch
     return blockArray;
 }
 
-export function formatTimestampForSpreadsheet(date: Date, excludeTime: boolean = false): string {
+export function getTimestampFormulaForSpreadsheet(date: Date, includeTime: boolean = false): string {
+    const timeStr = date.toISOString(); // of the form 2012-11-04T14:51:06.157Z
+    let sheetFormula = `=DATEVALUE(MID("${timeStr}",1,10))`;
+    if (includeTime) {
+        sheetFormula += ` + TIMEVALUE(MID("${timeStr}",12,8))`;
+    }
+    return sheetFormula;
+}
+
+export function getTimestampStringForSpreadsheet(date: Date, excludeTime: boolean = false): string {
     const timeStr = date.toISOString() // of the form 2012-11-04T14:51:06.157Z
         .replace(/T/, " ") // delete the T
         .substring(0, excludeTime ? 10 : 16);

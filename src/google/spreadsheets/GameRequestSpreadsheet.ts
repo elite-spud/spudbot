@@ -1,7 +1,7 @@
 import { sheets_v4 } from "googleapis";
 import { ChannelPointRequests } from "../../ChannelPointRequests";
 import { borderLeft, getBorderRowBelow, pendingEntryFormat } from "./GameRequestSpreadsheetStyle";
-import { SpreadsheetBase, SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getEntryValue_Date, getEntryValue_Number, getEntryValue_String, headerToRowData, parseHeaderFooterRow } from "./SpreadsheetBase";
+import { SpreadsheetBase, SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getTimestampFormulaForSpreadsheet, getEntryValue_Date, getEntryValue_Number, getEntryValue_String, headerToRowData, parseHeaderFooterRow } from "./SpreadsheetBase";
 
 export enum GameRequest_Spreadsheet_BlockOrder {
     Active = 0,
@@ -126,6 +126,7 @@ export class GameRequest_ActiveBlock extends SpreadsheetBlock {
 
     public toRowData(): sheets_v4.Schema$RowData[] {
         const headerRow = headerToRowData(this.header);
+        const dateFormat: sheets_v4.Schema$CellFormat = { numberFormat: { type: "DATE_TIME", pattern: "yyyy-mm-dd" } };
         const entryRows = this.entries.map(n => {
             const rowData: sheets_v4.Schema$RowData = {
                 values: [
@@ -139,12 +140,13 @@ export class GameRequest_ActiveBlock extends SpreadsheetBlock {
                     },
                     {
                         userEnteredValue: { numberValue: n.pointsContributed },
-                        note: n.contributions.sort((a, b) => b.points - a.points).map(c => `${c.name} - ${c.points}`).join("\n"),
+                        note: n.contributions.sort((a, b) => b.points - a.points).map(c => `${c.name} • ${c.points}`).join("\n"),
                         userEnteredFormat: pendingEntryFormat,
                     },
                     {
-                        userEnteredValue: { stringValue: n.requestDate..toISOString(), }, // TODO: format this and start working on calculating the effective cost formula
-                        userEnteredFormat: pendingEntryFormat,
+                        userEnteredValue: { formulaValue: getTimestampFormulaForSpreadsheet(n.requestDate) },
+                        note: n.requestDate.toISOString(),
+                        userEnteredFormat: Object.assign({}, pendingEntryFormat, dateFormat),
                     },
                     {
                         userEnteredValue: { numberValue: n.effectivePoints, },
@@ -290,12 +292,15 @@ export function parseGameRequestActiveEntry(row: sheets_v4.Schema$RowData): Game
 
     const contributionsString = row.values[2].note ?? "";
     const contributions = parseContributions(contributionsString);
+    const requestDate = row.values[3].note
+        ? new Date(row.values[3].note)
+        : getEntryValue_Date(row.values[3]);
 
     const entry = new GameRequest_ActiveEntry({
         gameName: getEntryValue_String(row.values[0]),
         gameLengthHours: getEntryValue_Number(row.values[1]),
         contributions: contributions,
-        requestDate: getEntryValue_Date(row.values[3]),
+        requestDate: requestDate,
     });
 
     return entry;
@@ -342,9 +347,9 @@ export function parseContributions(contributionsString: string): { name: string,
     }
 
     const contributions = contributionsString.split("\n").map(n => { 
-        const tokens = n.split(" ");
+        const tokens = n.split(/\s*•\s*/);
         const name = tokens[0];
-        const points = Number.parseInt(tokens[2]);
+        const points = Number.parseInt(tokens[1]);
         return { name: name, points: points };
     });
     return contributions;

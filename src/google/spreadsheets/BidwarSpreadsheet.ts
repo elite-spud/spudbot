@@ -1,6 +1,6 @@
 import { sheets_v4 } from "googleapis";
 import { borderLeft, getBorderRowBelow, headerFormatCenter, pendingEntryFormat } from "./GameRequestSpreadsheetStyle";
-import { SpreadsheetBase, SpreadsheetBlock, SpreadsheetRow, extractBlockArray, formatTimestampForSpreadsheet, getEntryValue_String, headerToRowData, parseHeaderFooterRow } from "./SpreadsheetBase";
+import { SpreadsheetBase, SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getEntryValue_String, getTimestampStringForSpreadsheet, headerToRowData, parseHeaderFooterRow } from "./SpreadsheetBase";
 
 export enum Bidwar_Spreadsheet_BlockOrder {
     Pending = 0,
@@ -147,7 +147,7 @@ export class Bidwar_AwaitingBlock extends SpreadsheetBlock {
                 values: [
                     {
                         userEnteredValue: { numberValue: n.amountContributed },
-                        note: n.contributions.sort((a, b) => b.amount - a.amount).map(c => `${c.name} - ${c.amount}`).join("\n"),
+                        note: n.contributions.sort((a, b) => b.amount - a.amount).map(c => `${c.name} • ${c.amount}`).join("\n"),
                         userEnteredFormat: pendingEntryFormat,
                     },
                     {
@@ -188,7 +188,7 @@ export class Bidwar_ActiveBlock extends SpreadsheetBlock {
                 values: [
                     {
                         userEnteredValue: { numberValue: n.amountContributed },
-                        note: n.contributions.sort((a, b) => b.amount - a.amount).map(c => `${c.name} - ${c.amount}`).join("\n"),
+                        note: n.contributions.sort((a, b) => b.amount - a.amount).map(c => `${c.name} • ${c.amount}`).join("\n"),
                         userEnteredFormat: pendingEntryFormat,
                     },
                     {
@@ -256,9 +256,9 @@ export class Bidwar_Entry {
         }
     
         const contributions = contributionsString.split("\n").map(n => { 
-            const tokens = n.trim().split(/\s+/);
+            const tokens = n.trim().split(/\s*•\s*/);
             const amount = Number.parseInt(tokens[0]);
-            const name = tokens[2];
+            const name = tokens[1];
             const contribution: Bidwar_EntryContribution = { amount, name };
             return contribution;
         });
@@ -288,14 +288,15 @@ export class Bidwar_BankBlock extends SpreadsheetBlock {
                         userEnteredValue: { numberValue: n.currentBalance },
                         note: n.contributions.map(c => {
                             const timeString = c.timestamp
-                                ? formatTimestampForSpreadsheet(c.timestamp)
+                                ?  getTimestampStringForSpreadsheet(c.timestamp)
                                 : undefined
-                            let contributionString = `${c.amount >= 0 ? "+" : ""}${c.amount}`;
+                            let contributionString = "";
                             if (timeString) {
-                                contributionString += ` - ${timeString}`;
+                                contributionString += `${timeString} • `;
                             }
+                            contributionString += `${c.amount >= 0 ? "+" : ""}${c.amount}`;
                             if (c.detail) {
-                                contributionString += ` - ${c.detail}`;
+                                contributionString += ` • ${c.detail}`;
                             }
                             return contributionString;
                         }).join("\n"),
@@ -349,14 +350,31 @@ export class Bidwar_BankEntry {
             return [];
         }
     
-        const contributions = contributionsString.split("\n").map(n => { 
-            const tokens = n.trim().split(/\s+/);
-            const amount = Number.parseInt(tokens[0]);
-            const timestamp = tokens.length >= 3 ? new Date(tokens[2]) : undefined;
-            let detail = tokens.length >= 5 ? tokens[4] : undefined;
+        const contributionStrings = contributionsString.split("\n");
+        const contributions: Bidwar_BankEntryContribution[] = [];
+        for (const contributionString of contributionStrings) {
+            const tokens = contributionString.trim().split(/\s*•\s*/)
+            if (tokens.length === 0) {
+                continue;
+            }
+            let amount: number;
+            let timestamp: Date | undefined;
+            let detail: string | undefined;
+            if (tokens.length === 1) {
+                amount = Number.parseInt(tokens[0]);
+            } else if (tokens.length >= 3) {
+                timestamp = new Date(tokens[0]);
+                amount = Number.parseInt(tokens[1]);
+            } else if (tokens.length >= 5) {
+                timestamp = new Date(tokens[0]);
+                amount = Number.parseInt(tokens[1]);
+                detail = tokens[2];
+            } else {
+                continue;
+            }
             const contribution: Bidwar_BankEntryContribution = { amount, timestamp, detail };
-            return contribution;
-        });
+            contributions.push(contribution);
+        }
         return contributions;
     }
 }

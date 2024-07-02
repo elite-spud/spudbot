@@ -578,13 +578,19 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
             }
             const regex = /([^\s"]+|"[^"]*")+/g;
             const tokens = messageDetail.message.match(regex) ?? [];
-            if (tokens.length < 3) {
-                this.chat(messageDetail.respondTo, `!gameRequest command was malformed (expected at least 3 arguments, but found ${tokens.length})`);
+
+            const adminHelpMessage = `!gamerequest [add, remove, fund]`;
+            if (tokens.length <= 1) {
+                this.chat(messageDetail.respondTo, adminHelpMessage);
                 return;
             }
 
             if (tokens[1] === "add") {
                 const args = tokens.slice(2);
+                if (args.length === 0) {
+                    this.chat(messageDetail.respondTo, `!gamerequest add <gamename> <gameLengthHours> [pointsToActivate] <username> <points>`);
+                    return;
+                }
                 const gameName = args[0].replaceAll("\"", "");
                 if (args.length === 4) {
                     await (await this._googleApi).handleGameRequestAdd(messageDetail.respondTo, gameName, Number.parseInt(args[1]), undefined, args[2], Number.parseInt(args[3]), new Date());
@@ -593,16 +599,20 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
                 } else {
                     this.chat(messageDetail.respondTo, `!gameRequest add command was malformed (expected at least 4 arguments, but found ${args.length})`);
                 }
-            }
-            if (tokens[1] === "remove") {
+            } else if (tokens[1] === "remove") {
                 // TODO: implement this
-            }
-            if (tokens[1] === "fund") {
+            } else if (tokens[1] === "fund") {
                 const args = tokens.slice(2);
+                if (args.length === 0) {
+                    this.chat(messageDetail.respondTo, `!gamerequest fund <gamename> <username> <points>`);
+                    return;
+                }
                 const gameName = args[0].replaceAll("\"", "");
                 if (args.length === 3) {
                     await (await this._googleApi).handleGameRequestFund(messageDetail.respondTo, gameName, args[1], Number.parseInt(args[2]), new Date());
                 }
+            } else {
+                this.chat(messageDetail.respondTo, `unknown !gameRequest command ${tokens[1]}`);
             }
         }
         const func = this.getCommandFunc({
@@ -629,7 +639,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
 
             if (tokens[1] === "help") {
                 const helpMessage = userIsBroadcaster
-                    ? `!bidwar [contribute, remove, add, fund]`
+                    ? `!bidwar [contribute, remove, add, addFunds]`
                     : contributeHelpMessage;
                 this.chat(messageDetail.respondTo, helpMessage);
                 return;
