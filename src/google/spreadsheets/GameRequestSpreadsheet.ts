@@ -127,7 +127,14 @@ export class GameRequest_ActiveBlock extends SpreadsheetBlock {
     public toRowData(): sheets_v4.Schema$RowData[] {
         const headerRows = headersToRowData(this.headers);
         // const dateFormat: sheets_v4.Schema$CellFormat = { numberFormat: { type: "DATE_TIME", pattern: "yyyy-mm-dd " } };
-        const entryRows = this.entries.sort((a, b) => b.percentageFunded - a.percentageFunded).map(n => {
+        const entryRows = this.entries.sort((a, b) => {
+            const percentageComparison = b.percentageFunded - a.percentageFunded;
+            if (percentageComparison === 0) {
+                return a.gameLengthHours - b.gameLengthHours; // sort ascending
+            } else {
+                return percentageComparison;
+            }
+        }).map(n => {
             const rowData: sheets_v4.Schema$RowData = {
                 values: [
                     {
@@ -247,7 +254,14 @@ export class GameRequest_PendingBlock extends SpreadsheetBlock {
 
     public toRowData(): sheets_v4.Schema$RowData[] {
         const headerRows = headersToRowData(this.headers);
-        const entryRows = this.entries.sort((a, b) => b.percentageFunded - a.percentageFunded).map(n => {
+        const entryRows = this.entries.sort((a, b) => {
+            const percentageComparison = b.percentageFunded - a.percentageFunded;
+            if (percentageComparison === 0) {
+                return a.gameLengthHours - b.gameLengthHours; // sort ascending
+            } else {
+                return percentageComparison;
+            }
+        }).map(n => {
             const rowData: sheets_v4.Schema$RowData = {
                 values: [
                     {

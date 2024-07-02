@@ -31,10 +31,6 @@ export interface GoogleAPIConfig {
 
 export class GoogleAPI {
     public static readonly incentiveSheetId = "1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY";
-    public static readonly bidwarTestReadSubSheet = 877321766;
-    public static readonly bidwarTestWriteSubSheet = 1036115869;
-    public static readonly gameRequestTestReadSubSheet = 1313890864;
-    public static readonly gameRequestTestWriteSubSheet = 1834520193;
     public static readonly gameRequestSubSheet = 384782784;
     public static readonly bidwarSubSheet = 877321766;
 
@@ -82,7 +78,7 @@ export class GoogleAPI {
     public async handleGameRequestFund(respondTo: string, gameName: string, username: string, points: number, timestamp: Date): Promise<boolean> {
         const future = new Future<boolean>();
         const task = async (): Promise<void> => {
-            const gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestTestReadSubSheet);
+            const gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet);
             const existingEntry = gameRequestSpreadsheet.findEntry(gameName);
             if (!existingEntry) {
                 this._twitchBot.chat(respondTo, `@${username}, your game request was detected as a new request; please wait until an admin adds this game to the spreadsheet before adding any further points`);
@@ -91,7 +87,7 @@ export class GoogleAPI {
             }
 
             gameRequestSpreadsheet.addPointsToEntry(username, gameName, points, timestamp);
-            await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestTestWriteSubSheet, gameRequestSpreadsheet);
+            await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet, gameRequestSpreadsheet);
             this._twitchBot.chat(respondTo, `@${username}, your points were successfully added to requesting ${gameName} on stream!`);
             future.resolve(true);
         }
@@ -106,7 +102,7 @@ export class GoogleAPI {
         const task = async (): Promise<void> => {
             let gameRequestSpreadsheet: GameRequest_Spreadsheet;
             try {
-                gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestTestReadSubSheet);
+                gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet);
             } catch (err) {
                 this._twitchBot.chat(respondTo, `Failed to read game request spreadsheet. No data altered.`);
                 console.log(err);
@@ -122,7 +118,7 @@ export class GoogleAPI {
             }
             
             gameRequestSpreadsheet.addEntry(gameName, gameLengthHours, pointsToActivate, username, points, timestamp);
-            await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestTestWriteSubSheet, gameRequestSpreadsheet);
+            await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet, gameRequestSpreadsheet);
             this._twitchBot.chat(respondTo, `Game request successfully added.`);
             future.resolve();
         }
@@ -139,9 +135,9 @@ export class GoogleAPI {
                 future.resolve();
                 return;
             }
-            const bidwarSpreadsheet = await Bidwar_Spreadsheet.getBidwarSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestReadSubSheet);
+            const bidwarSpreadsheet = await Bidwar_Spreadsheet.getBidwarSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarSubSheet);
             bidwarSpreadsheet.addBitsToUser(event.user_id, event.user_name, event.bits, new Date(subscription.created_at));
-            await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestWriteSubSheet, bidwarSpreadsheet);
+            await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarSubSheet, bidwarSpreadsheet);
         }
         this._taskQueue.addTask(task);
         this._taskQueue.startQueue();
@@ -153,7 +149,7 @@ export class GoogleAPI {
         const future = new Future<void>();
         const task = async (): Promise<void> => {
             // TODO: try-catch this and report if the bits were not contributed
-            const bidwarSpreadsheet = await Bidwar_Spreadsheet.getBidwarSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestReadSubSheet);
+            const bidwarSpreadsheet = await Bidwar_Spreadsheet.getBidwarSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarSubSheet);
             const status = bidwarSpreadsheet.spendBitsOnEntry(userId, username, gameName, bits, timestamp);
             if (status.message) {
                 this._twitchBot.chat(respondTo, status.message);
@@ -161,7 +157,7 @@ export class GoogleAPI {
             if (!status.success) {
                 return;
             }
-            await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestWriteSubSheet, bidwarSpreadsheet);
+            await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarSubSheet, bidwarSpreadsheet);
             this._twitchBot.chat(respondTo, `@${username}, your bits were successfully contributed to ${gameName}.`);
         }
         this._taskQueue.addTask(task);
@@ -174,13 +170,13 @@ export class GoogleAPI {
         const future = new Future<void>();
         const task = async (): Promise<void> => {
             try {
-                const bidwarSpreadsheet = await Bidwar_Spreadsheet.getBidwarSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestReadSubSheet);
+                const bidwarSpreadsheet = await Bidwar_Spreadsheet.getBidwarSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarSubSheet);
                 const status = bidwarSpreadsheet.addEntry(gameName);
                 if (!status.success && status.message) {
                     this._twitchBot.chat(respondTo, status.message);
                     return;
                 }
-                await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestWriteSubSheet, bidwarSpreadsheet);
+                await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarSubSheet, bidwarSpreadsheet);
                 this._twitchBot.chat(respondTo, `Bidwar entry ${gameName} was successfully added.`);
             } catch (err) {
                 this._twitchBot.chat(respondTo, `Error adding entry.`);
@@ -197,9 +193,9 @@ export class GoogleAPI {
         const future = new Future<void>();
         const task = async (): Promise<void> => {
             try {
-                const bidwarSpreadsheet = await Bidwar_Spreadsheet.getBidwarSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestReadSubSheet);
+                const bidwarSpreadsheet = await Bidwar_Spreadsheet.getBidwarSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarSubSheet);
                 bidwarSpreadsheet.addBitsToUser(userId, username, amount, timestamp, source ?? `manually added by admin`);
-                await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarTestWriteSubSheet, bidwarSpreadsheet);
+                await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarSubSheet, bidwarSpreadsheet);
                 this._twitchBot.chat(respondTo, `User ${username} had ${amount} added to their bidwar bank balance.`);
             } catch (err) {
                 this._twitchBot.chat(respondTo, `Error adding entry.`);

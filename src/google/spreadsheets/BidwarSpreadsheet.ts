@@ -43,7 +43,7 @@ export class Bidwar_Spreadsheet extends SpreadsheetBase {
     
     public spendBitsOnEntry(userId: string, username: string, gameName: string, bits: number, timestamp: Date): BidwarOperationStatus {
         if (bits === 0) {
-            return { success: false } ;
+            return { success: false };
         }
 
         const entry = this.activeBlock.entries.find(n => n.name.toLowerCase() === gameName.toLowerCase());
@@ -59,7 +59,13 @@ export class Bidwar_Spreadsheet extends SpreadsheetBase {
             return { success: false, message: `User ${username} does not have enough points to fund the request (${user.currentBalance} / ${bits})` };
         }
 
-        entry.contributions.unshift({ name: username, amount: bits });
+        const existingContribution = entry.contributions.find(n => n.name.toLowerCase() === username.toLowerCase());
+        if (existingContribution) {
+            existingContribution.name = username;
+            existingContribution.amount += bits;
+        } else {
+            entry.contributions.unshift({ name: username, amount: bits });
+        }
         user.contributions.unshift({ amount: -bits, timestamp: timestamp, detail: `-> ${gameName}` });
 
         return { success: true };
@@ -143,7 +149,7 @@ export class Bidwar_AwaitingBlock extends SpreadsheetBlock {
                 values: [
                     {
                         userEnteredValue: { numberValue: n.amountContributed },
-                        note: n.contributions.sort((a, b) => b.amount - a.amount).map(c => `${c.name} • ${c.amount}`).join("\n"),
+                        note: n.contributions.sort((a, b) => b.amount - a.amount).map(c => `${c.amount} • ${c.name}`).join("\n"),
                         userEnteredFormat: pendingEntryFormat,
                     },
                     {
@@ -184,7 +190,7 @@ export class Bidwar_ActiveBlock extends SpreadsheetBlock {
                 values: [
                     {
                         userEnteredValue: { numberValue: n.amountContributed },
-                        note: n.contributions.sort((a, b) => b.amount - a.amount).map(c => `${c.name} • ${c.amount}`).join("\n"),
+                        note: n.contributions.sort((a, b) => b.amount - a.amount).map(c => `${c.amount} • ${c.name}`).join("\n"),
                         userEnteredFormat: pendingEntryFormat,
                     },
                     {
@@ -358,10 +364,10 @@ export class Bidwar_BankEntry {
             let detail: string | undefined;
             if (tokens.length === 1) {
                 amount = Number.parseInt(tokens[0]);
-            } else if (tokens.length >= 3) {
+            } else if (tokens.length === 2) {
                 timestamp = new Date(tokens[0]);
                 amount = Number.parseInt(tokens[1]);
-            } else if (tokens.length >= 5) {
+            } else if (tokens.length >= 3) {
                 timestamp = new Date(tokens[0]);
                 amount = Number.parseInt(tokens[1]);
                 detail = tokens[2];
