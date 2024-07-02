@@ -35,6 +35,8 @@ export class GoogleAPI {
     public static readonly bidwarTestWriteSubSheet = 1036115869;
     public static readonly gameRequestTestReadSubSheet = 1313890864;
     public static readonly gameRequestTestWriteSubSheet = 1834520193;
+    public static readonly gameRequestSubSheet = 384782784;
+    public static readonly bidwarSubSheet = 877321766;
 
     protected readonly _config: GoogleAPIConfig
     protected readonly _twitchBot: TwitchBotBase<ITwitchUserDetail>;
@@ -102,7 +104,16 @@ export class GoogleAPI {
     public async handleGameRequestAdd(respondTo: string, gameName: string, gameLengthHours: number, pointsToActivate: number | undefined, username: string, points: number, timestamp: Date): Promise<void> {
         const future = new Future<void>();
         const task = async (): Promise<void> => {
-            const gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestTestReadSubSheet);
+            let gameRequestSpreadsheet: GameRequest_Spreadsheet;
+            try {
+                gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestTestReadSubSheet);
+            } catch (err) {
+                this._twitchBot.chat(respondTo, `Failed to read game request spreadsheet. No data altered.`);
+                console.log(err);
+                future.resolve();
+                return;
+            }
+
             const existingEntry = gameRequestSpreadsheet.findEntry(gameName);
             if (existingEntry) {
                 this._twitchBot.chat(respondTo, `Game request already present in spreadsheet.`);

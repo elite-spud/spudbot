@@ -2,16 +2,20 @@ import { sheets_v4 } from "googleapis";
 import { borderLeft, headerFormatCenter } from "./GameRequestSpreadsheetStyle";
 
 export type SpreadsheetRow = (string | number | undefined)[];
-export function headerToRowData(row: SpreadsheetRow): sheets_v4.Schema$RowData {
-    return {
-        values: row.map((n) => {
-            const cellData: sheets_v4.Schema$CellData = {
-                userEnteredValue: { stringValue: n?.toString() },
-                userEnteredFormat: headerFormatCenter,
-            }
-            return cellData;
-        }).concat({ userEnteredFormat: borderLeft }),
-    };
+export function headersToRowData(rows: SpreadsheetRow[]): sheets_v4.Schema$RowData[] {
+    const rowDataArray = rows.map(row => {
+        const rowData: sheets_v4.Schema$RowData = {
+            values: row.map((n) => {
+                const cellData: sheets_v4.Schema$CellData = {
+                    userEnteredValue: { stringValue: n?.toString() },
+                    userEnteredFormat: headerFormatCenter,
+                }
+                return cellData;
+            }).concat({ userEnteredFormat: borderLeft }),
+        };
+        return rowData;
+    });
+    return rowDataArray;
 }
 
 export async function pushSpreadsheet(sheetsApi: sheets_v4.Sheets, sheetId: string, subSheetId: number, spreadsheet: SpreadsheetBase): Promise<void> {    
@@ -60,9 +64,9 @@ export abstract class SpreadsheetBlock {
     public abstract toRowData(): sheets_v4.Schema$RowData[];
 }
 
-export function getEntryValue_String(cell: sheets_v4.Schema$CellData): string {
+export function getEntryValue_String(cell: sheets_v4.Schema$CellData): string | undefined {
     if (cell.userEnteredValue === undefined) {
-        throw new Error("Expected value to not be undefined");
+        return undefined;
     }
     if (cell.userEnteredValue.stringValue !== undefined && cell.userEnteredValue.stringValue !== null) {
         return cell.userEnteredValue.stringValue;
@@ -73,9 +77,9 @@ export function getEntryValue_String(cell: sheets_v4.Schema$CellData): string {
     throw new Error(`Cell value was expected to be string, but had no string values`);
 }
 
-export function getEntryValue_Number(cell: sheets_v4.Schema$CellData): number {
+export function getEntryValue_Number(cell: sheets_v4.Schema$CellData): number | undefined {
     if (cell.userEnteredValue === undefined) {
-        throw new Error("Expected value to not be undefined");
+        return undefined;
     }
     if (cell.userEnteredValue.numberValue !== undefined && cell.userEnteredValue.numberValue !== null) {
         return cell.userEnteredValue.numberValue;
@@ -83,9 +87,9 @@ export function getEntryValue_Number(cell: sheets_v4.Schema$CellData): number {
     throw new Error(`Cell value was expected to be a number, but had no number values`);
 }
 
-export function getEntryValue_Boolean(cell: sheets_v4.Schema$CellData): boolean {
+export function getEntryValue_Boolean(cell: sheets_v4.Schema$CellData): boolean | undefined {
     if (cell.userEnteredValue === undefined) {
-        throw new Error("Expected value to not be undefined");
+        return undefined;
     }
     if (cell.userEnteredValue.boolValue !== undefined && cell.userEnteredValue.boolValue !== null) {
         return cell.userEnteredValue.boolValue;
@@ -93,9 +97,9 @@ export function getEntryValue_Boolean(cell: sheets_v4.Schema$CellData): boolean 
     throw new Error(`Cell value was expected to be a boolean, but had no boolean values`);
 }
 
-export function getEntryValue_Date(cell: sheets_v4.Schema$CellData): Date {
+export function getEntryValue_Date(cell: sheets_v4.Schema$CellData): Date | undefined {
     if (cell.userEnteredValue === undefined) {
-        throw new Error("Expected value to not be undefined");
+        return undefined;
     }
     if (cell.formattedValue) {
         return new Date(cell.formattedValue);
@@ -110,13 +114,17 @@ export function parseHeaderFooterRow(row: sheets_v4.Schema$RowData): (string | u
     }
     
     const array: (string | undefined)[] = [];
+    let numEmptyCells = 0;
     for (const value of row.values) {
-        try {
-            const strValue = getEntryValue_String(value);
-            array.push(strValue);
-        } catch {
+        const strValue = getEntryValue_String(value);
+        if (strValue === undefined) {
+            numEmptyCells++;
+            continue;
+        }
+        for (let i = 0; i < numEmptyCells; i++) {
             array.push(undefined);
         }
+        array.push(strValue);
     }
     return array;
 }
@@ -155,18 +163,36 @@ export function extractBlockArray(sheet: sheets_v4. Schema$Sheet): sheets_v4.Sch
     return blockArray;
 }
 
-export function getTimestampFormulaForSpreadsheet(date: Date, includeTime: boolean = false): string {
-    const timeStr = date.toISOString(); // of the form 2012-11-04T14:51:06.157Z
-    let sheetFormula = `=DATEVALUE(MID("${timeStr}",1,10))`;
+export function getDateFormulaForSpreadsheet(date: Date): string {
+    return `DATEVALUE(MID("${date.toISOString()}",1,10))`; // of the form 2012-11-04T14:51:06.157Z
+}
+
+export function getTimeFormulaForSpreadsheet(date: Date): string {
+    return `TIMEVALUE(MID("${date.toISOString()}",12,8))`; // of the form 2012-11-04T14:51:06.157Z
+}
+
+export function getDatetimeFormulaForSpreadsheet(date: Date, includeTime: boolean = false): string {
+    let sheetFormula = `${getDateFormulaForSpreadsheet(date)}`;
     if (includeTime) {
-        sheetFormula += ` + TIMEVALUE(MID("${timeStr}",12,8))`;
+        sheetFormula += ` + ${getTimeFormulaForSpreadsheet(date)}`;
     }
     return sheetFormula;
 }
 
-export function getTimestampStringForSpreadsheet(date: Date, excludeTime: boolean = false): string {
+export function getTimestampStringForSpreadsheet(date: Date, includeTime: boolean = true): string {
     const timeStr = date.toISOString() // of the form 2012-11-04T14:51:06.157Z
         .replace(/T/, " ") // delete the T
-        .substring(0, excludeTime ? 10 : 16);
+        .substring(0, includeTime ? 16 : 10);
     return timeStr;
+}
+
+/** https://infoinspired.com/google-docs/spreadsheet/elapsed-days-and-time-between-two-dates-in-sheets/ */
+export function getElapsedTimeFormulaForSpreadsheet(date: Date, includeTime: boolean = true): string {
+    const dateDifferenceFormula = `NOW()-(${getDatetimeFormulaForSpreadsheet(date)})`;
+    const elapsedDaysFormula = `int(${dateDifferenceFormula})`;
+    const elapsedHoursFormula = `text(${dateDifferenceFormula}-${elapsedDaysFormula},"HH")`;
+    const formulaStr = includeTime
+        ? `${elapsedDaysFormula}&" days "&${elapsedHoursFormula}&" hours"`
+        : `${elapsedDaysFormula}&" days"`;
+    return formulaStr;
 }

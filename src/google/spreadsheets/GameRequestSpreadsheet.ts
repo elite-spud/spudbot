@@ -1,7 +1,7 @@
 import { sheets_v4 } from "googleapis";
 import { ChannelPointRequests } from "../../ChannelPointRequests";
 import { borderLeft, getBorderRowBelow, pendingEntryFormat } from "./GameRequestSpreadsheetStyle";
-import { SpreadsheetBase, SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getTimestampFormulaForSpreadsheet, getEntryValue_Date, getEntryValue_Number, getEntryValue_String, headerToRowData, parseHeaderFooterRow } from "./SpreadsheetBase";
+import { SpreadsheetBase, SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getDatetimeFormulaForSpreadsheet, getElapsedTimeFormulaForSpreadsheet, getEntryValue_Date, getEntryValue_Number, getEntryValue_String, headersToRowData, parseHeaderFooterRow } from "./SpreadsheetBase";
 
 export enum GameRequest_Spreadsheet_BlockOrder {
     Active = 0,
@@ -55,7 +55,7 @@ export class GameRequest_Spreadsheet extends SpreadsheetBase {
             contribution.points += points;
 
             if (pendingEntry.pointsContributed >= pendingEntry.pointsToActivate) {         
-                const activeEntry = new GameRequest_ActiveEntry({ gameName: pendingEntry.gameName, gameLengthHours: pendingEntry.gameLengthHours, requestDate: timestamp, contributions: Array.from(pendingEntry.contributions) });
+                const activeEntry = new GameRequest_ActiveEntry({ gameName: pendingEntry.gameName, gameLengthHours: pendingEntry.gameLengthHours, pointsToActivate: pendingEntry.pointsToActivate, requestDate: timestamp, contributions: Array.from(pendingEntry.contributions) });
                 this.pendingBlock.entries.splice(pendingEntryIndex, 1);
                 this.activeBlock.entries.push(activeEntry);
             }
@@ -112,22 +112,22 @@ export class GameRequest_Spreadsheet extends SpreadsheetBase {
 }
 
 export class GameRequest_ActiveBlock extends SpreadsheetBlock {
-    public header: SpreadsheetRow;
+    public headers: SpreadsheetRow[];
     public entries: GameRequest_ActiveEntry[];
 
     public constructor(args: {
-            header: SpreadsheetRow,
+            headers: SpreadsheetRow[],
             entries: GameRequest_ActiveEntry[],
         }) {
         super();
-        this.header = args.header;
+        this.headers = args.headers;
         this.entries = args.entries;
     }
 
     public toRowData(): sheets_v4.Schema$RowData[] {
-        const headerRow = headerToRowData(this.header);
-        const dateFormat: sheets_v4.Schema$CellFormat = { numberFormat: { type: "DATE_TIME", pattern: "yyyy-mm-dd" } };
-        const entryRows = this.entries.map(n => {
+        const headerRows = headersToRowData(this.headers);
+        // const dateFormat: sheets_v4.Schema$CellFormat = { numberFormat: { type: "DATE_TIME", pattern: "yyyy-mm-dd " } };
+        const entryRows = this.entries.sort((a, b) => b.percentageFunded - a.percentageFunded).map(n => {
             const rowData: sheets_v4.Schema$RowData = {
                 values: [
                     {
@@ -144,13 +144,23 @@ export class GameRequest_ActiveBlock extends SpreadsheetBlock {
                         userEnteredFormat: pendingEntryFormat,
                     },
                     {
-                        userEnteredValue: { formulaValue: getTimestampFormulaForSpreadsheet(n.requestDate) },
-                        note: n.requestDate.toISOString(),
-                        userEnteredFormat: Object.assign({}, pendingEntryFormat, dateFormat),
+                        userEnteredValue: { numberValue: n.pointsToActivate },
+                        userEnteredFormat: pendingEntryFormat,
                     },
                     {
-                        userEnteredValue: { numberValue: n.effectivePoints, },
+                        // userEnteredValue: { formulaValue: `=${getDatetimeFormulaForSpreadsheet(n.requestDate)}` },
+                        userEnteredValue: { formulaValue: `=${getElapsedTimeFormulaForSpreadsheet(n.requestDate, false)}` },
+                        note: n.requestDate.toISOString(),
+                        //userEnteredFormat: Object.assign({}, pendingEntryFormat, dateFormat),
+                        userEnteredFormat: Object.assign({}, pendingEntryFormat, <sheets_v4.Schema$CellFormat>{ horizontalAlignment: "RIGHT" }),
+                    },
+                    {
+                        userEnteredValue: { formulaValue: `=${n.getEffectivePointsFormulaForSpreadsheet()}` },
                         userEnteredFormat: pendingEntryFormat,
+                    },
+                    {
+                        userEnteredValue: { formulaValue: `=${n.getPercentageFundedFormulaForSpreadsheet()}` },
+                        userEnteredFormat: Object.assign({}, pendingEntryFormat, <sheets_v4.Schema$CellFormat>{ numberFormat: { type: "NUMBER", pattern: "0.0%" } }),
                     },
                     {
                         userEnteredFormat: borderLeft,
@@ -159,12 +169,16 @@ export class GameRequest_ActiveBlock extends SpreadsheetBlock {
             };
             return rowData;
         });
-        return [headerRow].concat(entryRows).concat(getBorderRowBelow(5));
+        return headerRows.concat(entryRows).concat(getBorderRowBelow(7));
     }
 }
 
 export abstract class GameRequestEntry {
     public constructor(
+        public readonly gameName: string,
+        public readonly gameLengthHours: number,
+        /** overrides the calculated activation requirement if supplied */
+        protected readonly _pointsToActivate: number | undefined,
         public readonly contributions: { name: string, points: number }[]) {
     }
 
@@ -173,46 +187,67 @@ export abstract class GameRequestEntry {
             return prev + current.points;
         }, 0);
     }
+
+    public get pointsToActivate(): number {
+        return this._pointsToActivate ?? ChannelPointRequests.getGameRequestPrice(this.gameLengthHours);
+    }
 }
 
 export class GameRequest_ActiveEntry extends GameRequestEntry {
-    public readonly gameName: string;
-    public readonly gameLengthHours: number;
     public readonly requestDate: Date;
     
     public constructor(args: {
         gameName: string,
         gameLengthHours: number,
         requestDate: Date,
+        /** overrides the calculated activation requirement if supplied */
+        pointsToActivate: number | undefined,
         contributions: { name: string, points: number }[]
     }) {
-        super(args.contributions);
-        this.gameName = args.gameName;
-        this.gameLengthHours = args.gameLengthHours;
+        super(args.gameName, args.gameLengthHours, args.pointsToActivate, args.contributions);
         this.requestDate = args.requestDate;
     }
 
     public get effectivePoints(): number {
-        return this.pointsContributed; // TODO: determine a formula for this
+        const elapsedMilliseconds = Date.now() - this.requestDate.getTime();
+        const elapsedYears = elapsedMilliseconds / (1000 * 60 * 60 * 24 * 365);
+        return this.pointsContributed * Math.pow(2, elapsedYears);
+    }
+
+    public get percentageFunded(): number {
+        return this.effectivePoints / this.pointsToActivate;
+    }
+
+    public getEffectivePointsFormulaForSpreadsheet(): string {
+        const dateDifferenceFormula = `NOW()-(${getDatetimeFormulaForSpreadsheet(this.requestDate)})`;
+        const elapsedYearsFormula = `int(${dateDifferenceFormula}) / 365`;
+        const effectivePointsFormula = `${this.pointsContributed} * POW(2, ${elapsedYearsFormula})`;
+        return effectivePointsFormula;
+    }
+
+    public getPercentageFundedFormulaForSpreadsheet(): string {
+        const effectivePointsReferenceFormula = `INDIRECT(ADDRESS(ROW(), COLUMN()-1))`;
+        const pointsRequiredToActivateReferenceFormula = `INDIRECT(ADDRESS(ROW(), COLUMN()-3))`
+        return `${effectivePointsReferenceFormula} / ${pointsRequiredToActivateReferenceFormula}`;
     }
 }
 
 export class GameRequest_PendingBlock extends SpreadsheetBlock {
-    public header: SpreadsheetRow;
+    public headers: SpreadsheetRow[];
     public entries: GameRequest_PendingEntry[];
 
     public constructor(args: {
-        header: SpreadsheetRow,
+        headers: SpreadsheetRow[],
         entries: GameRequest_PendingEntry[],
     }) {
         super();
-        this.header = args.header;
+        this.headers = args.headers;
         this.entries = args.entries;
     }
 
     public toRowData(): sheets_v4.Schema$RowData[] {
-        const headerRow = headerToRowData(this.header);
-        const entryRows = this.entries.map(n => {
+        const headerRows = headersToRowData(this.headers);
+        const entryRows = this.entries.sort((a, b) => b.percentageFunded - a.percentageFunded).map(n => {
             const rowData: sheets_v4.Schema$RowData = {
                 values: [
                     {
@@ -233,22 +268,21 @@ export class GameRequest_PendingBlock extends SpreadsheetBlock {
                         userEnteredFormat: pendingEntryFormat,
                     },
                     {
+                        userEnteredValue: { numberValue: n.percentageFunded, },
+                        userEnteredFormat: Object.assign({}, pendingEntryFormat, <sheets_v4.Schema$CellFormat>{ numberFormat: { type: "NUMBER", pattern: "0.0%" } }),
+                    },
+                    {
                         userEnteredFormat: borderLeft,
                     },
                 ],
             };
             return rowData;
         });
-        return [headerRow].concat(entryRows).concat([getBorderRowBelow(4)]);
+        return headerRows.concat(entryRows).concat([getBorderRowBelow(5)]);
     }
 }
 
 export class GameRequest_PendingEntry extends GameRequestEntry {
-    public readonly gameName: string;
-    public readonly gameLengthHours: number;
-    /** overrides the calculated activation requirement if supplied */
-    protected readonly _pointsToActivate: number | undefined;
-    
     public constructor(
         args: {
             gameName: string,
@@ -257,28 +291,28 @@ export class GameRequest_PendingEntry extends GameRequestEntry {
             pointsToActivate: number | undefined,
             contributions: { name: string, points: number }[],
         }) {
-        super(args.contributions);
-        this.gameName = args.gameName;
-        this.gameLengthHours = args.gameLengthHours;
-        this._pointsToActivate = args.pointsToActivate;
+        super(args.gameName, args.gameLengthHours, args.pointsToActivate, args.contributions);
     }
 
-    public get pointsToActivate(): number {
-        return this._pointsToActivate ?? ChannelPointRequests.getGameRequestPrice(this.gameLengthHours);
+    public get percentageFunded(): number {
+        return this.pointsContributed / this.pointsToActivate;
     }
 }
 
 export function parseGameRequestActiveBlock(rows: sheets_v4.Schema$RowData[]): GameRequest_ActiveBlock {
-    const headerRow = parseHeaderFooterRow(rows[0]);
+    const headerRows = [
+        parseHeaderFooterRow(rows[0]),
+        parseHeaderFooterRow(rows[1]),
+    ];
 
     const entries: GameRequest_ActiveEntry[] = [];
-    for (let i = 1; i < rows.length; i++) {
+    for (let i = 2; i < rows.length; i++) {
         const entry = parseGameRequestActiveEntry(rows[i]);
         entries.push(entry);
     }
     
     const activeBlock = new GameRequest_ActiveBlock({
-        header: headerRow,
+        headers: headerRows,
         entries: entries,
     });
     return activeBlock;
@@ -290,33 +324,45 @@ export function parseGameRequestActiveEntry(row: sheets_v4.Schema$RowData): Game
     }
     // TODO: enforce a length at least as long as is required
 
+    const gameName = getEntryValue_String(row.values[0]);
+    const gameLengthHours = getEntryValue_Number(row.values[1]);
     const contributionsString = row.values[2].note ?? "";
     const contributions = parseContributions(contributionsString);
-    const requestDate = row.values[3].note
-        ? new Date(row.values[3].note)
-        : getEntryValue_Date(row.values[3]);
+    const pointsToActivate = row.values[3]
+        ? getEntryValue_Number(row.values[3])
+        : undefined;
+    const requestDate = row.values[4].note
+        ? new Date(row.values[4].note)
+        : getEntryValue_Date(row.values[4]);
+
+    if (!gameName || !gameLengthHours || !requestDate) {
+        throw new Error("Required properties not found when parsing active game request entry: gameName, gameLengthHours, requestDate");
+    }
 
     const entry = new GameRequest_ActiveEntry({
-        gameName: getEntryValue_String(row.values[0]),
-        gameLengthHours: getEntryValue_Number(row.values[1]),
-        contributions: contributions,
-        requestDate: requestDate,
+        gameName,
+        gameLengthHours,
+        pointsToActivate,
+        contributions,
+        requestDate,
     });
-
     return entry;
 }
 
 export function parseGameRequestPendingBlock(rows: sheets_v4.Schema$RowData[]): GameRequest_PendingBlock {
-    const headerRow = parseHeaderFooterRow(rows[0]);
+    const headerRows = [
+        parseHeaderFooterRow(rows[0]),
+        parseHeaderFooterRow(rows[1]),
+    ];
 
     const entries: GameRequest_PendingEntry[] = [];
-    for (let i = 1; i < rows.length; i++) {
+    for (let i = 2; i < rows.length; i++) {
         const entry = parseGameRequestPendingEntry(rows[i]);
         entries.push(entry);
     }
     
     const activeBlock = new GameRequest_PendingBlock({
-        header: headerRow,
+        headers: headerRows,
         entries: entries,
     });
     return activeBlock;
@@ -328,14 +374,23 @@ export function parseGameRequestPendingEntry(row: sheets_v4.Schema$RowData): Gam
     }
     // TODO: enforce a length at least as long as is required
 
+    const gameName = getEntryValue_String(row.values[0]);
+    const gameLengthHours = getEntryValue_Number(row.values[1]);
     const contributionsString = row.values[2].note ?? "";
     const contributions = parseContributions(contributionsString);
+    const pointsToActivate = row.values[3]
+        ? getEntryValue_Number(row.values[3])
+        : undefined;
+
+    if (!gameName || !gameLengthHours) {
+        throw new Error("Required properties not found when parsing active game request entry: gameName, gameLengthHours");
+    }
     
     const entry = new GameRequest_PendingEntry({
-        gameName: getEntryValue_String(row.values[0]),
-        gameLengthHours: getEntryValue_Number(row.values[1]),
-        contributions: contributions,
-        pointsToActivate: getEntryValue_Number(row.values[3]),
+        gameName,
+        gameLengthHours,
+        contributions,
+        pointsToActivate,
     });
 
     return entry;

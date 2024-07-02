@@ -1,6 +1,6 @@
 import { sheets_v4 } from "googleapis";
 import { borderLeft, getBorderRowBelow, headerFormatCenter, pendingEntryFormat } from "./GameRequestSpreadsheetStyle";
-import { SpreadsheetBase, SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getEntryValue_String, getTimestampStringForSpreadsheet, headerToRowData, parseHeaderFooterRow } from "./SpreadsheetBase";
+import { SpreadsheetBase, SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getEntryValue_String, getTimestampStringForSpreadsheet, headersToRowData, parseHeaderFooterRow } from "./SpreadsheetBase";
 
 export enum Bidwar_Spreadsheet_BlockOrder {
     Pending = 0,
@@ -81,11 +81,7 @@ export class Bidwar_Spreadsheet extends SpreadsheetBase {
     }
 
     public toRowData(): sheets_v4.Schema$RowData[] {
-        let rowData: sheets_v4.Schema$RowData[] = [];
-        if (this.awaitingBlock.entries.length !== 0) {
-            rowData = rowData.concat(this.awaitingBlock.toRowData());
-        }
-        rowData = rowData.concat(this.activeBlock.toRowData()).concat(this.bankBlock.toRowData());
+        const rowData = this.awaitingBlock.toRowData().concat(this.activeBlock.toRowData()).concat(this.bankBlock.toRowData());
         return rowData;
     }
 
@@ -128,20 +124,20 @@ export class Bidwar_Spreadsheet extends SpreadsheetBase {
 }
 
 export class Bidwar_AwaitingBlock extends SpreadsheetBlock {
-    public header: SpreadsheetRow;
+    public headers: SpreadsheetRow[];
     public entries: Bidwar_Entry[];
 
     public constructor(args: {
-            header: SpreadsheetRow,
+            headers: SpreadsheetRow[],
             entries: Bidwar_Entry[],
         }) {
         super();
-        this.header = args.header;
+        this.headers = args.headers;
         this.entries = args.entries;
     }
 
     public toRowData(): sheets_v4.Schema$RowData[] {
-        const headerRow = headerToRowData(this.header);
+        const headerRows = headersToRowData(this.headers);
         const entryRows = this.entries.map(n => {
             const rowData: sheets_v4.Schema$RowData = {
                 values: [
@@ -162,28 +158,28 @@ export class Bidwar_AwaitingBlock extends SpreadsheetBlock {
             };
             return rowData;
         });
-        return [headerRow].concat(entryRows).concat(getBorderRowBelow(2));
+        return headerRows.concat(entryRows).concat(getBorderRowBelow(2));
     }
 }
 
 export class Bidwar_ActiveBlock extends SpreadsheetBlock {
-    public header: SpreadsheetRow;
+    public headers: SpreadsheetRow[];
     public entries: Bidwar_Entry[];
     public footer: SpreadsheetRow;
 
     public constructor(args: {
-            header: SpreadsheetRow,
+            headers: SpreadsheetRow[],
             entries: Bidwar_Entry[],
             footer: SpreadsheetRow,
         }) {
         super();
-        this.header = args.header;
+        this.headers = args.headers;
         this.entries = args.entries;
     }
 
     public toRowData(): sheets_v4.Schema$RowData[] {
-        const headerRow = headerToRowData(this.header);
-        const entryRows = this.entries.map(n => {
+        const headerRows = headersToRowData(this.headers);
+        const entryRows = this.entries.sort((a, b) => b.amountContributed - a.amountContributed).map(n => {
             const rowData: sheets_v4.Schema$RowData = {
                 values: [
                     {
@@ -220,7 +216,7 @@ export class Bidwar_ActiveBlock extends SpreadsheetBlock {
                 },
             ]
         }
-        return [headerRow].concat(entryRows).concat(footerRow).concat(getBorderRowBelow(2));
+        return headerRows.concat(entryRows).concat(footerRow).concat(getBorderRowBelow(2));
     }
 }
 
@@ -267,21 +263,21 @@ export class Bidwar_Entry {
 }
 
 export class Bidwar_BankBlock extends SpreadsheetBlock {
-    public header: SpreadsheetRow;
+    public headers: SpreadsheetRow[];
     public entries: Bidwar_BankEntry[];
 
     public constructor(args: {
-            header: SpreadsheetRow,
+            headers: SpreadsheetRow[],
             entries: Bidwar_BankEntry[],
         }) {
         super();
-        this.header = args.header;
+        this.headers = args.headers;
         this.entries = args.entries;
     }
 
     public toRowData(): sheets_v4.Schema$RowData[] {
-        const headerRow = headerToRowData(this.header);
-        const entryRows = this.entries.map(n => {
+        const headerRows = headersToRowData(this.headers);
+        const entryRows = this.entries.sort((a, b) => b.currentBalance - a.currentBalance).map(n => {
             const rowData: sheets_v4.Schema$RowData = {
                 values: [
                     {
@@ -314,7 +310,7 @@ export class Bidwar_BankBlock extends SpreadsheetBlock {
             };
             return rowData;
         });
-        return [headerRow].concat(entryRows).concat(getBorderRowBelow(2));
+        return headerRows.concat(entryRows).concat(getBorderRowBelow(2));
     }
 }
 
@@ -385,11 +381,15 @@ export function parseBidwarEntry(row: sheets_v4.Schema$RowData): Bidwar_Entry {
     }
     // TODO: enforce a length at least as long as is required
 
+    const gameName = getEntryValue_String(row.values[1]);
+    if (!gameName) {
+        throw new Error("game name not found");
+    }
     const contributionsString = row.values[0].note ?? "";
     const contributions = Bidwar_Entry.parseContributions(contributionsString);
     const entry = new Bidwar_Entry({
         contributions: contributions,
-        name: getEntryValue_String(row.values[1]),
+        name: gameName,
         nameNote: row.values[1].note ?? undefined,
     });
     return entry;
@@ -400,37 +400,46 @@ export function parseBidwarBankEntry(row: sheets_v4.Schema$RowData): Bidwar_Bank
         throw new Error("Expected bank entry row to have values");
     }
 
+    const gameName = getEntryValue_String(row.values[1]);
+    if (!gameName) {
+        throw new Error("gameName not found");
+    }
     const contributionsString = row.values[0].note ?? "";
     const contributions = Bidwar_BankEntry.parseContributions(contributionsString);
     const bankEntry = new Bidwar_BankEntry({
         userId: row.values[1].note ?? "",
-        name: getEntryValue_String(row.values[1]),
+        name: gameName,
         contributions: contributions,
     });
     return bankEntry;
 }
 
 export function parseBidwarAwaitingBlock(rows: sheets_v4.Schema$RowData[]): Bidwar_AwaitingBlock {
-    const headerRow = parseHeaderFooterRow(rows[0]);
+    const headerRows = [
+        parseHeaderFooterRow(rows[0]),
+        parseHeaderFooterRow(rows[1]),
+    ];
 
     const entries: Bidwar_Entry[] = [];
-    for (let i = 1; i < rows.length; i++) {
+    for (let i = 2; i < rows.length; i++) {
         const entry = parseBidwarEntry(rows[i]);
         entries.push(entry);
     }
     
     const pendingBlock = new Bidwar_AwaitingBlock({
-        header: headerRow,
+        headers: headerRows,
         entries: entries,
     });
     return pendingBlock;
 }
 
 export function parseBidwarActiveBlock(rows: sheets_v4.Schema$RowData[]): Bidwar_ActiveBlock {
-    const headerRow = parseHeaderFooterRow(rows[0]);
-
+    const headerRows = [
+        parseHeaderFooterRow(rows[0]),
+        parseHeaderFooterRow(rows[1]),
+    ];
     const entries: Bidwar_Entry[] = [];
-    for (let i = 1; i < rows.length - 1; i++) {
+    for (let i = 2; i < rows.length - 1; i++) {
         const entry = parseBidwarEntry(rows[i]);
         entries.push(entry);
     }
@@ -438,7 +447,7 @@ export function parseBidwarActiveBlock(rows: sheets_v4.Schema$RowData[]): Bidwar
     const footerRow = parseHeaderFooterRow(rows[rows.length - 1]);
     
     const activeBlock = new Bidwar_ActiveBlock({
-        header: headerRow,
+        headers: headerRows,
         entries: entries,
         footer: footerRow,
     });
@@ -446,16 +455,19 @@ export function parseBidwarActiveBlock(rows: sheets_v4.Schema$RowData[]): Bidwar
 }
 
 export function parseBidwarBankBlock(rows: sheets_v4.Schema$RowData[]): Bidwar_BankBlock {
-    const headerRow = parseHeaderFooterRow(rows[0]);
+    const headerRows = [
+        parseHeaderFooterRow(rows[0]),
+        parseHeaderFooterRow(rows[1]),
+    ];
 
     const entries: Bidwar_BankEntry[] = [];
-    for (let i = 1; i < rows.length; i++) {
+    for (let i = 2; i < rows.length; i++) {
         const entry = parseBidwarBankEntry(rows[i]);
         entries.push(entry);
     }
     
     const bankBlock = new Bidwar_BankBlock({
-        header: headerRow,
+        headers: headerRows,
         entries: entries,
     });
     return bankBlock;

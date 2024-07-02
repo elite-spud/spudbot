@@ -72,5 +72,9 @@ export const pendingEntryFormat: sheets_v4.Schema$CellFormat = {
     },
     textFormat: {
         fontSize: 12,
+    },
+    numberFormat: {
+        type: "NUMBER",
+        pattern: "0",
     }
 };
