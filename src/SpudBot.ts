@@ -687,7 +687,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
                 }
                 const args = tokens.slice(2);
                 if (args.length === 0) {
-                    this.chat(messageDetail.respondTo, `!bidwar addFunds <username> <amount> <reason?>`);
+                    this.chat(messageDetail.respondTo, `!bidwar addFunds <username> <amount> [reason]`);
                     return;
                 }
                 if (args.length < 2 || args.length > 3) {

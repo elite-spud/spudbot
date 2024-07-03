@@ -128,6 +128,7 @@ export class GoogleAPI {
             if (notCurrentlyOverfunded && wouldBeOverfunded) {
                 future.resolve({
                     type: FundGameRequestOutcomeType.PendingConfirmation,
+                    overfundAmount: existingEntry.pointsContributed + points - existingEntry.pointsToActivate,
                     complete: completeFunding,
                 });
                 return;
