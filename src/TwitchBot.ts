@@ -7,7 +7,7 @@ import { ConsoleColors } from "./ConsoleColors";
 import { Future } from "./Future";
 import { IIrcBotAuxCommandGroupConfig, IJoinMessageDetail, IPartMessageDetail, IPrivMessageDetail, IrcBotBase } from "./IrcBot";
 import { CreateCustomChannelPointRewardArgs, ITwitchBotAuxCommandConfig, ITwitchBotConfig, ITwitchBotConnectionConfig, ITwitchUserDetail, SubTierPoints, TwitchAppToken, TwitchBadgeTagKeys, TwitchBroadcasterSubscriptionsResponse, TwitchErrorResponse, TwitchEventSub_CreateSubscription, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_SubscriptionEnd, TwitchEventSub_Event_SubscriptionGift, TwitchEventSub_Event_SubscriptionMessage, TwitchEventSub_Event_SubscriptionStart, TwitchEventSub_Notification_Payload, TwitchEventSub_Notification_Subscription, TwitchEventSub_Reconnect_Payload, TwitchEventSub_SubscriptionType, TwitchEventSub_Welcome_Payload, TwitchGetChannelInfo, TwitchGetChannelInfoResponse, TwitchGetCustomChannelPointRewardInfo, TwitchGetCustomChannelPointRewardResponse, TwitchGetStreamInfo, TwitchGetStreamsResponse, TwitchPrivMessageTagKeys, TwitchUserInfoResponse, TwitchUserToken } from "./TwitchBotTypes";
-// import { randomInt } from "crypto";
+import { HeldTaskGroup } from "./HeldTask";
 
 export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwitchUserDetail> extends IrcBotBase<TUserDetail> {
     public static readonly maxChatMessageLength = 500;
@@ -17,11 +17,11 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
     protected readonly _userAccessToken = new Future<TwitchUserToken>();
     protected readonly _twitchAppToken = new Future<TwitchAppToken>();
     protected _twitchIdByUsername: { [key: string]: string } = {}
-    protected _lastPendingChannelPointRewardByUserId: { [key: string]: { redemption_id: string, reward_id: string, broadcaster_id: string } } = {};
     protected readonly _userAccessTokenAccountName = "default"; // TODO: find a good replacement for this
     protected _twitchEventSub: WebSocket;
     protected _twitchEventSubHeartbeatInterval: NodeJS.Timer;
     protected _twitchEventSubTemp: WebSocket | undefined = undefined;
+    public readonly heldTasksByUserId: HeldTaskGroup = new HeldTaskGroup();
 
     protected _currentSubPoints?: number = undefined;
     protected _currentSubs?: number = undefined;
@@ -795,17 +795,5 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         }
 
         throw new Error(`Unable to update redemption status: ${response.status} error (${(await response.json()).message})`);
-    }
-
-    public async holdLastChannelPointReward(redemption_id: string, reward_id: string, broadcaster_id: string, user_id: string): Promise<void> {
-        await this.tryUpdateHeldChannelPointReward(user_id, false); // automatically reject the other pending promise if there is one 
-        this._lastPendingChannelPointRewardByUserId[user_id] = { redemption_id, reward_id, broadcaster_id };
-    }
-
-    public async tryUpdateHeldChannelPointReward(user_id: string, fulfill?: boolean): Promise<void> {
-        const existingEntry = this._lastPendingChannelPointRewardByUserId[user_id];
-        if (existingEntry) {
-            await this.updateChannelPointRedemption(existingEntry.redemption_id, existingEntry.reward_id, existingEntry.broadcaster_id, fulfill);
-        }
     }
 }

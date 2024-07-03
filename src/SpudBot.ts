@@ -7,7 +7,7 @@ import { IChatWarriorUserDetail, ISpudBotConfig, ISpudBotConnectionConfig } from
 import { TwitchBotBase } from "./TwitchBot";
 import { CreateCustomChannelPointRewardArgs, ITwitchUserDetail, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_SubscriptionGift, TwitchEventSub_Notification_Subscription, TwitchEventSub_SubscriptionType } from "./TwitchBotTypes";
 import { Utils } from "./Utils";
-import { ChannelPointRedemptionOutcome, GoogleAPI } from "./google/GoogleAPI";
+import { FundGameRequestOutcomeType, GoogleAPI } from "./google/GoogleAPI";
 
 export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
     public declare readonly _config: ISpudBotConfig;
@@ -38,6 +38,8 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleCreateGameRequestRewards(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleGameRequestModular(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleBidwarModular(detail));
+        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleYes(detail));
+        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleNo(detail));
 
         try {
             this._bonkCountPath = fs.realpathSync(`${this._config.configDir}/bonkCount.txt`);
@@ -597,8 +599,8 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
                 const gameName = args[0].replaceAll("\"", "");
                 if (args.length === 3) {
                     const outcome = await (await this._googleApi).handleGameRequestFund(messageDetail.respondTo, gameName, args[1], Number.parseInt(args[2]), new Date());
-                    if (outcome === ChannelPointRedemptionOutcome.PendingUserResponse) {
-                        
+                    if (outcome.type === FundGameRequestOutcomeType.PendingConfirmation && outcome.complete !== undefined) {
+                        await outcome.complete(); // force this through
                     }
                 }
             } else {
@@ -713,6 +715,38 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
             triggerPhrases: ["!bidwar"],
             strictMatch: false,
             commandId: "!bidwar",
+            globalTimeoutSeconds: 0,
+            userTimeoutSeconds: 0,
+        });
+        await func(messageDetail);
+    }
+
+    protected async handleYes(messageDetail: IPrivMessageDetail): Promise<void> {
+        const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
+            const userId = await this.getUserIdForUsername(messageDetail.username);
+            await this.heldTasksByUserId.complete(userId);
+        }
+        const func = this.getCommandFunc({
+            messageHandler: messageHandler,
+            triggerPhrases: ["!yes"],
+            strictMatch: true,
+            commandId: "!yes",
+            globalTimeoutSeconds: 0,
+            userTimeoutSeconds: 0,
+        });
+        await func(messageDetail);
+    }
+
+    protected async handleNo(messageDetail: IPrivMessageDetail): Promise<void> {
+        const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
+            const userId = await this.getUserIdForUsername(messageDetail.username);
+            await this.heldTasksByUserId.cancel(userId);
+        }
+        const func = this.getCommandFunc({
+            messageHandler: messageHandler,
+            triggerPhrases: ["!no"],
+            strictMatch: true,
+            commandId: "!no",
             globalTimeoutSeconds: 0,
             userTimeoutSeconds: 0,
         });
