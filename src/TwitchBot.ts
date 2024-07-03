@@ -775,7 +775,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         throw new Error(`Unable to create new channel point reward: ${response.status} error (${(await response.json()).message})`);
     }
 
-    public async updateChannelPointRedemptions(redemption_id: string, reward_id: string, broadcaster_id: string, fulfill?: boolean): Promise<void> {
+    public async updateChannelPointRedemption(redemption_id: string, reward_id: string, broadcaster_id: string, fulfill?: boolean): Promise<void> {
         const body = {
             status: fulfill ? "FULFILLED" : "CANCELED",
         };

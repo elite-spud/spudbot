@@ -1,13 +1,13 @@
 import { randomInt } from "crypto";
 import * as fs from "fs";
 import { Future } from "./Future";
-import { GoogleAPI } from "./google/GoogleAPI";
 import { IIrcBotAuxCommandGroupConfig, IPrivMessageDetail } from "./IrcBot";
 import { egadd_quotes, f_zero_gx_interview_quotes, f_zero_gx_quotes, f_zero_gx_story_quotes, luigi_quotes } from "./Quotes";
 import { IChatWarriorUserDetail, ISpudBotConfig, ISpudBotConnectionConfig } from "./SpudBotTypes";
 import { TwitchBotBase } from "./TwitchBot";
 import { ITwitchUserDetail, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_SubscriptionGift, TwitchEventSub_Notification_Subscription, TwitchEventSub_SubscriptionType } from "./TwitchBotTypes";
 import { Utils } from "./Utils";
+import { GoogleAPI } from "./google/GoogleAPI";
 
 export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
     public declare readonly _config: ISpudBotConfig;
@@ -128,27 +128,6 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
 
         if (event.reward.title.includes("Contribute to a !GameRequest")) {
             (await this._googleApi).handleGameRequestRedeem(event);
-        }
-
-        if (event.reward.title === "Ultra Nice") {
-            await this.handleCheer({
-                is_anonymous: false,
-                user_id: "5",
-                user_name: "foo",
-                bits: 100,
-                broadcaster_user_id: "6",
-                broadcaster_user_name: "Elite_Spud",
-                broadcaster_user_login: "elite_spud",
-                message: "hello world!",
-            }, {
-                id: "",
-                status: "enabled",
-                type: "",
-                version: "",
-                condition: {
-                },
-                created_at: new Date().toISOString(),
-            });
         }
     }
 

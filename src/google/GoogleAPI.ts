@@ -4,9 +4,9 @@ import { Future } from "../Future";
 import { TaskQueue } from "../TaskQueue";
 import { TwitchBotBase } from "../TwitchBot";
 import { ITwitchUserDetail, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Notification_Subscription } from "../TwitchBotTypes";
+import { Bidwar_Spreadsheet } from "./spreadsheets/BidwarSpreadsheet";
 import { GameRequest_Spreadsheet } from "./spreadsheets/GameRequestSpreadsheet";
 import { pushSpreadsheet } from "./spreadsheets/SpreadsheetBase";
-import { Bidwar_Spreadsheet } from "./spreadsheets/BidwarSpreadsheet";
 
 export interface GoogleAPIConfig {
     oauth: {
@@ -63,7 +63,7 @@ export class GoogleAPI {
     public async handleGameRequestRedeem(event: TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd): Promise<void> {
         const pointsWereApplied = await this.handleGameRequestFund(`#${event.broadcaster_user_name}`, event.user_input, event.user_name, event.reward.cost, new Date(event.redeemed_at));
         if (pointsWereApplied) {
-            await this._twitchBot.updateChannelPointRedemptions(event.id, event.reward.id, event.broadcaster_user_id, true);
+            await this._twitchBot.updateChannelPointRedemption(event.id, event.reward.id, event.broadcaster_user_id, true);
         }
     }
 
