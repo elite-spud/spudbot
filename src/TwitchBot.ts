@@ -17,6 +17,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
     protected readonly _userAccessToken = new Future<TwitchUserToken>();
     protected readonly _twitchAppToken = new Future<TwitchAppToken>();
     protected _twitchIdByUsername: { [key: string]: string } = {}
+    protected _lastPendingChannelPointRewardByUserId: { [key: string]: { redemption_id: string, reward_id: string, broadcaster_id: string } } = {};
     protected readonly _userAccessTokenAccountName = "default"; // TODO: find a good replacement for this
     protected _twitchEventSub: WebSocket;
     protected _twitchEventSubHeartbeatInterval: NodeJS.Timer;
@@ -794,5 +795,17 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
         }
 
         throw new Error(`Unable to update redemption status: ${response.status} error (${(await response.json()).message})`);
+    }
+
+    public async holdLastChannelPointReward(redemption_id: string, reward_id: string, broadcaster_id: string, user_id: string): Promise<void> {
+        await this.tryUpdateHeldChannelPointReward(user_id, false); // automatically reject the other pending promise if there is one 
+        this._lastPendingChannelPointRewardByUserId[user_id] = { redemption_id, reward_id, broadcaster_id };
+    }
+
+    public async tryUpdateHeldChannelPointReward(user_id: string, fulfill?: boolean): Promise<void> {
+        const existingEntry = this._lastPendingChannelPointRewardByUserId[user_id];
+        if (existingEntry) {
+            await this.updateChannelPointRedemption(existingEntry.redemption_id, existingEntry.reward_id, existingEntry.broadcaster_id, fulfill);
+        }
     }
 }
