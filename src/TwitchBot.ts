@@ -7,7 +7,7 @@ import { ConsoleColors } from "./ConsoleColors";
 import { Future } from "./Future";
 import { IIrcBotAuxCommandGroupConfig, IJoinMessageDetail, IPartMessageDetail, IPrivMessageDetail, IrcBotBase } from "./IrcBot";
 import { CreateCustomChannelPointRewardArgs, ITwitchBotAuxCommandConfig, ITwitchBotConfig, ITwitchBotConnectionConfig, ITwitchUserDetail, SubTierPoints, TwitchAppToken, TwitchBadgeTagKeys, TwitchBroadcasterSubscriptionsResponse, TwitchErrorResponse, TwitchEventSub_CreateSubscription, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_SubscriptionEnd, TwitchEventSub_Event_SubscriptionGift, TwitchEventSub_Event_SubscriptionMessage, TwitchEventSub_Event_SubscriptionStart, TwitchEventSub_Notification_Payload, TwitchEventSub_Notification_Subscription, TwitchEventSub_Reconnect_Payload, TwitchEventSub_SubscriptionType, TwitchEventSub_Welcome_Payload, TwitchGetChannelInfo, TwitchGetChannelInfoResponse, TwitchGetCustomChannelPointRewardInfo, TwitchGetCustomChannelPointRewardResponse, TwitchGetStreamInfo, TwitchGetStreamsResponse, TwitchPrivMessageTagKeys, TwitchUserInfoResponse, TwitchUserToken } from "./TwitchBotTypes";
-// import { randomInt } from "crypto";
+import { HeldTaskGroup } from "./HeldTask";
 
 export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwitchUserDetail> extends IrcBotBase<TUserDetail> {
     public static readonly maxChatMessageLength = 500;
@@ -21,6 +21,7 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
     protected _twitchEventSub: WebSocket;
     protected _twitchEventSubHeartbeatInterval: NodeJS.Timer;
     protected _twitchEventSubTemp: WebSocket | undefined = undefined;
+    public readonly heldTasksByUserId: HeldTaskGroup = new HeldTaskGroup();
 
     protected _currentSubPoints?: number = undefined;
     protected _currentSubs?: number = undefined;

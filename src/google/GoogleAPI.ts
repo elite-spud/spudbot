@@ -7,6 +7,7 @@ import { ITwitchUserDetail, TwitchEventSub_Event_ChannelPointCustomRewardRedempt
 import { Bidwar_Spreadsheet } from "./spreadsheets/BidwarSpreadsheet";
 import { GameRequest_Spreadsheet } from "./spreadsheets/GameRequestSpreadsheet";
 import { pushSpreadsheet } from "./spreadsheets/SpreadsheetBase";
+import { HeldTask } from "../HeldTask";
 
 export interface GoogleAPIConfig {
     oauth: {
@@ -27,6 +28,18 @@ export interface GoogleAPIConfig {
         client_x509_cert_url: string,
         universe_domain: string,
     };
+}
+
+export interface FundGameRequestOutcome {
+    type: FundGameRequestOutcomeType,
+    overfundAmount?: number,
+    complete?: () => Promise<void>,
+}
+
+export enum FundGameRequestOutcomeType {
+    Fulfilled,
+    Unfulfilled,
+    PendingConfirmation,
 }
 
 export class GoogleAPI {
@@ -61,9 +74,27 @@ export class GoogleAPI {
     }
 
     public async handleGameRequestRedeem(event: TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd): Promise<void> {
-        const pointsWereApplied = await this.handleGameRequestFund(`#${event.broadcaster_user_name}`, event.user_input, event.user_name, event.reward.cost, new Date(event.redeemed_at));
-        if (pointsWereApplied) {
+        const outcome = await this.handleGameRequestFund(`#${event.broadcaster_user_name}`, event.user_input, event.user_name, event.reward.cost, new Date(event.redeemed_at));
+        if (outcome.type === FundGameRequestOutcomeType.Fulfilled) {
             await this._twitchBot.updateChannelPointRedemption(event.id, event.reward.id, event.broadcaster_user_id, true);
+            return;
+        }
+
+        if (outcome.type === FundGameRequestOutcomeType.PendingConfirmation && outcome.complete !== undefined) {
+            const timeoutMinutes = 1;
+            this._twitchBot.chat(`#${event.broadcaster_user_name}`, `@${event.user_name}, you've submitted enough channel points to overfund the requested game, ${event.user_input}${outcome.overfundAmount ? `, by ${outcome.overfundAmount} points` : ``}. Are you sure you want to overfund this game? (respond with !yes or !no) This request will be automatically rejected in ${timeoutMinutes} minute(s) without further input.`);
+            const outcomeComplete = outcome.complete; // compiler wasn't inferring the right type without this
+            const complete = async () => {
+                await outcomeComplete();
+                await this._twitchBot.updateChannelPointRedemption(event.id, event.reward.id, event.broadcaster_user_id, true);
+            }
+            const cancel = async () => {
+                await this._twitchBot.updateChannelPointRedemption(event.id, event.reward.id, event.broadcaster_user_id, false);
+                this._twitchBot.chat(`#${event.broadcaster_user_name}`, `@${event.user_name} your ${event.reward.cost} points have been refunded.`);
+            }
+            const heldTask = new HeldTask(complete, cancel);
+            await this._twitchBot.heldTasksByUserId.addHeldTask(event.user_id, heldTask, timeoutMinutes * 60 * 1000);
+            return;
         }
     }
 
@@ -75,21 +106,36 @@ export class GoogleAPI {
      * @param timestamp 
      * @returns whether or not the reward was successfully completed
      */
-    public async handleGameRequestFund(respondTo: string, gameName: string, username: string, points: number, timestamp: Date): Promise<boolean> {
-        const future = new Future<boolean>();
+    public async handleGameRequestFund(respondTo: string, gameName: string, username: string, points: number, timestamp: Date): Promise<FundGameRequestOutcome> {
+        const future = new Future<FundGameRequestOutcome>();
         const task = async (): Promise<void> => {
             const gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet);
             const existingEntry = gameRequestSpreadsheet.findEntry(gameName);
             if (!existingEntry) {
                 this._twitchBot.chat(respondTo, `@${username}, your game request was detected as a new request; please wait until an admin adds this game to the spreadsheet before adding any further points`);
-                future.resolve(false);
+                future.resolve({ type: FundGameRequestOutcomeType.Unfulfilled });
                 return;
             }
 
-            gameRequestSpreadsheet.addPointsToEntry(username, gameName, points, timestamp);
-            await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet, gameRequestSpreadsheet);
-            this._twitchBot.chat(respondTo, `@${username}, your points were successfully added to requesting ${gameName} on stream!`);
-            future.resolve(true);
+            const completeFunding = async () => {
+                gameRequestSpreadsheet.addPointsToEntry(username, gameName, points, timestamp);
+                await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet, gameRequestSpreadsheet);
+                this._twitchBot.chat(respondTo, `@${username}, your ${points} points were successfully added to requesting ${gameName} on stream!`);
+            }
+
+            const notCurrentlyOverfunded = existingEntry.pointsContributed <= existingEntry.pointsToActivate;
+            const wouldBeOverfunded = existingEntry.pointsContributed + points > existingEntry.pointsToActivate;
+            if (notCurrentlyOverfunded && wouldBeOverfunded) {
+                future.resolve({
+                    type: FundGameRequestOutcomeType.PendingConfirmation,
+                    overfundAmount: existingEntry.pointsContributed + points - existingEntry.pointsToActivate,
+                    complete: completeFunding,
+                });
+                return;
+            }
+
+            await completeFunding();
+            future.resolve({ type: FundGameRequestOutcomeType.Fulfilled });
         }
         this._taskQueue.addTask(task);
         this._taskQueue.startQueue();

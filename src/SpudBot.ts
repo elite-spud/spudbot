@@ -5,9 +5,9 @@ import { IIrcBotAuxCommandGroupConfig, IPrivMessageDetail } from "./IrcBot";
 import { egadd_quotes, f_zero_gx_interview_quotes, f_zero_gx_quotes, f_zero_gx_story_quotes, luigi_quotes } from "./Quotes";
 import { IChatWarriorUserDetail, ISpudBotConfig, ISpudBotConnectionConfig } from "./SpudBotTypes";
 import { TwitchBotBase } from "./TwitchBot";
-import { ITwitchUserDetail, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_SubscriptionGift, TwitchEventSub_Notification_Subscription, TwitchEventSub_SubscriptionType } from "./TwitchBotTypes";
+import { CreateCustomChannelPointRewardArgs, ITwitchUserDetail, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_SubscriptionGift, TwitchEventSub_Notification_Subscription, TwitchEventSub_SubscriptionType } from "./TwitchBotTypes";
 import { Utils } from "./Utils";
-import { GoogleAPI } from "./google/GoogleAPI";
+import { FundGameRequestOutcomeType, GoogleAPI } from "./google/GoogleAPI";
 
 export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
     public declare readonly _config: ISpudBotConfig;
@@ -38,6 +38,8 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleCreateGameRequestRewards(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleGameRequestModular(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleBidwarModular(detail));
+        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleYes(detail));
+        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleNo(detail));
 
         try {
             this._bonkCountPath = fs.realpathSync(`${this._config.configDir}/bonkCount.txt`);
@@ -491,13 +493,15 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
     protected async handleCreateGameRequestRewards(messageDetail: IPrivMessageDetail): Promise<void> {
         const messageHandler = async (_messageDetail: IPrivMessageDetail): Promise<void> => {
             const existingRewards = await this.getChannelPointRewards();
-            const newRewards = [
+            const newRewards: CreateCustomChannelPointRewardArgs[] = [
                 {
                     title: "Contribute to a !GameRequest (1K)",
                     cost: 1000,
                     prompt: "Please provide the name of the game you'd like me to play. Points will be automatically added toward any existing request matching that name, so please ensure correct spelling.",
                     background_color: "#FFFFFF",
                     is_user_input_required: true,
+                    is_max_per_user_per_stream_enabled: true,
+                    max_per_user_per_stream: 5,
                 },
                 {
                     title: "Contribute to a !GameRequest (5K)",
@@ -505,6 +509,8 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
                     prompt: "Please provide the name of the game you'd like me to play. Points will be automatically added toward any existing request matching that name, so please ensure correct spelling.",
                     background_color: "#FFFFFF",
                     is_user_input_required: true,
+                    is_max_per_user_per_stream_enabled: true,
+                    max_per_user_per_stream: 5,
                 },
                 {
                     title: "Contribute to a !GameRequest (25K)",
@@ -512,6 +518,8 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
                     prompt: "Please provide the name of the game you'd like me to play. Points will be automatically added toward any existing request matching that name, so please ensure correct spelling.",
                     background_color: "#FFFFFF",
                     is_user_input_required: true,
+                    is_max_per_user_per_stream_enabled: true,
+                    max_per_user_per_stream: 4,
                 },
                 {
                     title: "Contribute to a !GameRequest (100K)",
@@ -519,6 +527,8 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
                     prompt: "Please provide the name of the game you'd like me to play. Points will be automatically added toward any existing request matching that name, so please ensure correct spelling.",
                     background_color: "#FFFFFF",
                     is_user_input_required: true,
+                    is_max_per_user_per_stream_enabled: true,
+                    max_per_user_per_stream: 4,
                 }
             ];
 
@@ -588,7 +598,10 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
                 }
                 const gameName = args[0].replaceAll("\"", "");
                 if (args.length === 3) {
-                    await (await this._googleApi).handleGameRequestFund(messageDetail.respondTo, gameName, args[1], Number.parseInt(args[2]), new Date());
+                    const outcome = await (await this._googleApi).handleGameRequestFund(messageDetail.respondTo, gameName, args[1], Number.parseInt(args[2]), new Date());
+                    if (outcome.type === FundGameRequestOutcomeType.PendingConfirmation && outcome.complete !== undefined) {
+                        await outcome.complete(); // force this through
+                    }
                 }
             } else {
                 this.chat(messageDetail.respondTo, `unknown !gameRequest command ${tokens[1]}`);
@@ -674,7 +687,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
                 }
                 const args = tokens.slice(2);
                 if (args.length === 0) {
-                    this.chat(messageDetail.respondTo, `!bidwar addFunds <username> <amount> <reason?>`);
+                    this.chat(messageDetail.respondTo, `!bidwar addFunds <username> <amount> [reason]`);
                     return;
                 }
                 if (args.length < 2 || args.length > 3) {
@@ -702,6 +715,38 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
             triggerPhrases: ["!bidwar"],
             strictMatch: false,
             commandId: "!bidwar",
+            globalTimeoutSeconds: 0,
+            userTimeoutSeconds: 0,
+        });
+        await func(messageDetail);
+    }
+
+    protected async handleYes(messageDetail: IPrivMessageDetail): Promise<void> {
+        const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
+            const userId = await this.getUserIdForUsername(messageDetail.username);
+            await this.heldTasksByUserId.complete(userId);
+        }
+        const func = this.getCommandFunc({
+            messageHandler: messageHandler,
+            triggerPhrases: ["!yes"],
+            strictMatch: true,
+            commandId: "!yes",
+            globalTimeoutSeconds: 0,
+            userTimeoutSeconds: 0,
+        });
+        await func(messageDetail);
+    }
+
+    protected async handleNo(messageDetail: IPrivMessageDetail): Promise<void> {
+        const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
+            const userId = await this.getUserIdForUsername(messageDetail.username);
+            await this.heldTasksByUserId.cancel(userId);
+        }
+        const func = this.getCommandFunc({
+            messageHandler: messageHandler,
+            triggerPhrases: ["!no"],
+            strictMatch: true,
+            commandId: "!no",
             globalTimeoutSeconds: 0,
             userTimeoutSeconds: 0,
         });

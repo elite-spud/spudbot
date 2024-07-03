@@ -80,6 +80,7 @@ export class Bidwar_Spreadsheet extends SpreadsheetBase {
         const entry = new Bidwar_Entry({
             name: gameName,
             nameNote: undefined,
+            note: undefined,
             contributions: [],
         });
         this.activeBlock.entries.push(entry);
@@ -158,13 +159,17 @@ export class Bidwar_AwaitingBlock extends SpreadsheetBlock {
                         userEnteredFormat: pendingEntryFormat,
                     },
                     {
+                        userEnteredValue: { stringValue: n.note },
+                        userEnteredFormat: pendingEntryFormat,
+                    },
+                    {
                         userEnteredFormat: borderLeft,
                     }
                 ],
             };
             return rowData;
         });
-        return headerRows.concat(entryRows).concat(getBorderRowBelow(2));
+        return headerRows.concat(entryRows).concat(getBorderRowBelow(3));
     }
 }
 
@@ -199,6 +204,10 @@ export class Bidwar_ActiveBlock extends SpreadsheetBlock {
                         userEnteredFormat: pendingEntryFormat,
                     },
                     {
+                        userEnteredValue: { stringValue: n.note },
+                        userEnteredFormat: pendingEntryFormat,
+                    },
+                    {
                         userEnteredFormat: borderLeft,
                     },
                 ],
@@ -218,11 +227,14 @@ export class Bidwar_ActiveBlock extends SpreadsheetBlock {
                     userEnteredFormat: headerFormatCenter,
                 },
                 {
+                    userEnteredFormat: headerFormatCenter,
+                },
+                {
                     userEnteredFormat: borderLeft,
                 },
             ]
         }
-        return headerRows.concat(entryRows).concat(footerRow).concat(getBorderRowBelow(2));
+        return headerRows.concat(entryRows).concat(footerRow).concat(getBorderRowBelow(3));
     }
 }
 
@@ -234,15 +246,18 @@ export interface Bidwar_EntryContribution {
 export class Bidwar_Entry {
     public readonly name: string;
     public readonly nameNote?: string;
+    public readonly note?: string
     public readonly contributions: Bidwar_EntryContribution[];
 
     public constructor(args: {
         name: string,
         nameNote: string | undefined,
+        note?: string,
         contributions: { name: string, amount: number }[]
     }) {
         this.name = args.name;
         this.nameNote = args.nameNote;
+        this.note = args.note;
         this.contributions = Array.from(args.contributions);
     }
 
@@ -391,12 +406,14 @@ export function parseBidwarEntry(row: sheets_v4.Schema$RowData): Bidwar_Entry {
     if (!gameName) {
         throw new Error("game name not found");
     }
+    const note = getEntryValue_String(row.values[2]);
     const contributionsString = row.values[0].note ?? "";
     const contributions = Bidwar_Entry.parseContributions(contributionsString);
     const entry = new Bidwar_Entry({
-        contributions: contributions,
+        contributions,
         name: gameName,
         nameNote: row.values[1].note ?? undefined,
+        note,
     });
     return entry;
 }
