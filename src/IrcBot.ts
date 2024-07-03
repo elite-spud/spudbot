@@ -42,10 +42,6 @@ export interface IUserDetail {
     lastSeenInChat?: Date;
     lastChatted?: Date;
     oldUsernames?: { username: string, lastSeenInChat: Date }[];
-    monthsSubscribed?: number,
-    currentSubcriptionStreak?: number,
-    subscriptionTier?: string,
-    lastKnownSubscribedDate?: Date,
 }
 
 export interface IIrcBotAuxCommandConfig {
@@ -165,6 +161,7 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
     }
 
     protected async trackUsersInChat(secondsToAdd: number): Promise<void> {
+        // TODO: track daily / per-stream stats
         const userUpdatePromises: Promise<void>[] = [];
         for (const username of Object.keys(this._usernamesInChat)) {
             const userUpdatedPromise = this.getUserDetailWithCache(username).then((userDetail) => {
@@ -224,7 +221,7 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
             if (this._userDetailByUserId[userId]) {
                 return this._userDetailByUserId[userId];
             }
-            
+
             const userDetail = this.createFreshUserDetail(username, userId);
             this._userDetailByUserId[userId] = userDetail;
 
