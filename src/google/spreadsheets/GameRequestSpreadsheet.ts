@@ -274,7 +274,7 @@ export class GameRequest_PendingBlock extends SpreadsheetBlock {
                     },
                     {
                         userEnteredValue: { numberValue: n.pointsContributed },
-                        note: n.contributions.sort((a, b) => b.points - a.points).map(c => `${c.name} - ${c.points}`).join("\n"),
+                        note: n.contributions.sort((a, b) => b.points - a.points).map(c => `${c.name} • ${c.points}`).join("\n"),
                         userEnteredFormat: pendingEntryFormat,
                     },
                     {
