@@ -17,12 +17,12 @@
                 "aliases": [],
                 "autoPostIfTitleContainsAny": ["!blind"],
                 "responses": [
-                    "This is a blind playthrough, which means that I know nothing about this game want to keep it that way. Do not tell me how to play the game. Do not spoil. Do not fake spoil. Do not hint, backseat, advise, guide, remind, or warn me in any way, please. Consider all questions to be rhetorical. Revel in my ignorance, and enjoy my suffering."
+                    "This is a blind playthrough, which means that I know nothing about this game want to keep it that way. Do not tell me how to play the game. Do not spoil. Do not fake spoil. Do not hint, backseat, advise, guide, remind, or warn me in any way, please. Consider all questions to be rhetorical. Revel in my ignorance, and enjoy my suffering. https://pastebin.com/nBB1B3bD"
                 ]
             },
             {
                 "name": "!spoilerdiscord_recurring",
-                "aliases": [],
+                "aliases": ["!spoilerdiscord"],
                 "autoPostIfTitleContainsAny": ["!blind"],
                 "responses": [
                     "Wanna talk spoilers without posting directly in twitch chat? I've got a dedicated channel for spoiler-y discussion in the Discord server! Consider telling the folks in here that you'll be talking there so that others can join in on the conversation! https://discord.gg/f4bhKYxPy8"
@@ -49,7 +49,7 @@
                 "aliases": ["!incentives", "!goals", "!subgoals"],
                 "autoPostIfTitleContainsAny": ["!incentive", "!incentives"],
                 "responses": [
-                    "Current subgoal incentives: https://docs.google.com/spreadsheets/d/1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY"
+                    "Current subgoal incentives: https://docs.google.com/spreadsheets/d/1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY (see the other sub-sheets for active bidwars and channel point requests)"
                 ]
             },
             {
@@ -63,7 +63,7 @@
             {
                 "name": "!gdqhotfix",
                 "aliases": ["!hotfix"],
-                "autoPostIfTitleContainsAny": ["!attractmode"],
+                "autoPostIfTitleContainsAny": ["!hotfix", "!gdqhotfix"],
                 "responses": [
                     "I'll be appearing on @Mr_Shasta's GDQ Hotfix show, Do All the Things!, on June 27th at 7:00 PM EST where I'll playing some Luigi's Mansion 100% [PAL] in a race with @KaiiRunz!"
                 ]
@@ -81,7 +81,8 @@
                     "Ask a question but didn't get an answer? Feel free to ask again in a few minutes with an @ if I don't respond the first time!",
                     "I often get tunnel vision when playing video games on stream, so it's tough to keep up with chat sometimes. If your question isn't answered, please ask again after a little while!",
                     "Sorry if I miss any of your questions! I promise it's not intentional. Please @ me and ask again if I don't get around to your message the first time.",
-                    "I'm easily distracted, and often go on tangents while in the middle of making a point. If I get sidetracked while talking about something you found interesting, please feel free to bring it up again so I can finish sharing my thoughts!"
+                    "I'm easily distracted, and often go on tangents while in the middle of talking about things. If I get sidetracked while talking about something you found interesting, please feel free to bring it up again so I can finish sharing my thoughts!",
+                    "I sometimes stream games which require a lot of focus to play, so it's not uncommon for me to miss important chat messages while I'm in the zone. If it seems like I missed your message, or didn't address anything to your satisfaction, please ask me to clarify or elaborate further and I'll be more than happy to oblige."
                 ]
             },
             {
@@ -119,9 +120,11 @@
                 "responses": [
                     "We have a Discord server! Join in and be a part of the community offstream! https://discord.gg/f4bhKYxPy8",
                     "Want consistent notifications when the stream is live? Join the Discord server and request a role to always get pinged! https://discord.gg/f4bhKYxPy8",
-                    "Enjoy using my sub emotes? You can link your Twitch account with Discord to get access to them on other servers if you're a subscriber; no Nitro required! https://discord.gg/f4bhKYxPy8",
-                    "Like seeing Loki and the other kitties on stream? You can see more of them and other folks' cats in the community Discord! https://discord.gg/f4bhKYxPy8",
-                    "Wanna talk about music you love or discovered recently? We've got a Discord channel for that! https://discord.gg/f4bhKYxPy8"
+                    "Enjoy using my sub emotes? You can link your Twitch account with Discord to get access to them on other servers if you're a subscriber. No Nitro required! https://discord.gg/f4bhKYxPy8",
+                    "Like seeing Loki and the other kitties on stream? You can see more of them and other folks' animals in the community Discord! https://discord.gg/f4bhKYxPy8",
+                    "Wanna talk about music you love or discovered recently? We've got a Discord channel for that! https://discord.gg/f4bhKYxPy8",
+                    "Do you like to cook or consider yourself a food-lover? See what the community's been dining on recently in our Discord server: https://discord.gg/f4bhKYxPy8",
+                    "Interested in talking about all the intricacies that go into streaming? Hear my thoughts and others' in our dedicated channels for stream/tech talk in the Discord https://discord.gg/f4bhKYxPy8"
                 ]
             },
             {
@@ -138,7 +141,8 @@
                 "aliases": ["!cats", "!insta", "!ig"],
                 "responses": [
                     "I have an instagram where I post pictures of my cats and also cool places I travel to https://www.instagram.com/elite.spud/",
-                    "Hey, wanna see some cute cats? https://www.instagram.com/elite.spud/"
+                    "Hey, wanna see some cute cats? https://www.instagram.com/elite.spud/",
+                    "I might not consider myself much of a photographer, but I do like to stop and take pictures of flowers and other beautiful things I see from day to day https://www.instagram.com/elite.spud/"
                 ]
             },
             {
@@ -160,7 +164,7 @@
                 "name": "!pendinggames",
                 "aliases": ["!streamgames", "!games"],
                 "responses": [
-                    "I maintain a list of all the games I've streamed (and might stream) here: https://docs.google.com/spreadsheets/d/1JsdDfmdjaL3d-oGsuq38z_jhrvkhePF1LLz4W1dpzI4/edit?usp=sharing and keep a tier list of my blind playthroughs here: https://pastebin.com/fRPKHM7D You can also check my pastebin profile for some of my more substantial opinions on certain games: https://pastebin.com/u/ghetto_spud"
+                    "I maintain a list of all the games I've streamed (and would like to stream) here: https://docs.google.com/spreadsheets/d/1JsdDfmdjaL3d-oGsuq38z_jhrvkhePF1LLz4W1dpzI4/edit?usp=sharing and keep a tier list of my blind playthroughs here: https://pastebin.com/fRPKHM7D"
                 ]
             },
             {
@@ -169,7 +173,8 @@
                 "responses": [
                     "I (Spud) wrote this chatbot myself because I'm a big nerd. If you fancy yourself a nerd too, you can peruse the source code on GitHub here: https://github.com/elite-spud/spudbot",
                     "This chatbot is © Spud Inc., which maintains an open policy of showcasing all the programming mistakes of the chatbot author for all to see here: https://github.com/elite-spud/spudbot",
-                    "I'm a software engineer by day, and this chatbot is actually one of my side-projects! If you want to see how it works, you can find all the source code here: https://github.com/elite-spud/spudbot"
+                    "I'm a software engineer by day, and this chatbot is actually one of my side-projects! If you want to see how it works, you can find all the source code here: https://github.com/elite-spud/spudbot",
+                    "I'm not a potato, I'm a bot! Get a peek at my source code here: https://github.com/elite-spud/spudbot"
                 ]
             },
             {
@@ -178,7 +183,8 @@
                 "responses": [
                     "I took the time to catalog and rate all the games I've played over the years. Take a peek at my favorites and not-so-favorites here: https://glitchwave.com/user/elite_spud/",
                     "Curious if I've played your favorite game before, and/or what my opinions about it are? Look no further: https://glitchwave.com/user/elite_spud/",
-                    "Got a favorite game? Me too: https://glitchwave.com/user/elite_spud/"
+                    "Got a favorite game? Me too: https://glitchwave.com/user/elite_spud/",
+                    "What's the worst game I've ever played? The answer may surprise you: https://glitchwave.com/user/elite_spud/"
                 ]
             },
             {
@@ -191,14 +197,22 @@
                 "name": "!streamteam",
                 "aliases": ["!binarybreakers", "!bb"],
                 "responses": [
-                    "I'm part of a stream team on Twitch now! If you're looking for some amazing nonbinary streamers to follow, check out the Binary Breakers! https://www.twitch.tv/team/binarybreakers"
+                    "I'm part of a stream team on Twitch! If you're looking for some amazing nonbinary streamers to follow, check out the Binary Breakers! https://www.twitch.tv/team/binarybreakers"
                 ]
             },
             {
                 "name": "!gamesuggestions",
                 "aliases": ["!gamesuggestion", "!recommendation", "!request", "!requests", "!GameRequest", "!GameRequests"],
                 "responses": [
-                    "Channel points can be used to request games that you want me to play on stream! Submit your favorite title, challenge me with something super difficult, get weird or goofy with it, and more! — almost anything is fair game if you have enough points and I have the means to play it! (e.g. no VR, foreign visual novels, super expensive stuff, etc.)"
+                    "Channel points can be used to request games that you want me to play on stream! Submit your favorite title, challenge me with something super difficult, get weird/goofy with it, or help fund someone else's suggestion! Almost anything is fair game so long as I have the means to play it! (e.g. no VR, foreign visual novels, etc.) Check out the spreadsheet to see everyone's requests! https://docs.google.com/spreadsheets/d/1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY/edit?gid=384782784"
+                ]
+            },
+            {
+                "name": "!bidwar",
+                "strict": true,
+                "aliases": ["!bits", "!incentive", "!incentives", "!goals"],
+                "responses": [
+                    "Have you cheered bits on the channel before? You might have a balance in the bidwar bank! The current bidwar will be active until the end of 2024, so make sure to use your points to vote on your favorite option. Type '!bidwar contribute' to get started! https://docs.google.com/spreadsheets/d/1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY/edit?gid=877321766"
                 ]
             }
         ]
@@ -228,7 +242,7 @@
                 "name": "!nonbinary",
                 "aliases": ["!nb", "!non-binary", "!trans", "!gender"],
                 "responses": [
-                    "Hi! I'm non-binary, which is a term that means a lot of different things to a lot of people. For me, it means that I identify more strongly with the general concept of being a human person than anything else. Despite presenting more femininely, I prefer to think of myself in a more neutral way, and for that reason, I prefer to be addressed with they/them pronouns, as it reinforces how I see myself! If you have any other questions about what it's like being NB, please don't hesitate to ask!"
+                    "Hi! I'm non-binary, which is a term that means a lot of different things to a lot of people. For me, it means that I identify more strongly with the general concept of being a human person than anything else. Despite presenting more femininely, I prefer to think of myself in a more neutral way, which is why I enjoy being addressed with both they/them & she/her pronouns, as it reinforces how I see myself! If you have any other questions about what it's like to be NB, please don't hesitate to ask!"
                 ]
             },
             {
@@ -277,7 +291,7 @@
             },
             {
                 "name": "!rhetorical",
-                "aliases": ["!blind", "!spoilers", "spoils", "!spoil", "!hint", "!hints", "!nohints", "!help", "!mints", "!nomints"],
+                "aliases": ["!blind", "!spoiler", "!spoilers", "spoils", "!spoil", "!hint", "!hints", "!nohints", "!help", "!mints", "!nomints"],
                 "responses": [
                     "Do not tell me how to play the game. Do not spoil. Do not fake spoil. Do not hint, backseat, advise, guide, remind, or warn me in any way, please. Consider all questions to be rhetorical. If I am wrong about something, you don't have to be right. Revel in my ignorance, and enjoy my suffering."
                 ]
@@ -319,7 +333,7 @@
                 "name": "!captions",
                 "aliases": ["!caption"],
                 "responses": [
-                    "I use OBS-captions-plugin for my on-screen captions as well as the closed-captions offered through Twitch. Download it here: https://github.com/ratwithacompiler/OBS-captions-plugin/releases"
+                    "I use OBS-captions-plugin for my on-screen captions as well as the closed-captions sent directly in the Twitch broadcast. Download it here: https://github.com/ratwithacompiler/OBS-captions-plugin/releases"
                 ]
             },
             {
@@ -358,7 +372,7 @@
                 "name": "!TDoV",
                 "aliases": ["!transdayofvisibility", "!tdov"],
                 "responses": [
-                    "March 31 is Transgender Day of Visibility! As a trans person who's also observable in the visible spectrum of electromagnetic radiation, I'm here playing games and being proud about myself in the most public way I can. Not every trans person has the privilege to make themselves visible, though, so I think it's important to stand in solidarity with those who aren't yet able. We exist, we are strong, and our voices will be heard."
+                    "March 31 is Transgender Day of Visibility! As a trans person who's also observable in the visible spectrum of electromagnetic radiation, I'm here playing games and being proud about myself in the most public way I can. Not every trans person has the same privilege to make themselves visible, though, so I think it's important to stand in solidarity with those who aren't yet able. We exist, we are strong, and our voices will be heard."
                 ]
             },
             {
@@ -377,19 +391,28 @@
             },
             {
                 "name": "!happy",
+                "strict": true,
+                "responses": [
+                    "pride!"
+                ]
+            },
+            {
+                "name": "!Happy",
+                "strict": true,
                 "responses": [
                     "Pride!"
                 ]
             },
             {
                 "name": "!HAPPY",
+                "strict": true,
                 "responses": [
                     "PRIDE!"
                 ]
             },
             {
-                "name": "!tournament",
-                "aliases": ["!tourney", "!Tournament"],
+                "name": "!lmtournament",
+                "aliases": ["!tournament, !tourney", "!Tournament"],
                 "responses": [
                     "I'm participating in the annual Luigi's Mansion Any% No OoB tournament this year as both a runner and a commentator! Check out the bracket https://challonge.com/LMTournament2024 and the schedule https://schedule.speedgaming.org/lm/ to keep up with the event!"
                 ]
@@ -451,7 +474,7 @@
                 "name": "!dvt",
                 "aliases": ["!clot", "!bloodclot"],
                 "responses": [
-                    "In 2022, I developed a substantial deep vein thrombosis (blood clot) in my left leg following a major surgery. Because I suffered significant vascular scarring from that clot, I'll forever be at high risk of developing another one, which means that I need to take low-dose blood thinners for the rest of my life to reduce the chances of that happening. Staying active also helps, though, so I take regular breaks during streaming to walk around and stretch; I encourage you all to do the same!"
+                    "In 2022, I developed a substantial deep vein thrombosis (blood clot) in my left leg following a major surgery. Because I suffered significant vascular scarring from that clot, I'll forever be at high risk of developing another one, which means that I need to take low-dose blood thinners for the rest of my life to reduce the chances of that happening. Staying active also helps though, so I try to take regular breaks during streaming to walk around and stretch; I encourage you all to do the same!"
                 ]
             },
             {
@@ -479,14 +502,6 @@
                 "name": "!GO",
                 "responses": [
                     "FAST"
-                ]
-            },
-            {
-                "name": "!bidwar",
-                "strict": true,
-                "aliases": ["!bits", "!incentive", "!incentives", "!goals"],
-                "responses": [
-                    "View the active Bits bidwar here: https://docs.google.com/spreadsheets/d/1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY/edit#gid=877321766. Contribute to specific bidwar choices with !bidwar contribute"
                 ]
             },
             {
