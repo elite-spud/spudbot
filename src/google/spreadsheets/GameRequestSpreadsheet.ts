@@ -18,13 +18,13 @@ export class GameRequest_Spreadsheet extends SpreadsheetBase {
         this.pendingBlock = pendingBlock;
     }
 
-    public findEntry(gamename: string): GameRequestEntry | undefined {
-        const activeEntry = this.activeBlock.entries.find(n => n.gameName.toLowerCase() === gamename.toLowerCase());
+    public findEntry(gameName: string): GameRequestEntry | undefined {
+        const activeEntry = this.activeBlock.entries.find(n => n.gameName.toLowerCase() === gameName.toLowerCase());
         if (activeEntry) {
             return activeEntry;
         }
 
-        const pendingEntry = this.pendingBlock.entries.find(n => n.gameName.toLowerCase() === gamename.toLowerCase());
+        const pendingEntry = this.pendingBlock.entries.find(n => n.gameName.toLowerCase() === gameName.toLowerCase());
         if (pendingEntry) {
             return pendingEntry;
         }
@@ -32,8 +32,8 @@ export class GameRequest_Spreadsheet extends SpreadsheetBase {
         return undefined;
     }
 
-    public addPointsToEntry(username: string, gamename: string, points: number, timestamp: Date): void {
-        const activeEntry = this.activeBlock.entries.find(n => n.gameName.toLowerCase() === gamename.toLowerCase());
+    public addPointsToEntry(username: string, gameName: string, points: number, timestamp: Date): void {
+        const activeEntry = this.activeBlock.entries.find(n => n.gameName.toLowerCase() === gameName.toLowerCase());
         if (activeEntry) {
             let contribution = activeEntry.contributions.find(n => n.name === username);
             if (!contribution) {
@@ -44,7 +44,7 @@ export class GameRequest_Spreadsheet extends SpreadsheetBase {
             return;
         }
         
-        const pendingEntryIndex = this.pendingBlock.entries.findIndex(n => n.gameName.toLowerCase() === gamename.toLowerCase());
+        const pendingEntryIndex = this.pendingBlock.entries.findIndex(n => n.gameName.toLowerCase() === gameName.toLowerCase());
         if (pendingEntryIndex !== -1) {
             const pendingEntry = this.pendingBlock.entries.at(pendingEntryIndex)!;
             let contribution = pendingEntry.contributions.find(n => n.name === username); // ?? { name: username, points: 0 };
@@ -198,6 +198,9 @@ export abstract class GameRequestEntry {
     public get pointsToActivate(): number {
         return this._pointsToActivate ?? ChannelPointRequests.getGameRequestPrice(this.gameLengthHours);
     }
+
+    public abstract get effectivePoints(): number;
+    public abstract get percentageFunded(): number;
 }
 
 export class GameRequest_ActiveEntry extends GameRequestEntry {
@@ -215,13 +218,13 @@ export class GameRequest_ActiveEntry extends GameRequestEntry {
         this.requestDate = args.requestDate;
     }
 
-    public get effectivePoints(): number {
+    public override get effectivePoints(): number {
         const elapsedMilliseconds = Date.now() - this.requestDate.getTime();
         const elapsedYears = elapsedMilliseconds / (1000 * 60 * 60 * 24 * 365);
         return this.pointsContributed * Math.pow(2, elapsedYears);
     }
 
-    public get percentageFunded(): number {
+    public override get percentageFunded(): number {
         return this.effectivePoints / this.pointsToActivate;
     }
 
@@ -308,8 +311,12 @@ export class GameRequest_PendingEntry extends GameRequestEntry {
         super(args.gameName, args.gameLengthHours, args.pointsToActivate, args.contributions);
     }
 
-    public get percentageFunded(): number {
+    public override get percentageFunded(): number {
         return this.pointsContributed / this.pointsToActivate;
+    }
+
+    public override get effectivePoints(): number {
+        return this.pointsContributed;
     }
 }
 

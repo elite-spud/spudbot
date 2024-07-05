@@ -73,10 +73,37 @@ export class GoogleAPI {
         this._googleSheets.resolve(sheets);
     }
 
-    public async handleGameRequestRedeem(event: TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd): Promise<void> {
+    public async handleGameRequestAddRedeem(event: TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd) : Promise<void> {
+        const future = new Future<void>();
+        const task = async (): Promise<void> => {
+            const gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet);
+            const existingEntry = gameRequestSpreadsheet.findEntry(event.user_input);
+            if (!existingEntry) {
+                this._twitchBot.chat(`#${event.broadcaster_user_name}`, `@${event.user_name}, your new game request was received. Please wait for an admin to add it to the spreadsheet before contributing any further points.`);
+                future.resolve();
+                return;
+            } else {
+                await this._twitchBot.updateChannelPointRedemption(event.id, event.reward.id, event.broadcaster_user_id, false);
+                this._twitchBot.chat(`#${event.broadcaster_user_name}`, `@${event.user_name}, your request to add ${event.user_input} has been rejected because it already exists in the spreadsheet (${(existingEntry.percentageFunded * 100).toFixed(1)}% funded). Please consider contributing points instead.`);
+                future.resolve();
+                return;
+            }
+        }
+        this._taskQueue.addTask(task);
+        this._taskQueue.startQueue();
+
+        return future;
+    }
+
+    public async handleGameRequestContributeRedeem(event: TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd): Promise<void> {
         const outcome = await this.handleGameRequestFund(`#${event.broadcaster_user_name}`, event.user_input, event.user_name, event.reward.cost, new Date(event.redeemed_at));
         if (outcome.type === FundGameRequestOutcomeType.Fulfilled) {
             await this._twitchBot.updateChannelPointRedemption(event.id, event.reward.id, event.broadcaster_user_id, true);
+            return;
+        }
+
+        if (outcome.type === FundGameRequestOutcomeType.Unfulfilled) {
+            await this._twitchBot.updateChannelPointRedemption(event.id, event.reward.id, event.broadcaster_user_id, false);
             return;
         }
 
@@ -112,7 +139,7 @@ export class GoogleAPI {
             const gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet);
             const existingEntry = gameRequestSpreadsheet.findEntry(gameName);
             if (!existingEntry) {
-                this._twitchBot.chat(respondTo, `@${username}, your game request was detected as a new request; please wait until an admin adds this game to the spreadsheet before adding any further points`);
+                this._twitchBot.chat(respondTo, `@${username}, your game request was detected as a new request. Please redeem the "Submit a new !GameRequest" reward first in order to add it to the spreadsheet.`);
                 future.resolve({ type: FundGameRequestOutcomeType.Unfulfilled });
                 return;
             }
@@ -120,7 +147,14 @@ export class GoogleAPI {
             const completeFunding = async () => {
                 gameRequestSpreadsheet.addPointsToEntry(username, gameName, points, timestamp);
                 await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet, gameRequestSpreadsheet);
-                this._twitchBot.chat(respondTo, `@${username}, your ${points} points were successfully added to requesting ${gameName} on stream!`);
+                const entry = gameRequestSpreadsheet.findEntry(gameName);
+                let fundingStr = ``;
+                if (entry) {
+                    fundingStr = entry.percentageFunded <= 1.0
+                        ? ` (${entry.effectivePoints / entry.pointsToActivate} points)`
+                        : ` (${entry.percentageFunded.toFixed(1)}% funded)`;
+                }
+                this._twitchBot.chat(respondTo, `@${username}, your ${points} points were successfully added to requesting ${gameName} on stream!${fundingStr}`);
             }
 
             const notCurrentlyOverfunded = existingEntry.pointsContributed <= existingEntry.pointsToActivate;

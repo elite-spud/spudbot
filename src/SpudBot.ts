@@ -8,6 +8,7 @@ import { TwitchBotBase } from "./TwitchBot";
 import { CreateCustomChannelPointRewardArgs, ITwitchUserDetail, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_SubscriptionGift, TwitchEventSub_Notification_Subscription, TwitchEventSub_SubscriptionType } from "./TwitchBotTypes";
 import { Utils } from "./Utils";
 import { FundGameRequestOutcomeType, GoogleAPI } from "./google/GoogleAPI";
+import { ChannelPointRequests } from "./ChannelPointRequests";
 
 export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
     public declare readonly _config: ISpudBotConfig;
@@ -129,7 +130,11 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
         }
 
         if (event.reward.title.includes("Contribute to a !GameRequest")) {
-            (await this._googleApi).handleGameRequestRedeem(event);
+            await (await this._googleApi).handleGameRequestContributeRedeem(event);
+        }
+
+        if (event.reward.title === "Submit a new !GameRequest") {
+            await (await this._googleApi).handleGameRequestAddRedeem(event);
         }
     }
 
@@ -495,10 +500,19 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
             const existingRewards = await this.getChannelPointRewards();
             const newRewards: CreateCustomChannelPointRewardArgs[] = [
                 {
+                    title: "Submit a new !GameRequest",
+                    cost: ChannelPointRequests.getGameRequestPrice(0),
+                    prompt: "Please provide the name of the game you'd like me to play. I manually review each request to determine how long it will take and how many points the request will cost to fund.",
+                    background_color: "#196719",
+                    is_user_input_required: true,
+                    is_max_per_user_per_stream_enabled: true,
+                    max_per_user_per_stream: 2,
+                },
+                {
                     title: "Contribute to a !GameRequest (1K)",
                     cost: 1000,
                     prompt: "Please provide the name of the game you'd like me to play. Points will be automatically added toward any existing request matching that name, so please ensure correct spelling.",
-                    background_color: "#FFFFFF",
+                    background_color: "#196719",
                     is_user_input_required: true,
                     is_max_per_user_per_stream_enabled: true,
                     max_per_user_per_stream: 5,
@@ -507,7 +521,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
                     title: "Contribute to a !GameRequest (5K)",
                     cost: 5000,
                     prompt: "Please provide the name of the game you'd like me to play. Points will be automatically added toward any existing request matching that name, so please ensure correct spelling.",
-                    background_color: "#FFFFFF",
+                    background_color: "#196719",
                     is_user_input_required: true,
                     is_max_per_user_per_stream_enabled: true,
                     max_per_user_per_stream: 5,
@@ -516,7 +530,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
                     title: "Contribute to a !GameRequest (25K)",
                     cost: 25000,
                     prompt: "Please provide the name of the game you'd like me to play. Points will be automatically added toward any existing request matching that name, so please ensure correct spelling.",
-                    background_color: "#FFFFFF",
+                    background_color: "#196719",
                     is_user_input_required: true,
                     is_max_per_user_per_stream_enabled: true,
                     max_per_user_per_stream: 4,
@@ -525,10 +539,10 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
                     title: "Contribute to a !GameRequest (100K)",
                     cost: 100000,
                     prompt: "Please provide the name of the game you'd like me to play. Points will be automatically added toward any existing request matching that name, so please ensure correct spelling.",
-                    background_color: "#FFFFFF",
+                    background_color: "#196719",
                     is_user_input_required: true,
                     is_max_per_user_per_stream_enabled: true,
-                    max_per_user_per_stream: 4,
+                    max_per_user_per_stream: 100,
                 }
             ];
 
@@ -577,7 +591,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
             if (tokens[1] === "add") {
                 const args = tokens.slice(2);
                 if (args.length === 0) {
-                    this.chat(messageDetail.respondTo, `!gamerequest add <gamename> <gameLengthHours> [pointsToActivate] <username> <points>`);
+                    this.chat(messageDetail.respondTo, `!gamerequest add <gameName> <gameLengthHours> [pointsToActivate] <username> <points>`);
                     return;
                 }
                 const gameName = args[0].replaceAll("\"", "");
@@ -593,7 +607,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
             } else if (tokens[1] === "fund") {
                 const args = tokens.slice(2);
                 if (args.length === 0) {
-                    this.chat(messageDetail.respondTo, `!gamerequest fund <gamename> <username> <points>`);
+                    this.chat(messageDetail.respondTo, `!gamerequest fund <gameName> <username> <points>`);
                     return;
                 }
                 const gameName = args[0].replaceAll("\"", "");
@@ -624,7 +638,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
             const tokens = messageDetail.message.match(regex) ?? [];
 
             const userIsBroadcaster = messageDetail.username === this.twitchChannelName; // TODO: detect streamer's name from config or make this a basic configuration with a name/broadcaster option
-            const contributeHelpMessage = `!bidwar contribute <gamename> <amount>`;
+            const contributeHelpMessage = `!bidwar contribute <gameName> <amount>`;
             if (tokens.length <= 1) {
                 return;
             }
@@ -669,7 +683,7 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
                 }
                 const args = tokens.slice(2);
                 if (args.length === 0) {
-                    this.chat(messageDetail.respondTo, `!bidwar add <gamename> <amount>`);
+                    this.chat(messageDetail.respondTo, `!bidwar add <gameName> <amount>`);
                     return;
                 }
                 if (args.length !== 2) {
