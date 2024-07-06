@@ -6,10 +6,10 @@ import { WebSocket } from "ws";
 import { ConsoleColors } from "./ConsoleColors";
 import { Future } from "./Future";
 import { IIrcBotAuxCommandGroupConfig, IJoinMessageDetail, IPartMessageDetail, IPrivMessageDetail, IrcBotBase } from "./IrcBot";
-import { CreateCustomChannelPointRewardArgs, ITwitchBotAuxCommandConfig, ITwitchBotConfig, ITwitchBotConnectionConfig, ITwitchUserDetail, SubTierPoints, TwitchAppToken, TwitchBadgeTagKeys, TwitchBroadcasterSubscriptionsResponse, TwitchErrorResponse, TwitchEventSub_CreateSubscription, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_SubscriptionEnd, TwitchEventSub_Event_SubscriptionGift, TwitchEventSub_Event_SubscriptionMessage, TwitchEventSub_Event_SubscriptionStart, TwitchEventSub_Notification_Payload, TwitchEventSub_Notification_Subscription, TwitchEventSub_Reconnect_Payload, TwitchEventSub_SubscriptionType, TwitchEventSub_Welcome_Payload, TwitchGetChannelInfo, TwitchGetChannelInfoResponse, TwitchGetCustomChannelPointRewardInfo, TwitchGetCustomChannelPointRewardResponse, TwitchGetStreamInfo, TwitchGetStreamsResponse, TwitchPrivMessageTagKeys, TwitchUserInfoResponse, TwitchUserToken } from "./TwitchBotTypes";
+import { CreateCustomChannelPointRewardArgs, ITwitchBotAuxCommandConfig, ITwitchBotConfig, ITwitchBotConnectionConfig, SubTierPoints, TwitchAppToken, TwitchBadgeTagKeys, TwitchBroadcasterSubscriptionsResponse, TwitchErrorResponse, TwitchEventSub_CreateSubscription, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_SubscriptionEnd, TwitchEventSub_Event_SubscriptionGift, TwitchEventSub_Event_SubscriptionMessage, TwitchEventSub_Event_SubscriptionStart, TwitchEventSub_Notification_Payload, TwitchEventSub_Notification_Subscription, TwitchEventSub_Reconnect_Payload, TwitchEventSub_SubscriptionType, TwitchEventSub_Welcome_Payload, TwitchGetChannelInfo, TwitchGetChannelInfoResponse, TwitchGetCustomChannelPointRewardInfo, TwitchGetCustomChannelPointRewardResponse, TwitchGetStreamInfo, TwitchGetStreamsResponse, TwitchPrivMessageTagKeys, TwitchUserDetail, TwitchUserInfoResponse, TwitchUserToken } from "./TwitchBotTypes";
 import { HeldTaskGroup } from "./HeldTask";
 
-export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwitchUserDetail> extends IrcBotBase<TUserDetail> {
+export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = TwitchUserDetail> extends IrcBotBase<TUserDetail> {
     public static readonly maxChatMessageLength = 500;
     protected static readonly _knownConfig: { encoding: "utf8" } = { encoding: "utf8" };
 
@@ -567,32 +567,39 @@ export abstract class TwitchBotBase<TUserDetail extends ITwitchUserDetail = ITwi
     }
 
     protected async handleEventSubNotification(notificationMessage: TwitchEventSub_Notification_Payload): Promise<void> {
-        if (notificationMessage.subscription.type === "channel.channel_points_custom_reward_redemption.add") {
-            await this.handleChannelPointRewardRedeem(notificationMessage.event as TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, notificationMessage.subscription);
-        } else if (notificationMessage.subscription.type === "channel.subscribe") {
-            await this.handleSubscriptionStart(notificationMessage.event as TwitchEventSub_Event_SubscriptionStart, notificationMessage.subscription);
-        } else if (notificationMessage.subscription.type === "channel.subscription.end") {
-            await this.handleSubscriptionEnd(notificationMessage.event as TwitchEventSub_Event_SubscriptionEnd, notificationMessage.subscription);
-        } else if (notificationMessage.subscription.type === "channel.subscription.message") {
-            await this.handleSubscriptionMessage(notificationMessage.event as TwitchEventSub_Event_SubscriptionMessage, notificationMessage.subscription);
-        } else if (notificationMessage.subscription.type === "channel.subscription.gift") {
-            await this.handleSubscriptionGift(notificationMessage.event as TwitchEventSub_Event_SubscriptionGift, notificationMessage.subscription);
-        } else if (notificationMessage.subscription.type === "channel.cheer") {
-            await this.handleCheer(notificationMessage.event as TwitchEventSub_Event_Cheer, notificationMessage.subscription);
-        } else if (notificationMessage.subscription.type === "channel.hype_train.begin") {
-            
-        } else if (notificationMessage.subscription.type === "channel.hype_train.progress") {
-
-        } else if (notificationMessage.subscription.type === "channel.hype_train.end") {
-
-        } else if (notificationMessage.subscription.type === "channel.prediction.begin") {
-
-        } else if (notificationMessage.subscription.type === "channel.raid") {
-
-        } else if (notificationMessage.subscription.type === "channel.follow") {
-
-        } else if (notificationMessage.subscription.type === "channel.ad_break.begin") {
-
+        try {
+            if (notificationMessage.subscription.type === "channel.channel_points_custom_reward_redemption.add") {
+                await this.handleChannelPointRewardRedeem(notificationMessage.event as TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, notificationMessage.subscription);
+            } else if (notificationMessage.subscription.type === "channel.subscribe") {
+                await this.handleSubscriptionStart(notificationMessage.event as TwitchEventSub_Event_SubscriptionStart, notificationMessage.subscription);
+            } else if (notificationMessage.subscription.type === "channel.subscription.end") {
+                await this.handleSubscriptionEnd(notificationMessage.event as TwitchEventSub_Event_SubscriptionEnd, notificationMessage.subscription);
+            } else if (notificationMessage.subscription.type === "channel.subscription.message") {
+                await this.handleSubscriptionMessage(notificationMessage.event as TwitchEventSub_Event_SubscriptionMessage, notificationMessage.subscription);
+            } else if (notificationMessage.subscription.type === "channel.subscription.gift") {
+                await this.handleSubscriptionGift(notificationMessage.event as TwitchEventSub_Event_SubscriptionGift, notificationMessage.subscription);
+            } else if (notificationMessage.subscription.type === "channel.cheer") {
+                await this.handleCheer(notificationMessage.event as TwitchEventSub_Event_Cheer, notificationMessage.subscription);
+            } else if (notificationMessage.subscription.type === "channel.hype_train.begin") {
+                
+            } else if (notificationMessage.subscription.type === "channel.hype_train.progress") {
+                
+            } else if (notificationMessage.subscription.type === "channel.hype_train.end") {
+                
+            } else if (notificationMessage.subscription.type === "channel.prediction.begin") {
+                
+            } else if (notificationMessage.subscription.type === "channel.raid") {
+                
+            } else if (notificationMessage.subscription.type === "channel.follow") {
+                
+            } else if (notificationMessage.subscription.type === "channel.ad_break.begin") {
+                
+            }
+        } catch (err) {
+            console.log("Error processing eventSub notification: ");
+            console.log(err);
+            console.error("Error processing eventSub notification: "); // TODO: actually use this output stream
+            console.error(err);
         }
     }
 

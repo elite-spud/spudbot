@@ -31,7 +31,7 @@ export interface IIrcBotAuxCommandGroupConfig {
     commands: IIrcBotAuxCommandConfig[];
 }
 
-export interface IUserDetailCollection<TUserDetail extends IUserDetail> {
+export interface IUserDetailCollection<TUserDetail extends UserDetail> {
     [userId: string]: TUserDetail;
 }
 
@@ -42,6 +42,28 @@ export interface IUserDetail {
     lastSeenInChat?: Date;
     lastChatted?: Date;
     oldUsernames?: { username: string, lastSeenInChat: Date }[];
+}
+
+export class UserDetail implements IUserDetail {
+    public username: string;
+    public secondsInChat: number;
+    public numChatMessages: number;
+    public lastSeenInChat?: Date;
+    public lastChatted?: Date;
+    public oldUsernames?: { username: string, lastSeenInChat: Date }[];
+
+    public constructor(detail: IUserDetail) {
+        this.username = detail.username;
+        this.secondsInChat = detail.secondsInChat;
+        this.numChatMessages = detail.numChatMessages;
+        this.lastSeenInChat = detail.lastSeenInChat === undefined ? undefined : new Date(detail.lastSeenInChat);
+        this.lastChatted = detail.lastChatted === undefined ? undefined : new Date(detail.lastChatted);
+        this.oldUsernames = detail.oldUsernames === undefined
+            ? undefined
+            : detail.oldUsernames.map(n => {
+                return { username: n.username, lastSeenInChat: new Date(n.lastSeenInChat) }
+            });
+    }
 }
 
 export interface IIrcBotAuxCommandConfig {
@@ -110,7 +132,7 @@ export enum UserChatStatus {
     Connected = 2,
 }
 
-export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
+export abstract class IrcBotBase<TUserDetail extends UserDetail> {
     private _startupPromise: Promise<void>;
     public get hasStarted(): Promise<void> { return this._startupPromise; };
 
@@ -153,7 +175,8 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleChatMessageCount(detail));
         
         const userDetailJson: string = fs.readFileSync(this._userDetailsPath, { encoding: IrcBotBase.userDetailEncoding });
-        this._userDetailByUserId = JSON.parse(userDetailJson); // TODO: Add error checking of some sort
+        const jsonUserCollection = JSON.parse(userDetailJson);
+        this._userDetailByUserId = this.createUserCollection(jsonUserCollection); // necessary to instantiate non-primitive fields like Dates
         console.log(`Successfully loaded userDetail from file: ${this._userDetailsPath}`);
 
         const userTrackingIntervalSeconds = 30;
@@ -234,6 +257,8 @@ export abstract class IrcBotBase<TUserDetail extends IUserDetail> {
     }
 
     protected abstract createFreshUserDetail(username: string, userId: string): TUserDetail;
+    
+    protected abstract createUserCollection(collection: IUserDetailCollection<TUserDetail>): IUserDetailCollection<TUserDetail>;
 
     protected async callCommandFunctionFromConfig(command: IIrcBotAuxCommandConfig, channel: string): Promise<boolean> {
         const responseIndex = randomInt(command.responses.length);

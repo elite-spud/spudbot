@@ -1,5 +1,5 @@
 import { ChanceTime } from "./ChanceTime";
-import { IChatWarriorUserDetail } from "./SpudBotTypes";
+import { ChatWarriorUserDetail } from "./SpudBotTypes";
 import { Utils } from "./Utils";
 
 export class ChatWarriorAttribute {
@@ -74,10 +74,10 @@ export class ChatWarrior {
             return this.state.attributes[cur].value + prev;
         }, 0);
     }
-    protected readonly userDetail: IChatWarriorUserDetail;
+    protected readonly userDetail: ChatWarriorUserDetail;
     public get state(): IChatWarriorState { return this.userDetail.chatWarriorState!; }
 
-    public constructor(userDetail: IChatWarriorUserDetail) {
+    public constructor(userDetail: ChatWarriorUserDetail) {
         if (!userDetail.chatWarriorState) {
             const stats: IChatWarriorAttributes = {
                 strength: new ChatWarriorAttribute("strength", "strength", 10),

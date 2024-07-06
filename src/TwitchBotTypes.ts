@@ -1,4 +1,4 @@
-import { IIrcBotAuxCommandConfig, IIrcBotConfig, IIrcBotConnectionConfig, IUserDetail } from "./IrcBot";
+import { IIrcBotAuxCommandConfig, IIrcBotConfig, IIrcBotConnectionConfig, IUserDetail, UserDetail } from "./IrcBot";
 
 export interface ITwitchUserDetail extends IUserDetail {
     /** globally unique id for a twitch user (persists between username changes) */
@@ -9,6 +9,27 @@ export interface ITwitchUserDetail extends IUserDetail {
     lastKnownSubscribedDate?: Date;
     firstKnownSubscribedDate?: Date;
     subsGifted?: number;
+}
+
+export class TwitchUserDetail extends UserDetail implements ITwitchUserDetail {
+    public id: string;
+    public monthsSubscribed?: number;
+    public currentSubcriptionStreak?: number;
+    public subscriptionTier?: string;
+    public lastKnownSubscribedDate?: Date;
+    public firstKnownSubscribedDate?: Date;
+    public subsGifted?: number;
+    
+    public constructor(detail: ITwitchUserDetail) {
+        super(detail);
+        this.id = detail.id;
+        this.monthsSubscribed = detail.monthsSubscribed;
+        this.currentSubcriptionStreak = detail.currentSubcriptionStreak;
+        this.subscriptionTier = detail.subscriptionTier;
+        this.lastKnownSubscribedDate = detail.lastKnownSubscribedDate === undefined ? undefined : new Date(detail.lastKnownSubscribedDate);
+        this.firstKnownSubscribedDate = detail.firstKnownSubscribedDate === undefined ? undefined : new Date(detail.firstKnownSubscribedDate);
+        this.subsGifted = detail.subsGifted;
+    }
 }
 
 export interface ITwitchBotConfig extends IIrcBotConfig {

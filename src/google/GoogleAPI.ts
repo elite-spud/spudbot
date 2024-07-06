@@ -3,7 +3,7 @@ import { google, sheets_v4 } from "googleapis";
 import { Future } from "../Future";
 import { TaskQueue } from "../TaskQueue";
 import { TwitchBotBase } from "../TwitchBot";
-import { ITwitchUserDetail, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Notification_Subscription } from "../TwitchBotTypes";
+import { TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Notification_Subscription, TwitchUserDetail } from "../TwitchBotTypes";
 import { Bidwar_Spreadsheet } from "./spreadsheets/BidwarSpreadsheet";
 import { GameRequest_Spreadsheet } from "./spreadsheets/GameRequestSpreadsheet";
 import { pushSpreadsheet } from "./spreadsheets/SpreadsheetBase";
@@ -48,12 +48,12 @@ export class GoogleAPI {
     public static readonly bidwarSubSheet = 877321766;
 
     protected readonly _config: GoogleAPIConfig
-    protected readonly _twitchBot: TwitchBotBase<ITwitchUserDetail>;
+    protected readonly _twitchBot: TwitchBotBase<TwitchUserDetail>;
     public readonly _googleSheets = new Future<sheets_v4.Sheets>();
 
     protected _taskQueue: TaskQueue = new TaskQueue();
 
-    public constructor(config: GoogleAPIConfig, twitchBot: TwitchBotBase<ITwitchUserDetail>) { // TODO: make a singleton?
+    public constructor(config: GoogleAPIConfig, twitchBot: TwitchBotBase<TwitchUserDetail>) { // TODO: make a singleton?
         this._config = config;
         this._twitchBot = twitchBot;
     }
@@ -151,8 +151,8 @@ export class GoogleAPI {
                 let fundingStr = ``;
                 if (entry) {
                     fundingStr = entry.percentageFunded <= 1.0
-                        ? ` (${entry.effectivePoints / entry.pointsToActivate} points)`
-                        : ` (${entry.percentageFunded.toFixed(1)}% funded)`;
+                        ? ` (${entry.effectivePoints}/${entry.pointsToActivate} points)`
+                        : ` (${(entry.percentageFunded * 100).toFixed(1)}% funded)`;
                 }
                 this._twitchBot.chat(respondTo, `@${username}, your ${points} points were successfully added to requesting ${gameName} on stream!${fundingStr}`);
             }

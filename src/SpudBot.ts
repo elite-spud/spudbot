@@ -1,16 +1,16 @@
 import { randomInt } from "crypto";
 import * as fs from "fs";
+import { ChannelPointRequests } from "./ChannelPointRequests";
 import { Future } from "./Future";
-import { IIrcBotAuxCommandGroupConfig, IPrivMessageDetail } from "./IrcBot";
+import { IIrcBotAuxCommandGroupConfig, IPrivMessageDetail, IUserDetailCollection } from "./IrcBot";
 import { egadd_quotes, f_zero_gx_interview_quotes, f_zero_gx_quotes, f_zero_gx_story_quotes, luigi_quotes } from "./Quotes";
-import { IChatWarriorUserDetail, ISpudBotConfig, ISpudBotConnectionConfig } from "./SpudBotTypes";
+import { ChatWarriorUserDetail, IChatWarriorUserDetail, ISpudBotConfig, ISpudBotConnectionConfig } from "./SpudBotTypes";
 import { TwitchBotBase } from "./TwitchBot";
-import { CreateCustomChannelPointRewardArgs, ITwitchUserDetail, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_SubscriptionGift, TwitchEventSub_Notification_Subscription, TwitchEventSub_SubscriptionType } from "./TwitchBotTypes";
+import { CreateCustomChannelPointRewardArgs, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_SubscriptionGift, TwitchEventSub_Notification_Subscription, TwitchEventSub_SubscriptionType } from "./TwitchBotTypes";
 import { Utils } from "./Utils";
 import { FundGameRequestOutcomeType, GoogleAPI } from "./google/GoogleAPI";
-import { ChannelPointRequests } from "./ChannelPointRequests";
 
-export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
+export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
     public declare readonly _config: ISpudBotConfig;
     protected readonly _bonkCountPath: string;
     protected _firstChatterName: string | undefined = undefined;
@@ -164,14 +164,24 @@ export class SpudBotTwitch extends TwitchBotBase<IChatWarriorUserDetail> {
         return;
     }
 
-    protected createFreshUserDetail(username: string, userId: string): IChatWarriorUserDetail {
-        const twitchUserDetail: ITwitchUserDetail = {
+    protected override createFreshUserDetail(username: string, userId: string): ChatWarriorUserDetail {
+        const twitchUserDetail: ChatWarriorUserDetail = new ChatWarriorUserDetail({
             id: userId,
             username: username,
             secondsInChat: 0,
             numChatMessages: 0,
-        };
+        });
         return twitchUserDetail;
+    }
+
+    protected override createUserCollection(jsonCollection: IUserDetailCollection<IChatWarriorUserDetail>): IUserDetailCollection<ChatWarriorUserDetail> {
+        const collection: IUserDetailCollection<ChatWarriorUserDetail> = {};
+        for (const userId in jsonCollection) {
+            const jsonDetail = jsonCollection[userId];
+            const detail = new ChatWarriorUserDetail(jsonDetail);
+            collection[userId] = detail;
+        }
+        return collection;
     }
 
     protected async handleEcho(messageDetail: IPrivMessageDetail): Promise<void> {
