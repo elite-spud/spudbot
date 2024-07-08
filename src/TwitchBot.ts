@@ -709,7 +709,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
 
         console.log(`Timing out ${usernameToTimeout} in channel ${channelUsername}`)
         const broadcasterId = await this.getTwitchIdWithCache(channelUsername.replace("#", ""));
-        const chatbotId = await this.getTwitchIdWithCache(this._config.connection.user.nick);
+        // const chatbotId = await this.getTwitchIdWithCache(this._config.connection.user.nick);
         const userIdToBan = await this.getTwitchIdWithCache(usernameToTimeout);
         const body = {
             data: {
@@ -718,7 +718,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
             }
         }
 
-        const response = await fetch(`https://api.twitch.tv/helix/moderation/bans?broadcaster_id=${broadcasterId}&moderator_id=${chatbotId}`, {
+        const response = await fetch(`https://api.twitch.tv/helix/moderation/bans?broadcaster_id=${broadcasterId}&moderator_id=${broadcasterId}`, { // TODO: sign in with the chatbot account for this
             method: `POST`,
             headers: {
                 Authorization: `Bearer ${userAccessToken.access_token}`,
