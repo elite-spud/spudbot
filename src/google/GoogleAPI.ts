@@ -154,7 +154,7 @@ export class GoogleAPI {
                         ? ` (${entry.effectivePoints}/${entry.pointsToActivate} points)`
                         : ` (${(entry.percentageFunded * 100).toFixed(1)}% funded)`;
                 }
-                this._twitchBot.chat(respondTo, `@${username}, your ${points} points were successfully added to requesting ${gameName} on stream!${fundingStr}`);
+                this._twitchBot.chat(respondTo, `@${username}, added ${points} points to requesting ${gameName} on stream!${fundingStr}`);
             }
 
             const notCurrentlyOverfunded = existingEntry.pointsContributed <= existingEntry.pointsToActivate;
