@@ -1,6 +1,7 @@
 import { sheets_v4 } from "googleapis";
 import { borderLeft, getBorderRowBelow, headerFormatCenter, pendingEntryFormat } from "./GameRequestSpreadsheetStyle";
 import { SpreadsheetBase, SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getEntryValue_String, getTimestampStringForSpreadsheet, headersToRowData, parseHeaderFooterRow } from "./SpreadsheetBase";
+import { Utils } from "../../Utils";
 
 export enum Bidwar_Spreadsheet_BlockOrder {
     Pending = 0,
@@ -380,10 +381,10 @@ export class Bidwar_BankEntry {
             if (tokens.length === 1) {
                 amount = Number.parseInt(tokens[0]);
             } else if (tokens.length === 2) {
-                timestamp = new Date(tokens[0]);
+                timestamp = Utils.getDateFromUtcTimestring(tokens[0]);
                 amount = Number.parseInt(tokens[1]);
             } else if (tokens.length >= 3) {
-                timestamp = new Date(tokens[0]);
+                timestamp = Utils.getDateFromUtcTimestring(tokens[0]);
                 amount = Number.parseInt(tokens[1]);
                 detail = tokens[2];
             } else {

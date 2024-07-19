@@ -2,6 +2,7 @@ import { sheets_v4 } from "googleapis";
 import { ChannelPointRequests } from "../../ChannelPointRequests";
 import { borderLeft, getBorderRowBelow, pendingEntryFormat } from "./GameRequestSpreadsheetStyle";
 import { SpreadsheetBase, SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getDatetimeFormulaForSpreadsheet, getElapsedTimeFormulaForSpreadsheet, getEntryValue_Date, getEntryValue_Number, getEntryValue_String, headersToRowData, parseHeaderFooterRow } from "./SpreadsheetBase";
+import { Utils } from "../../Utils";
 
 export enum GameRequest_Spreadsheet_BlockOrder {
     Active = 0,
@@ -353,7 +354,7 @@ export function parseGameRequestActiveEntry(row: sheets_v4.Schema$RowData): Game
         ? getEntryValue_Number(row.values[3])
         : undefined;
     const requestDate = row.values[4].note
-        ? new Date(row.values[4].note)
+        ? Utils.getDateFromUtcTimestring(row.values[4].note)
         : getEntryValue_Date(row.values[4]);
 
     if (!gameName || !gameLengthHours || !requestDate) {

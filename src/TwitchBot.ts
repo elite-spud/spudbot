@@ -291,6 +291,11 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         return false;
     }
 
+    protected emoteWasGigantified(messageDetail: IPrivMessageDetail): boolean {
+        const tags = this.parseTwitchTags(messageDetail.tags);
+        return tags["msg-id"] === "gigantified-emote-message";
+    }
+
     protected parseTwitchBadges(badges?: string): { [badgeName in TwitchBadgeTagKeys]: string } {
         if (!badges) {
             return {};

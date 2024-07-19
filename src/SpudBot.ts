@@ -11,6 +11,8 @@ import { Utils } from "./Utils";
 import { FundGameRequestOutcomeType, GoogleAPI } from "./google/GoogleAPI";
 
 export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
+    public readonly powerupGigantifyBitsCost = 10;
+
     public declare readonly _config: ISpudBotConfig;
     protected readonly _bonkCountPath: string;
     protected _firstChatterName: string | undefined = undefined;
@@ -41,6 +43,7 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleBidwarModular(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleYes(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleNo(detail));
+        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleMessagePowerup(detail));
 
         try {
             this._bonkCountPath = fs.realpathSync(`${this._config.configDir}/bonkCount.txt`);
@@ -775,6 +778,17 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
             userTimeoutSeconds: 0,
         });
         await func(messageDetail);
+    }
+
+    protected async handleMessagePowerup(messageDetail: IPrivMessageDetail): Promise<void> {
+        const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
+            if (this.emoteWasGigantified(messageDetail)) {
+                const userId = await this.getUserIdForUsername(messageDetail.username);
+                await (await this._googleApi).handleBidwarAddFunds(messageDetail.respondTo, userId, messageDetail.username, this.powerupGigantifyBitsCost, `Powerup: Gigantify`, new Date());
+            }
+        }
+
+        await messageHandler(messageDetail);
     }
 
     // protected handleStatus(messageDetails: IPrivMessageDetail): void {

@@ -23,7 +23,7 @@ export class TaskQueue {
             try {
                 await task();
             } catch (err) {
-                // console.log(err); // TODO: pretty this up
+                console.log(err); // TODO: pretty this up
             }
         }
 

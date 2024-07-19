@@ -76,17 +76,23 @@ export class GoogleAPI {
     public async handleGameRequestAddRedeem(event: TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd) : Promise<void> {
         const future = new Future<void>();
         const task = async (): Promise<void> => {
-            const gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet);
-            const existingEntry = gameRequestSpreadsheet.findEntry(event.user_input);
-            if (!existingEntry) {
-                this._twitchBot.chat(`#${event.broadcaster_user_name}`, `@${event.user_name}, your new game request was received. Please wait for an admin to add it to the spreadsheet before contributing any further points.`);
+            try {
+                const gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet);
+                const existingEntry = gameRequestSpreadsheet.findEntry(event.user_input);
+                if (!existingEntry) {
+                    this._twitchBot.chat(`#${event.broadcaster_user_name}`, `@${event.user_name}, your new game request was received. Please wait for an admin to add it to the spreadsheet before contributing any further points.`);
+                    future.resolve();
+                    return;
+                } else {
+                    await this._twitchBot.updateChannelPointRedemption(event.id, event.reward.id, event.broadcaster_user_id, false);
+                    this._twitchBot.chat(`#${event.broadcaster_user_name}`, `@${event.user_name}, your request to add ${event.user_input} has been rejected because it already exists in the spreadsheet (${(existingEntry.percentageFunded * 100).toFixed(1)}% funded). Please consider contributing points instead.`);
+                    future.resolve();
+                    return;
+                }
+            } catch (err) {
+                const errorMessage = `Error handling game request add redemption: ${err.message}`;
                 future.resolve();
-                return;
-            } else {
-                await this._twitchBot.updateChannelPointRedemption(event.id, event.reward.id, event.broadcaster_user_id, false);
-                this._twitchBot.chat(`#${event.broadcaster_user_name}`, `@${event.user_name}, your request to add ${event.user_input} has been rejected because it already exists in the spreadsheet (${(existingEntry.percentageFunded * 100).toFixed(1)}% funded). Please consider contributing points instead.`);
-                future.resolve();
-                return;
+                throw new Error(errorMessage);
             }
         }
         this._taskQueue.addTask(task);
@@ -198,9 +204,17 @@ export class GoogleAPI {
             }
             
             gameRequestSpreadsheet.addEntry(gameName, gameLengthHours, pointsToActivate, username, points, timestamp);
-            await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet, gameRequestSpreadsheet);
-            this._twitchBot.chat(respondTo, `Game request successfully added.`);
-            future.resolve();
+            try {
+                await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet, gameRequestSpreadsheet);
+                this._twitchBot.chat(respondTo, `Game request successfully added.`);
+                future.resolve();
+            } catch (err) {
+                const chatMessage = `Error adding new game request`;
+                this._twitchBot.chat(respondTo, chatMessage);
+                const errorMessage = `${chatMessage}: ${err.message}`;
+                future.resolve();
+                throw new Error(errorMessage);
+            }
         }
         this._taskQueue.addTask(task);
         this._taskQueue.startQueue();
@@ -215,9 +229,18 @@ export class GoogleAPI {
                 future.resolve();
                 return;
             }
-            const bidwarSpreadsheet = await Bidwar_Spreadsheet.getBidwarSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarSubSheet);
-            bidwarSpreadsheet.addBitsToUser(event.user_id, event.user_name, event.bits, new Date(subscription.created_at));
-            await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarSubSheet, bidwarSpreadsheet);
+            try {
+                const bidwarSpreadsheet = await Bidwar_Spreadsheet.getBidwarSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarSubSheet);
+                bidwarSpreadsheet.addBitsToUser(event.user_id, event.user_name, event.bits, new Date(subscription.created_at));
+                await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarSubSheet, bidwarSpreadsheet);
+                future.resolve();
+            } catch (err) {
+                const chatMessage = `Error handling cheer event`;
+                this._twitchBot.chat(`#${event.broadcaster_user_name}`, `${chatMessage}`);
+                future.resolve();
+                const errorMessage = `${chatMessage}: ${err.message}`;
+                throw new Error(errorMessage);
+            }
         }
         this._taskQueue.addTask(task);
         this._taskQueue.startQueue();
@@ -228,17 +251,26 @@ export class GoogleAPI {
     public async handleBidwarContribute(respondTo: string, userId: string, username: string, gameName: string, bits: number, timestamp: Date): Promise<void> {
         const future = new Future<void>();
         const task = async (): Promise<void> => {
-            // TODO: try-catch this and report if the bits were not contributed
-            const bidwarSpreadsheet = await Bidwar_Spreadsheet.getBidwarSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarSubSheet);
-            const status = bidwarSpreadsheet.spendBitsOnEntry(userId, username, gameName, bits, timestamp);
-            if (status.message) {
-                this._twitchBot.chat(respondTo, status.message);
+            try {
+                const bidwarSpreadsheet = await Bidwar_Spreadsheet.getBidwarSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarSubSheet);
+                const status = bidwarSpreadsheet.spendBitsOnEntry(userId, username, gameName, bits, timestamp);
+                if (status.message) {
+                    this._twitchBot.chat(respondTo, status.message);
+                }
+                if (!status.success) {
+                    future.resolve();
+                    return;
+                }
+                await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarSubSheet, bidwarSpreadsheet);
+                this._twitchBot.chat(respondTo, `@${username}, your bits were successfully contributed to ${gameName}.`);
+                future.resolve();
+            } catch (err) {
+                const chatMessage = `Error handling bidwar contribution`;
+                this._twitchBot.chat(respondTo, `${chatMessage}`);
+                future.resolve();
+                const errorMessage = `${chatMessage}: ${err.message}`;
+                throw new Error(errorMessage);
             }
-            if (!status.success) {
-                return;
-            }
-            await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarSubSheet, bidwarSpreadsheet);
-            this._twitchBot.chat(respondTo, `@${username}, your bits were successfully contributed to ${gameName}.`);
         }
         this._taskQueue.addTask(task);
         this._taskQueue.startQueue();
@@ -254,13 +286,18 @@ export class GoogleAPI {
                 const status = bidwarSpreadsheet.addEntry(gameName);
                 if (!status.success && status.message) {
                     this._twitchBot.chat(respondTo, status.message);
+                    future.resolve();
                     return;
                 }
                 await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarSubSheet, bidwarSpreadsheet);
                 this._twitchBot.chat(respondTo, `Bidwar entry ${gameName} was successfully added.`);
+                future.resolve();
             } catch (err) {
-                this._twitchBot.chat(respondTo, `Error adding entry.`);
-                console.log(err);
+                const chatMessage = `Error adding a new bidwar entry`;
+                this._twitchBot.chat(respondTo, `${chatMessage}`);
+                future.resolve();
+                const errorMessage = `${chatMessage}: ${err.message}`;
+                throw new Error(errorMessage);
             }
         }
         this._taskQueue.addTask(task);
@@ -276,10 +313,14 @@ export class GoogleAPI {
                 const bidwarSpreadsheet = await Bidwar_Spreadsheet.getBidwarSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarSubSheet);
                 bidwarSpreadsheet.addBitsToUser(userId, username, amount, timestamp, source ?? `manually added by admin`);
                 await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.bidwarSubSheet, bidwarSpreadsheet);
-                this._twitchBot.chat(respondTo, `User ${username} had ${amount} added to their bidwar bank balance.`);
+                // this._twitchBot.chat(respondTo, `User ${username} had ${amount} added to their bidwar bank balance.`);
+                future.resolve();
             } catch (err) {
-                this._twitchBot.chat(respondTo, `Error adding entry.`);
-                console.log(err);
+                const chatMessage = `Error adding funds to bidwar bank balance`;
+                this._twitchBot.chat(respondTo, `${chatMessage}`);
+                future.resolve();
+                const errorMessage = `${chatMessage}: ${err.message}`;
+                throw new Error(errorMessage);
             }
         }
         this._taskQueue.addTask(task);

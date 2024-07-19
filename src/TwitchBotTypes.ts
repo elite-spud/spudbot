@@ -415,7 +415,7 @@ export class SubTierPoints {
     }
 }
 
-export type TwitchPrivMessageTagKeys = "badge-info" | "badges" | "client-nonce" | "color" | "display-name" | "emotes" | "flags" | "id" | "mod" | "room-id" | "subscriber" | "tmi-sent-ts" | "turbo" | "user-id" | "user-type" | string;
+export type TwitchPrivMessageTagKeys = "badge-info" | "badges" | "bits" | "client-nonce" | "color" | "display-name" | "emotes" | "flags" | "id" | "mod" | "msg-id" | "pinned-chat-paid-amount" | "pinned-chat-paid-currency" | "pinned-chat-paid-exponent" | "pinned-chat-paid-level" | "pinned-chat-paid-is-system-message" | "reply-parent-msg-id" | "reply-parent-user-id" | "reply-parent-user-login" | "reply-parent-display-name" | "reply-parent-msg-body" | "reply-thread-parent-msg-id" | "reply-thread-parent-user-login" | "returning-chatter" | "room-id" | "subscriber" | "tmi-sent-ts" | "turbo" | "user-id" | "user-type" | "vip" | string;
 export type TwitchBadgeTagKeys = "admin" | "bits" | "broadcaster" | "global_mod" | "moderator" | "subscriber" | "staff" | "turbo" | string;
 
 export interface CreateCustomChannelPointRewardArgs {

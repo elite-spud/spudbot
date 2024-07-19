@@ -1,5 +1,6 @@
 import { sheets_v4 } from "googleapis";
 import { borderLeft, headerFormatCenter } from "./GameRequestSpreadsheetStyle";
+import { Utils } from "../../Utils";
 
 export type SpreadsheetRow = (string | number | undefined)[];
 export function headersToRowData(rows: SpreadsheetRow[]): sheets_v4.Schema$RowData[] {
@@ -102,7 +103,7 @@ export function getEntryValue_Date(cell: sheets_v4.Schema$CellData): Date | unde
         return undefined;
     }
     if (cell.formattedValue) {
-        return new Date(cell.formattedValue);
+        return Utils.getDateFromUtcTimestring(cell.formattedValue);
     }
     throw new Error(`Cell value was expected to be a valid Date, but had no formatted value`);
 }
