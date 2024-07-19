@@ -67,6 +67,14 @@
                 "responses": [
                     "I'll be appearing on @Mr_Shasta's GDQ Hotfix show, Do All the Things!, on June 27th at 7:00 PM EST where I'll playing some Luigi's Mansion 100% [PAL] in a race with @KaiiRunz!"
                 ]
+            },
+            {
+                "name": "!bbbbq",
+                "aliases": ["!bbq"],
+                "autoPostIfTitleContainsAny": ["!bbq", "!bbbbq"],
+                "responses": [
+                    "I'll be participating in the Binary Breakers' Summer BBQ on Saturday! @enbyzee will be joining me on comms while I play through Luigi's Mansion Any% (No OoB) [PAL] https://horaro.org/bbsbbq/2024?key=BYOBBQ"
+                ]
             }
         ]
     },
