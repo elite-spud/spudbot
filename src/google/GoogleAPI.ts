@@ -46,7 +46,11 @@ export class GoogleAPI {
     public static readonly incentiveSheetId = "1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY";
     public static readonly gameRequestSubSheet = 384782784;
     public static readonly bidwarSubSheet = 877321766;
-
+    
+    protected _gameRequestOverfundingEnabled: boolean = false;
+    public get gameRequestOverfundingEnabled(): boolean {
+        return this._gameRequestOverfundingEnabled;
+    }
     protected readonly _config: GoogleAPIConfig
     protected readonly _twitchBot: TwitchBotBase<TwitchUserDetail>;
     public readonly _googleSheets = new Future<sheets_v4.Sheets>();
@@ -71,6 +75,10 @@ export class GoogleAPI {
         });
 
         this._googleSheets.resolve(sheets);
+    }
+
+    public setOverfundEnabled(enable: boolean) {
+        this._gameRequestOverfundingEnabled = enable;
     }
 
     public async handleGameRequestAddRedeem(event: TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd) : Promise<void> {
@@ -166,6 +174,12 @@ export class GoogleAPI {
             const notCurrentlyOverfunded = existingEntry.pointsContributed <= existingEntry.pointsToActivate;
             const wouldBeOverfunded = existingEntry.pointsContributed + points > existingEntry.pointsToActivate;
             if (notCurrentlyOverfunded && wouldBeOverfunded) {
+                if (!this.gameRequestOverfundingEnabled) {
+                    this._twitchBot.chat(respondTo, `@${username}, you've submitted enough channel points to overfund the requested game, ${gameName} by ${existingEntry.pointsContributed + points - existingEntry.pointsToActivate} points, but overfunding is currently disabled. Your points have been returned`);
+                    future.resolve({ type: FundGameRequestOutcomeType.Unfulfilled });
+                    return;
+                }
+
                 future.resolve({
                     type: FundGameRequestOutcomeType.PendingConfirmation,
                     overfundAmount: existingEntry.pointsContributed + points - existingEntry.pointsToActivate,

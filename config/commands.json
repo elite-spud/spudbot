@@ -210,7 +210,7 @@
             },
             {
                 "name": "!gamesuggestions",
-                "aliases": ["!gamesuggestion", "!recommendation", "!request", "!requests", "!GameRequest", "!GameRequests"],
+                "aliases": ["!gamesuggestion", "!recommendation", "!request", "!requests", "!GameRequest", "!GameRequests", "!gamerequest", "!gamerequests"],
                 "responses": [
                     "Channel points can be used to request games that you want me to play on stream! Submit your favorite title, challenge me with something super difficult, get weird/goofy with it, or help fund someone else's suggestion! Almost anything is fair game so long as I have the means to play it! (e.g. no VR, foreign visual novels, etc.) Check out the spreadsheet to see everyone's requests! https://docs.google.com/spreadsheets/d/1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY/edit?gid=384782784"
                 ]

@@ -587,7 +587,7 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
 
     protected async handleGameRequestModular(messageDetail: IPrivMessageDetail): Promise<void> {
         const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
-            const userIsBroadcaster = messageDetail.username === this.twitchChannelName
+            const userIsBroadcaster = messageDetail.username === this.twitchChannelName;
             if (!userIsBroadcaster) { // TODO: detect streamer's name from config or make this a basic configuration with a name/broadcaster option
                 this.chat(messageDetail.respondTo, `only the broadcaster can use this command`);
                 return;
@@ -783,6 +783,10 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
     protected async handleMessagePowerup(messageDetail: IPrivMessageDetail): Promise<void> {
         const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
             if (this.emoteWasGigantified(messageDetail)) {
+                const userIsBroadcaster = messageDetail.username === this.twitchChannelName;
+                if (userIsBroadcaster) { // Broadcasters Do not spend bits to redeem powerups on their own channel, so we should not add bits to the bidwar bank.
+                    return;
+                }
                 const userId = await this.getUserIdForUsername(messageDetail.username);
                 await (await this._googleApi).handleBidwarAddFunds(messageDetail.respondTo, userId, messageDetail.username, this.powerupGigantifyBitsCost, `Powerup: Gigantify`, new Date());
             }
