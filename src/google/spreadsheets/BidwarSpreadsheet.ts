@@ -31,14 +31,14 @@ export class Bidwar_Spreadsheet extends SpreadsheetBase {
         if (user === undefined) {
             const newBankUser = new Bidwar_BankEntry({
                 userId: userId,
-                name: username,
+                username: username,
                 contributions: [{ amount: bits, timestamp: timestamp, detail: source }],
             });
             this.bankBlock.entries.push(newBankUser);
             return;
         }
 
-        user.name = username;
+        user.username = username;
         user.contributions.unshift({ amount: bits, timestamp: timestamp, detail: source });
     }
     
@@ -321,7 +321,7 @@ export class Bidwar_BankBlock extends SpreadsheetBlock {
                         userEnteredFormat: pendingEntryFormat,
                     },
                     {
-                        userEnteredValue: { stringValue: n.name },
+                        userEnteredValue: { stringValue: n.username },
                         note: n.userId,
                         userEnteredFormat: pendingEntryFormat,
                     },
@@ -344,16 +344,16 @@ export interface Bidwar_BankEntryContribution {
 
 export class Bidwar_BankEntry {
     public readonly userId: string;
-    public name: string;
+    public username: string;
     public readonly contributions: Bidwar_BankEntryContribution[];
     
     public constructor(args: {
         userId: string,
-        name: string,
+        username: string,
         contributions: Bidwar_BankEntryContribution[]
     }) {
         this.userId = args.userId;
-        this.name = args.name;
+        this.username = args.username;
         this.contributions = Array.from(args.contributions);
     }
 
@@ -424,15 +424,15 @@ export function parseBidwarBankEntry(row: sheets_v4.Schema$RowData): Bidwar_Bank
         throw new Error("Expected bank entry row to have values");
     }
 
-    const gameName = getEntryValue_String(row.values[1]);
-    if (!gameName) {
+    const username = getEntryValue_String(row.values[1]);
+    if (!username) {
         throw new Error("gameName not found");
     }
     const contributionsString = row.values[0].note ?? "";
     const contributions = Bidwar_BankEntry.parseContributions(contributionsString);
     const bankEntry = new Bidwar_BankEntry({
         userId: row.values[1].note ?? "",
-        name: gameName,
+        username: username,
         contributions: contributions,
     });
     return bankEntry;
