@@ -5,12 +5,12 @@ import * as open from "open";
 import { WebSocket } from "ws";
 import { ConsoleColors } from "./ConsoleColors";
 import { Future } from "./Future";
-import { IIrcBotAuxCommandGroupConfig, IJoinMessageDetail, IPartMessageDetail, IPrivMessageDetail, IrcBotBase } from "./IrcBot";
+import { IIrcBotAuxCommandGroupConfig, IIrcBotMiscConfig, IJoinMessageDetail, IPartMessageDetail, IPrivMessageDetail, IrcBotBase } from "./IrcBot";
 import { CreateCustomChannelPointRewardArgs, ITwitchBotAuxCommandConfig, ITwitchBotConfig, ITwitchBotConnectionConfig, SubTierPoints, TwitchAppToken, TwitchBadgeTagKeys, TwitchBroadcasterSubscriptionsResponse, TwitchErrorResponse, TwitchEventSub_CreateSubscription, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_SubscriptionEnd, TwitchEventSub_Event_SubscriptionGift, TwitchEventSub_Event_SubscriptionMessage, TwitchEventSub_Event_SubscriptionStart, TwitchEventSub_Notification_Payload, TwitchEventSub_Notification_Subscription, TwitchEventSub_Reconnect_Payload, TwitchEventSub_SubscriptionType, TwitchEventSub_Welcome_Payload, TwitchGetChannelInfo, TwitchGetChannelInfoResponse, TwitchGetCustomChannelPointRewardInfo, TwitchGetCustomChannelPointRewardResponse, TwitchGetStreamInfo, TwitchGetStreamsResponse, TwitchPrivMessageTagKeys, TwitchUserDetail, TwitchUserInfoResponse, TwitchUserToken } from "./TwitchBotTypes";
 import { HeldTaskGroup } from "./HeldTask";
 
 export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = TwitchUserDetail> extends IrcBotBase<TUserDetail> {
-    public static readonly maxChatMessageLength = 500;
+    public static readonly twitchMaxChatMessageLength = 500;
     protected static readonly _knownConfig: { encoding: "utf8" } = { encoding: "utf8" };
 
     public declare readonly _config: ITwitchBotConfig;
@@ -26,10 +26,14 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
     protected _currentSubPoints?: number = undefined;
     protected _currentSubs?: number = undefined;
 
-    public constructor(connection: ITwitchBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], configDir: string) {
+    protected override get maxChatMessageLength(): number {
+        return this._config.misc.maxChatMessageLength ?? TwitchBotBase.twitchMaxChatMessageLength;
+    }
+
+    public constructor(miscConfig: IIrcBotMiscConfig, connection: ITwitchBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], configDir: string) {
         super(Object.assign(
             TwitchBotBase._knownConfig,
-            { connection, auxCommandGroups, configDir }
+            { connection, auxCommandGroups, configDir, misc: miscConfig }
         ));
     }
 
@@ -743,15 +747,6 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
 
     public clearTimeout(channel: string, username: string): void {
         this.timeout(channel, username, 1);
-    }
-
-    public override chat(recipient: string, message: string): void {
-        let actualMessage = message;
-        if (message.length > TwitchBotBase.maxChatMessageLength) {
-            actualMessage = "<Message was too long. Please file a bug report with the owner :)>"; // TODO: include first few words of attempted message
-            console.log(`Message too long for Twitch: ${message}`);
-        }
-        super.chat(recipient, actualMessage);
     }
 
     public async getChannelPointRewards(): Promise<TwitchGetCustomChannelPointRewardInfo[]> {

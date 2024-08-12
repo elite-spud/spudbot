@@ -2,7 +2,7 @@ import { randomInt } from "crypto";
 import * as fs from "fs";
 import { ChannelPointRequests } from "./ChannelPointRequests";
 import { Future } from "./Future";
-import { IIrcBotAuxCommandGroupConfig, IPrivMessageDetail, IUserDetailCollection } from "./IrcBot";
+import { IIrcBotAuxCommandGroupConfig, IIrcBotMiscConfig, IPrivMessageDetail, IUserDetailCollection } from "./IrcBot";
 import { egadd_quotes, f_zero_gx_interview_quotes, f_zero_gx_quotes, f_zero_gx_story_quotes, luigi_quotes } from "./Quotes";
 import { ChatWarriorUserDetail, IChatWarriorUserDetail, ISpudBotConfig, ISpudBotConnectionConfig } from "./SpudBotTypes";
 import { TwitchBotBase } from "./TwitchBot";
@@ -23,8 +23,8 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
     protected readonly _googleApi = new Future<GoogleAPI>();
 
 
-    public constructor(connection: ISpudBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], configDir: string) {
-        super(connection, auxCommandGroups, configDir);
+    public constructor(miscConfig: IIrcBotMiscConfig, connection: ISpudBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], configDir: string) {
+        super(miscConfig, connection, auxCommandGroups, configDir);
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleEcho(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleFirst(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleSlot(detail));

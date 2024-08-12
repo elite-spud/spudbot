@@ -6,10 +6,15 @@ import { ConsoleColors } from "./ConsoleColors";
 import { TimerGroup } from "./TimerGroup";
 
 export interface IIrcBotConfig {
-    connection: IIrcBotConnectionConfig,
-    encoding: "utf8" | "ascii",
-    auxCommandGroups: IIrcBotAuxCommandGroupConfig[],
-    configDir: string,
+    connection: IIrcBotConnectionConfig;
+    encoding: "utf8" | "ascii";
+    auxCommandGroups: IIrcBotAuxCommandGroupConfig[];
+    configDir: string;
+    misc: IIrcBotMiscConfig;
+}
+
+export interface IIrcBotMiscConfig {
+    maxChatMessageLength?: number;
 }
 
 export interface IIrcBotConnectionConfig {
@@ -163,9 +168,13 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
     protected readonly _userDetailByUserId: IUserDetailCollection<TUserDetail>;
     protected readonly _usernamesInChat: { [key: string]: UserChatStatus } = {};
 
-    protected readonly _userDetailsPath;
-    protected readonly _userDetailsPathCsv;
-    protected readonly chatHistoryPath = ``; // fs.realpathSync(`${configDir}/users/twitchChatHistory.csv`);
+    protected readonly _userDetailsPath: string;
+    protected readonly _userDetailsPathCsv: string;
+    protected readonly _chatHistoryPath: string = ``; // fs.realpathSync(`${configDir}/users/twitchChatHistory.csv`);
+
+    protected get maxChatMessageLength(): number {
+        return this._config.misc.maxChatMessageLength ?? Number.MAX_SAFE_INTEGER
+    }
 
     public constructor(config: IIrcBotConfig) {
         this._config = config;
@@ -280,7 +289,7 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
         }
         const responseIndex = randomInt(command.responses.length);
         const response = command.responses[responseIndex];
-        this.chat(channel, response);
+        this.chat(channel, response, true);
         return true;
     }
 
@@ -336,7 +345,7 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
     public getSimpleCommandFunc(triggerPhrases: string[], responses: string[], strictMatch: boolean, commandId: string, globalTimeoutSeconds: number, userTimeoutSeconds: number): (message: IPrivMessageDetail) => Promise<void> {
         const subFunc = async (messageDetail: IPrivMessageDetail): Promise<void> => {
             const response = responses[randomInt(responses.length)];
-            this.chat(messageDetail.respondTo, response);            
+            this.chat(messageDetail.respondTo, response, true);
         }
         return this.getCommandFunc({
             messageHandler: subFunc,
@@ -651,19 +660,25 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
         return messageDetails
     }
 
-    public chat(recipient: string, message: string): void {
+    public chat(recipient: string, message: string, ignoreCharacterLimit: boolean = false): void {
         // TODO: Wait on join here?
-        this.sendRaw(`PRIVMSG ${recipient} :${message}\r\n`);
 
-        // // Log chat messages that the bot sends as well
-        // const dummyPrivMessage: IPrivMessageDetail = {
-        //     command: "PRIVMESSAGE",
-        //     username: this._config.connection.user.nick,
-        //     hostname: this._config.connection.server.host,
-        //     recipient: this._config.connection.server.channel,
-        //     message: "",
-        //     respondTo: this._config.connection.server.channel,
-        // };
-        // this.handleChatMessageCount(dummyPrivMessage).catch(() => {});
+        let actualMessage = message;
+        if (actualMessage.length > this.maxChatMessageLength) {
+            if (ignoreCharacterLimit) {
+                while (actualMessage.length > this.maxChatMessageLength) {
+                    const head = actualMessage.substring(0, this.maxChatMessageLength);
+                    this.chat(recipient, head);
+                    actualMessage = actualMessage.substring(this.maxChatMessageLength);
+                }
+                this.chat(recipient, actualMessage);
+                return;
+            }
+
+            actualMessage = "<Message was too long. Please file a bug report with the owner :)>";
+            console.log(`Message too long: ${message}`);
+        }
+
+        this.sendRaw(`PRIVMSG ${recipient} :${actualMessage}\r\n`);
     }
 }
