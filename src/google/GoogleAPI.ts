@@ -197,7 +197,7 @@ export class GoogleAPI {
         return future;
     }
 
-    public async handleGameRequestAdd(respondTo: string, gameName: string, gameLengthHours: number, pointsToActivate: number | undefined, username: string, points: number, timestamp: Date): Promise<void> {
+    public async handleGameRequestAdd(respondTo: string, gameName: string, gameLengthHours: number, pointsToActivate: number | undefined, userId: string, username: string, points: number, timestamp: Date): Promise<void> {
         const future = new Future<void>();
         const task = async (): Promise<void> => {
             let gameRequestSpreadsheet: GameRequest_Spreadsheet;
@@ -217,7 +217,7 @@ export class GoogleAPI {
                 return;
             }
             
-            gameRequestSpreadsheet.addEntry(gameName, gameLengthHours, pointsToActivate, username, points, timestamp);
+            gameRequestSpreadsheet.addEntry(gameName, gameLengthHours, pointsToActivate, userId, username, points, timestamp);
             try {
                 await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet, gameRequestSpreadsheet);
                 this._twitchBot.chat(respondTo, `Game request successfully added.`);

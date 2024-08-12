@@ -56,7 +56,7 @@ export class GameRequest_Spreadsheet extends SpreadsheetBase {
             contribution.points += points;
 
             if (pendingEntry.pointsContributed >= pendingEntry.pointsToActivate) {         
-                const activeEntry = new GameRequest_ActiveEntry({ gameName: pendingEntry.gameName, gameLengthHours: pendingEntry.gameLengthHours, pointsToActivate: pendingEntry.pointsToActivate, requestDate: timestamp, contributions: Array.from(pendingEntry.contributions) });
+                const activeEntry = new GameRequest_ActiveEntry({ gameName: pendingEntry.gameName, gameLengthHours: pendingEntry.gameLengthHours, pointsToActivate: pendingEntry.pointsToActivate, requestDate: timestamp, contributions: Array.from(pendingEntry.contributions), originalRequestorId: pendingEntry.originalRequestorId, originalRequestorName: pendingEntry.originalRequestorName });
                 this.pendingBlock.entries.splice(pendingEntryIndex, 1);
                 this.activeBlock.entries.push(activeEntry);
             }
@@ -66,9 +66,9 @@ export class GameRequest_Spreadsheet extends SpreadsheetBase {
         throw new Error();
     }
 
-    public addEntry(gameName: string, gameLengthHours: number, pointsToActivate: number | undefined, username: string, points: number, timestamp: Date): void {
+    public addEntry(gameName: string, gameLengthHours: number, pointsToActivate: number | undefined, userId: string, username: string, points: number, timestamp: Date): void {
         const contributions = [ { name: username, points: 0 } ];
-        const pendingEntry = new GameRequest_PendingEntry({ gameName, gameLengthHours, pointsToActivate, contributions });
+        const pendingEntry = new GameRequest_PendingEntry({ gameName, gameLengthHours, pointsToActivate, contributions, originalRequestorId: userId, originalRequestorName: username });
         this.pendingBlock.entries.push(pendingEntry);
         this.addPointsToEntry(username, gameName, points, timestamp);
     }
@@ -171,13 +171,18 @@ export class GameRequest_ActiveBlock extends SpreadsheetBlock {
                         userEnteredFormat: Object.assign({}, pendingEntryFormat, <sheets_v4.Schema$CellFormat>{ numberFormat: { type: "NUMBER", pattern: "0.0%" } }),
                     },
                     {
+                        userEnteredValue: { stringValue: n.originalRequestorName, },
+                        note: n.originalRequestorId,
+                        userEnteredFormat: pendingEntryFormat,
+                    },
+                    {
                         userEnteredFormat: borderLeft,
                     }
                 ],
             };
             return rowData;
         });
-        return headerRows.concat(entryRows).concat(getBorderRowBelow(7));
+        return headerRows.concat(entryRows).concat(getBorderRowBelow(8));
     }
 }
 
@@ -187,7 +192,9 @@ export abstract class GameRequestEntry {
         public readonly gameLengthHours: number,
         /** overrides the calculated activation requirement if supplied */
         protected readonly _pointsToActivate: number | undefined,
-        public readonly contributions: { name: string, points: number }[]) {
+        public readonly contributions: { name: string, points: number }[],
+        public readonly originalRequestorId: string,
+        public readonly originalRequestorName: string) {
     }
 
     public get pointsContributed(): number {
@@ -213,9 +220,11 @@ export class GameRequest_ActiveEntry extends GameRequestEntry {
         requestDate: Date,
         /** overrides the calculated activation requirement if supplied */
         pointsToActivate: number | undefined,
-        contributions: { name: string, points: number }[]
+        contributions: { name: string, points: number }[],
+        originalRequestorId: string,
+        originalRequestorName: string,
     }) {
-        super(args.gameName, args.gameLengthHours, args.pointsToActivate, args.contributions);
+        super(args.gameName, args.gameLengthHours, args.pointsToActivate, args.contributions, args.originalRequestorId, args.originalRequestorName);
         this.requestDate = args.requestDate;
     }
 
@@ -290,13 +299,18 @@ export class GameRequest_PendingBlock extends SpreadsheetBlock {
                         userEnteredFormat: Object.assign({}, pendingEntryFormat, <sheets_v4.Schema$CellFormat>{ numberFormat: { type: "NUMBER", pattern: "0.0%" } }),
                     },
                     {
+                        userEnteredValue: { stringValue: n.originalRequestorName, },
+                        note: n.originalRequestorId,
+                        userEnteredFormat: pendingEntryFormat,
+                    },
+                    {
                         userEnteredFormat: borderLeft,
                     },
                 ],
             };
             return rowData;
         });
-        return headerRows.concat(entryRows).concat([getBorderRowBelow(5)]);
+        return headerRows.concat(entryRows).concat([getBorderRowBelow(6)]);
     }
 }
 
@@ -308,8 +322,10 @@ export class GameRequest_PendingEntry extends GameRequestEntry {
             /** overrides the calculated activation requirement if supplied */
             pointsToActivate: number | undefined,
             contributions: { name: string, points: number }[],
+            originalRequestorId: string,
+            originalRequestorName: string,
         }) {
-        super(args.gameName, args.gameLengthHours, args.pointsToActivate, args.contributions);
+        super(args.gameName, args.gameLengthHours, args.pointsToActivate, args.contributions, args.originalRequestorId, args.originalRequestorName);
     }
 
     public override get percentageFunded(): number {
@@ -356,6 +372,8 @@ export function parseGameRequestActiveEntry(row: sheets_v4.Schema$RowData): Game
     const requestDate = row.values[4].note
         ? Utils.getDateFromUtcTimestring(row.values[4].note)
         : getEntryValue_Date(row.values[4]);
+    const originalRequestorName = getEntryValue_String(row.values[7]) ?? "";
+    const originalRequestorId = row.values[7].note ?? "";
 
     if (!gameName || !gameLengthHours || !requestDate) {
         throw new Error("Required properties not found when parsing active game request entry: gameName, gameLengthHours, requestDate");
@@ -367,6 +385,8 @@ export function parseGameRequestActiveEntry(row: sheets_v4.Schema$RowData): Game
         pointsToActivate,
         contributions,
         requestDate,
+        originalRequestorId,
+        originalRequestorName,
     });
     return entry;
 }
@@ -403,6 +423,8 @@ export function parseGameRequestPendingEntry(row: sheets_v4.Schema$RowData): Gam
     const pointsToActivate = row.values[3]
         ? getEntryValue_Number(row.values[3])
         : undefined;
+    const originalRequestorName = getEntryValue_String(row.values[5]) ?? "";
+    const originalRequestorId = row.values[5].note ?? "";
 
     if (!gameName || !gameLengthHours) {
         throw new Error("Required properties not found when parsing active game request entry: gameName, gameLengthHours");
@@ -413,6 +435,8 @@ export function parseGameRequestPendingEntry(row: sheets_v4.Schema$RowData): Gam
         gameLengthHours,
         contributions,
         pointsToActivate,
+        originalRequestorId,
+        originalRequestorName,
     });
 
     return entry;

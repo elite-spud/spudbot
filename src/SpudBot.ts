@@ -612,9 +612,13 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
                 }
                 const gameName = args[0].replaceAll("\"", "");
                 if (args.length === 4) {
-                    await (await this._googleApi).handleGameRequestAdd(messageDetail.respondTo, gameName, Number.parseInt(args[1]), undefined, args[2], Number.parseInt(args[3]), new Date());
+                    const username = args[2];
+                    const userId = await this.getUserIdForUsername(username);
+                    await (await this._googleApi).handleGameRequestAdd(messageDetail.respondTo, gameName, Number.parseInt(args[1]), undefined, userId, username, Number.parseInt(args[3]), new Date());
                 } else if (args.length === 5) {
-                    await (await this._googleApi).handleGameRequestAdd(messageDetail.respondTo, gameName, Number.parseInt(args[1]), Number.parseInt(args[2]), args[3], Number.parseInt(args[4]), new Date());
+                    const username = args[3];
+                    const userId = await this.getUserIdForUsername(username);
+                    await (await this._googleApi).handleGameRequestAdd(messageDetail.respondTo, gameName, Number.parseInt(args[1]), Number.parseInt(args[2]), userId, username, Number.parseInt(args[4]), new Date());
                 } else {
                     this.chat(messageDetail.respondTo, `!gameRequest add command was malformed (expected at least 4 arguments, but found ${args.length})`);
                 }
