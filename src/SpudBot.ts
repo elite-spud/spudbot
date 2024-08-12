@@ -595,13 +595,16 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
             const regex = /([^\s"]+|"[^"]*")+/g;
             const tokens = messageDetail.message.match(regex) ?? [];
 
-            const adminHelpMessage = `!gamerequest [add, remove, fund]`;
             if (tokens.length <= 1) {
+                return; // Defer to configured command
+            }
+
+            if (tokens[1] === "help") {
+                const adminHelpMessage = `!gamerequest [add, remove, fund]`;
                 this.chat(messageDetail.respondTo, adminHelpMessage);
                 return;
             }
-
-            if (tokens[1] === "add") {
+            else if (tokens[1] === "add") {
                 const args = tokens.slice(2);
                 if (args.length === 0) {
                     this.chat(messageDetail.respondTo, `!gamerequest add <gameName> <gameLengthHours> [pointsToActivate] <username> <points>`);

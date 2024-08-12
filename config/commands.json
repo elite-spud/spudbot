@@ -55,6 +55,7 @@
             {
                 "name": "!attractmode",
                 "aliases": ["!la", "!ladyarcaders"],
+                "expiresAt": "2024-05-06T02:00:00",
                 "autoPostIfTitleContainsAny": ["!attractmode"],
                 "responses": [
                     "I'll be participating in the Lady Arcaders' Attract Mode once again on May 5th at 1:00 CST, by playing some F-Zero GX. The plan is to speedrun through the story mode on Very Hard difficulty, but if I finish that quickly, then I might have time for some other stuff!"
@@ -63,6 +64,7 @@
             {
                 "name": "!gdqhotfix",
                 "aliases": ["!hotfix"],
+                "expiresAt": "2024-06-28T02:00:00",
                 "autoPostIfTitleContainsAny": ["!hotfix", "!gdqhotfix"],
                 "responses": [
                     "I'll be appearing on @Mr_Shasta's GDQ Hotfix show, Do All the Things!, on June 27th at 7:00 PM EST where I'll playing some Luigi's Mansion 100% [PAL] in a race with @KaiiRunz!"
@@ -71,10 +73,21 @@
             {
                 "name": "!bbbbq",
                 "aliases": ["!bbq"],
+                "expiresAt": "2024-07-01T02:00:00",
                 "autoPostIfTitleContainsAny": ["!bbq", "!bbbbq"],
                 "responses": [
                     "I'll be participating in the Binary Breakers' Summer BBQ on Saturday! @enbyzee will be joining me on comms while I play through Luigi's Mansion Any% (No OoB) [PAL] https://horaro.org/bbsbbq/2024?key=BYOBBQ"
                 ]
+            },
+            {
+                "name": "!completithon",
+                "expiresAt": "2024-08-18T02:00:00",
+                "autoPostIfTitleContainsAny": ["!completithon"],
+                "responses": [
+                    "I'll be running Luigi's Mansion Max% as part of Completithon 2024 on Sunday, August 18th at 8:30 PM EDT! https://horaro.org/completithon2024/schedule As far as I know, this is the first Max% showcase in several years, so it's certain to be a special run!"
+                ]
+            },
+            {
             }
         ]
     },
@@ -211,6 +224,7 @@
             {
                 "name": "!gamesuggestions",
                 "aliases": ["!gamesuggestion", "!recommendation", "!request", "!requests", "!GameRequest", "!GameRequests", "!gamerequest", "!gamerequests"],
+                "strict": true,
                 "responses": [
                     "Channel points can be used to request games that you want me to play on stream! Submit your favorite title, challenge me with something super difficult, get weird/goofy with it, or help fund someone else's suggestion! Almost anything is fair game so long as I have the means to play it! (e.g. no VR, foreign visual novels, etc.) Check out the spreadsheet to see everyone's requests! https://docs.google.com/spreadsheets/d/1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY/edit?gid=384782784"
                 ]
@@ -218,7 +232,7 @@
             {
                 "name": "!bidwar",
                 "strict": true,
-                "aliases": ["!bits", "!incentive", "!incentives", "!goals"],
+                "aliases": ["!incentive", "!incentives", "!goals"],
                 "responses": [
                     "Have you cheered bits on the channel before? You might have a balance in the bidwar bank! The current bidwar will be active until the end of 2024, so make sure to use your points to vote on your favorite option. Type '!bidwar contribute' to get started! https://docs.google.com/spreadsheets/d/1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY/edit?gid=877321766"
                 ]
@@ -523,6 +537,18 @@
                 "aliases": ["!wheel"],
                 "responses": [
                     "Wanna spin the wheel of fast yourself? Try it here! https://wheelofnames.com/7xx-ect. The cups wheel can also be found here: https://wheelofnames.com/uyf-9ey"
+                ]
+            },
+            {
+                "name": "!subs",
+                "responses": [
+                    "Use this link to manage/gift Twitch subscriptions through a browser (mostly to avoid mobile fees) https://www.twitch.tv/subs/elite_spud. Change the username at the end to manage subs on other channels."
+                ]
+            },
+            {
+                "name": "!bits",
+                "responses": [
+                    "Use this link to purchase bits through a browser (mostly to avoid mobile fees) https://www.twitch.tv/bits."
                 ]
             }
         ]

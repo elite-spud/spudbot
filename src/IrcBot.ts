@@ -31,6 +31,11 @@ export interface IIrcBotAuxCommandGroupConfig {
     commands: IIrcBotAuxCommandConfig[];
 }
 
+export interface CommandsFromConfigResult {
+    chatResponses: ((messageDetail: IPrivMessageDetail) => Promise<void>)[];
+    timerGroups: TimerGroup[];
+}
+
 export interface IUserDetailCollection<TUserDetail extends UserDetail> {
     [userId: string]: TUserDetail;
 }
@@ -71,6 +76,8 @@ export interface IIrcBotAuxCommandConfig {
     aliases?: string[];
     /** Matches names exactly (ignoring whitespace) */
     strict?: boolean; // TODO: allow specifying strict match for each name/alias, not all.
+    /** Date string */
+    expiresAt?: string;
     responses: string[];
     /** Delay until this command can be triggered again by a particular user (defaults to 30 seconds) */
     userTimeoutSeconds?: number;
@@ -168,7 +175,7 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
         this._socket = new net.Socket();
         this._socket.setNoDelay();
 
-        const configCommands = this.getCommandsFromConfig(config.auxCommandGroups, config.connection.server.channel);
+        const configCommands: CommandsFromConfigResult = this.getCommandsFromConfig(config.auxCommandGroups, config.connection.server.channel);
         this._configuredPrivMessageResponseHandlers = configCommands.chatResponses;
         this._configuredTimerGroups = configCommands.timerGroups;
 
@@ -261,6 +268,16 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
     protected abstract createUserCollection(collection: IUserDetailCollection<TUserDetail>): IUserDetailCollection<TUserDetail>;
 
     protected async callCommandFunctionFromConfig(command: IIrcBotAuxCommandConfig, channel: string): Promise<boolean> {
+        if (command.expiresAt !== undefined) {
+            try {
+                const expireTime = new Date(command.expiresAt).getTime();
+                if (expireTime < Date.now()) {
+                    return false;
+                }
+            } catch (err) {
+                console.log(`Failed to compare command expiration time: ${err.message}`);
+            }
+        }
         const responseIndex = randomInt(command.responses.length);
         const response = command.responses[responseIndex];
         this.chat(channel, response);
@@ -268,7 +285,7 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
     }
 
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-    protected getCommandsFromConfig(commandGroups: IIrcBotAuxCommandGroupConfig[], channelToAddTimers: string | undefined) {
+    protected getCommandsFromConfig(commandGroups: IIrcBotAuxCommandGroupConfig[], channelToAddTimers: string | undefined): CommandsFromConfigResult {
         const chatResponses: ((messageDetail: IPrivMessageDetail) => Promise<void>)[] = [];
         const timerGroups: TimerGroup[] = [];
         
