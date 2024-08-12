@@ -19,3 +19,5 @@ A Node.js Typescript twitch bot used at [twitch.tv/elite_spud](twitch.tv/elite_s
 - Twitch OIDC tokens used to make API requests must be requested by an OIDC client that has been registered with Twitch [here](https://dev.twitch.tv/console/apps)
   - This bot assumes the [client credentials flow](https://github.com/elite-spud/spudbot/blob/6f43c96f40b5330dbd4a1650d7532ec407775e09/config/sample_config.json#L13-L14) is used to request the token
 - Twitch API referenced from [this documentation](https://dev.twitch.tv/docs/irc)
+- Google API configuration can be acquired by following [this guide](https://developers.google.com/workspace/guides/create-project). I obtained Node.js specific details from [this quickstart guide](https://developers.google.com/sheets/api/quickstart/nodejs)
+  - Because the chatbot does not allow users to "share" Google Workspace items with the service account, it is important to grant your service account direct access to any documents/spreadsheets it should modify.
