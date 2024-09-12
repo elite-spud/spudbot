@@ -668,7 +668,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
 
     protected async deleteUnusedEventSubSubscriptions(subs: any[]): Promise<void> {
         let numDeleted = 0;
-        for (const sub of subs) {
+        for (const sub of subs) { // TODO: fix subs not iterable error
             if (sub.status === "websocket_failed_ping_pong" || "websocket_disconnected") {
                 const deleteResponse = await fetch(`https://api.twitch.tv/helix/eventsub/subscriptions?id=${sub.id}`, {
                     method: `DELETE`,

@@ -62,7 +62,7 @@ export const headerFormatCenter: sheets_v4.Schema$CellFormat = {
     horizontalAlignment: "CENTER",
 };
 
-export const pendingEntryFormat: sheets_v4.Schema$CellFormat = {
+export const basicEntryFormat: sheets_v4.Schema$CellFormat = {
     backgroundColorStyle: { rgbColor: { red: 0.93, blue: 0.93, green: 0.93 } },
     borders: {
         top: { style: "SOLID" },
