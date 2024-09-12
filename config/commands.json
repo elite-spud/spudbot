@@ -91,9 +91,26 @@
             {
                 "name": "!charity",
                 "expiresAt": "2024-10-01T02:00:00",
-                "autoPostIfTitleContainsAny": ["!jdrf", "!fundraiser", "bt1d", "gameovert1d", "!tiltify", "!campaign", "!charitycampaign"],
+                "aliases": ["!donate", "!jdrf", "!fundraiser", "!fundraising", "!gameovert1d", "!tiltify", "!campaign", "!charitycampaign"],
+                "autoPostIfTitleContainsAny": ["jdrf", "fundraiser", "fundraising", "!gameovert1d", "!tiltify", "!campaign", "!charitycampaign", "!donate"],
                 "responses": [
-                    "Through the end of September, I'll be raising money to support Breakthrough T1D (formerly JDRF), a nonprofit organization that's focused around researching Type 1 Diabetes. On Sep 29th, the fundraising campaign will culminate in a Luigi's Mansion Crowd Control stream, which you can facilitate by donating to BT1D through the CC interface! https://interact.crowdcontrol.live/#/twitch/47243772/coins. Any donations made prior to the 29th will still earn you coins that can be used to fuel the chaos!  If you'd prefer to donate directly without any Crowd Control involvement, please use the main campaign link here: https://tiltify.com/@elite-spud/game-over-t1d-2024"
+                    "Through the end of September, I'll be raising money to support Breakthrough T1D (formerly JDRF), the world's largest nonprofit funder of Type 1 Diabetes research. On Sep 29th, the fundraising campaign will culminate in a Luigi's Mansion Crowd Control stream, which you can facilitate by donating to BT1D through the CC interface! https://interact.crowdcontrol.live/#/twitch/47243772/coins. Any donations made prior to the 29th will still earn you coins that can be used to fuel the chaos!            If you'd prefer to donate directly without any Crowd Control involvement, please use the main campaign link here: https://tiltify.com/@elite-spud/game-over-t1d-2024"
+                ]
+            },
+            {
+                "name": "!bt1d",
+                "expiresAt": "2024-10-01T02:00:00",
+                "autoPostIfTitleContainsAny": ["jdrf", "fundraiser", "fundraising", "bt1d", "!gameovert1d", "!tiltify", "!campaign", "!charitycampaign", "!donate"],
+                "responses": [
+                    "Breakthrough T1D is the world’s largest nonprofit funder of type 1 diabetes (T1D) research. With your support, we hope to find cures for T1D and improve the lives of those affected by it: https://tiltify.com/@elite-spud/game-over-t1d-2024"
+                ]
+            },
+            {
+                "name": "!chickennugget%",
+                "expiresAt": "2024-10-01T02:00:00",
+                "autoPostIfTitleContainsAny": ["!nugget%", "!Nugget%", "!ChickenNugget%"],
+                "responses": [
+                    "This playthrough fulfills an incentive that was met by my community! I'll be playing through what is essentially Max%, only I'll be eating 1 chicken nugget after each Boo that I capture. Yes, Boolossus counts as 15 nuggets. I am aware that this is a bad idea, because I am the one who came up with it."
                 ]
             }
         ]
@@ -230,7 +247,7 @@
             },
             {
                 "name": "!gamesuggestions",
-                "aliases": ["!gamesuggestion", "!recommendation", "!request", "!requests", "!GameRequest", "!GameRequests", "!gamerequest", "!gamerequests"],
+                "aliases": ["!gamesuggestion", "!recommendation", "!request", "!requests", "!GameRequest", "!GameRequests", "!gamerequest", "!gamerequests", "!ViewerRequest", "!viewerrequest", "!viewerRequest", "!ViewerRequests"],
                 "strict": true,
                 "responses": [
                     "Channel points can be used to request games that you want me to play on stream! Submit your favorite title, challenge me with something super difficult, get weird/goofy with it, or help fund someone else's suggestion! Almost anything is fair game so long as I have the means to play it! (e.g. no VR, foreign visual novels, etc.) Check out the spreadsheet to see everyone's requests! https://docs.google.com/spreadsheets/d/1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY/edit?gid=384782784"
