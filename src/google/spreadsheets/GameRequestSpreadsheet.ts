@@ -138,9 +138,9 @@ export class GameRequest_Spreadsheet extends SpreadsheetBase {
         let completedBlock: GameRequest_CompletedBlock | undefined = undefined;
         for (let i = 0; i < 4; i++) {
             if (i === GameRequest_Spreadsheet_BlockOrder.Funded) {
-                unfundedBlock = parseGameRequestUnfundedBlock(blockArray[i]);
-            } else if (i === GameRequest_Spreadsheet_BlockOrder.Unfunded) {
                 fundedBlock = parseGameRequestFundedBlock(blockArray[i]);
+            } else if (i === GameRequest_Spreadsheet_BlockOrder.Unfunded) {
+                unfundedBlock = parseGameRequestUnfundedBlock(blockArray[i]);
             } else if (i === GameRequest_Spreadsheet_BlockOrder.InProgress) {
                 inProgressBlock = parseGameRequestInProgressBlock(blockArray[i]);
             } else if (i === GameRequest_Spreadsheet_BlockOrder.Completed) {
@@ -363,7 +363,7 @@ export class GameRequest_UnfundedBlock extends SpreadsheetBlock {
                         userEnteredFormat: basicEntryFormat,
                     },
                     {
-                        userEnteredValue: { stringValue: getDateFormulaForSpreadsheet(n.dateRequested), },
+                        userEnteredValue: { stringValue: `=${getDateFormulaForSpreadsheet(n.dateRequested)}` },
                         note: n.dateRequested.toISOString(),
                         userEnteredFormat: basicEntryFormat,
                     },
@@ -442,7 +442,7 @@ export class GameRequest_FundedBlock extends SpreadsheetBlock {
                         userEnteredFormat: basicEntryFormat,
                     },
                     {
-                        userEnteredValue: { stringValue: getDateFormulaForSpreadsheet(n.dateRequested), },
+                        userEnteredValue: { stringValue: `=${getDateFormulaForSpreadsheet(n.dateRequested)}` },
                         note: n.dateRequested.toISOString(),
                         userEnteredFormat: basicEntryFormat,
                     },
@@ -492,7 +492,10 @@ export class GameRequest_InProgressBlock extends SpreadsheetBlock {
                         note: n.contributions.sort((a, b) => b.points - a.points).map(c => `${c.name} • ${c.points}`).join("\n"),
                         userEnteredFormat: basicEntryFormat,
                     },
-                    { }, // Empty Cell
+                    {
+                        userEnteredValue: { stringValue: "-" },
+                        userEnteredFormat: basicEntryFormat,
+                    },
                     {
                         userEnteredValue: { stringValue: getDateFormulaForSpreadsheet(n.dateStarted) },
                         userEnteredFormat: basicEntryFormat,
@@ -512,7 +515,7 @@ export class GameRequest_InProgressBlock extends SpreadsheetBlock {
                         userEnteredFormat: basicEntryFormat,
                     },
                     {
-                        userEnteredValue: { stringValue: getDateFormulaForSpreadsheet(n.dateRequested), },
+                        userEnteredValue: { stringValue: `=${getDateFormulaForSpreadsheet(n.dateRequested)}` },
                         note: n.dateRequested.toISOString(),
                         userEnteredFormat: basicEntryFormat,
                     },
@@ -582,7 +585,7 @@ export class GameRequest_CompletedBlock extends SpreadsheetBlock {
                         userEnteredFormat: basicEntryFormat,
                     },
                     {
-                        userEnteredValue: { stringValue: getDateFormulaForSpreadsheet(n.dateRequested), },
+                        userEnteredValue: { stringValue: `=${getDateFormulaForSpreadsheet(n.dateRequested)}` },
                         note: n.dateRequested.toISOString(),
                         userEnteredFormat: basicEntryFormat,
                     },

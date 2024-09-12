@@ -251,8 +251,8 @@ export class GoogleAPI {
             }
 
             const existingEntry = gameRequestSpreadsheet.findEntry(gameName);
-            if (existingEntry) {
-                this._twitchBot.chat(respondTo, `Game request already present in spreadsheet.`);
+            if (!existingEntry) {
+                this._twitchBot.chat(respondTo, `Game request ${gameName} was not found in spreadsheet.`);
                 future.resolve();
                 return;
             }
@@ -290,8 +290,8 @@ export class GoogleAPI {
             }
 
             const existingEntry = gameRequestSpreadsheet.findEntry(gameName);
-            if (existingEntry) {
-                this._twitchBot.chat(respondTo, `Game request already present in spreadsheet.`);
+            if (!existingEntry) {
+                this._twitchBot.chat(respondTo, `Game request ${gameName} was not found in spreadsheet.`);
                 future.resolve();
                 return;
             }
