@@ -1,8 +1,8 @@
 import { sheets_v4 } from "googleapis";
 import { ChannelPointRequests } from "../../ChannelPointRequests";
 import { Utils } from "../../Utils";
-import { basicEntryFormat, borderLeft, getBorderRowBelow } from "./GameRequestSpreadsheetStyle";
-import { SpreadsheetBase, SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getDateFormulaForSpreadsheet, getDatetimeFormulaForSpreadsheet, getElapsedTimeFormulaForSpreadsheet, getEntryValue_Date, getEntryValue_Number, getEntryValue_String, headersToRowData, parseHeaderFooterRow } from "./SpreadsheetBase";
+import { basicDateFormat, basicEntryFormat, borderLeft, getBorderRowBelow } from "./GameRequestSpreadsheetStyle";
+import { SpreadsheetBase, SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getDatetimeFormulaForSpreadsheet, getEffectivePointsFormulaForSpreadsheet, getElapsedTimeFormulaForSpreadsheet, getEntryValue_Date, getEntryValue_Number, getEntryValue_String, getPercentageFundedFormulaForSpreadsheet_NotStarted, getPercentageFundedFormulaForSpreadsheet_Started, headersToRowData, parseHeaderFooterRow } from "./SpreadsheetBase";
 
 export enum GameRequest_Spreadsheet_BlockOrder {
     Completed = 0,
@@ -90,8 +90,8 @@ export class GameRequest_Spreadsheet extends SpreadsheetBase {
 
     public startEntry(gameName: string, timestamp: Date): void {
         const fundedEntryIndex = this.fundedBlock.entries.findIndex(n => n.gameName.toLowerCase() === gameName.toLowerCase());
-        if (!fundedEntryIndex) {
-            throw new Error(`Unable to add entry "${gameName}" to in progress list: Unable to find funded entry by that name`);
+        if (fundedEntryIndex === -1) {
+            throw new Error(`Unable to find funded entry "${gameName}"`);
         }
 
         const fundedEntry = this.fundedBlock.entries[fundedEntryIndex];
@@ -101,9 +101,11 @@ export class GameRequest_Spreadsheet extends SpreadsheetBase {
     }
 
     public completeEntry(gameName: string, timestamp: Date, hoursPlayed: number): void {
+        console.log("Hours Played");
+        console.log(hoursPlayed);
         const inProgressEntryIndex = this.inProgressBlock.entries.findIndex(n => n.gameName.toLowerCase() === gameName.toLowerCase());
-        if (!inProgressEntryIndex) {
-            throw new Error(`Unable to add entry "${gameName}" to completed list: Unable to find in-progress entry by that name`);
+        if (inProgressEntryIndex === -1) {
+            throw new Error(`Unable to find in-progress entry "${gameName}"`);
         }
 
         const inProgressEntry = this.inProgressBlock.entries[inProgressEntryIndex];
@@ -113,7 +115,7 @@ export class GameRequest_Spreadsheet extends SpreadsheetBase {
     }
 
     public toRowData(): sheets_v4.Schema$RowData[] {
-        return this.fundedBlock.toRowData().concat(this.unfundedBlock.toRowData());
+        return this.completedBlock.toRowData().concat(this.inProgressBlock.toRowData().concat(this.fundedBlock.toRowData().concat(this.unfundedBlock.toRowData())));
     }
 
     public static async getGameRequestSpreadsheet(sheetsApi: sheets_v4.Sheets, sheetId: string, subSheetId: number): Promise<GameRequest_Spreadsheet> {
@@ -181,6 +183,10 @@ export abstract class GameRequestEntry {
 
     public abstract get effectivePoints(): number;
     public abstract get percentageFunded(): number;
+
+    public get isFunded(): boolean { return false; }
+    public get isStarted(): boolean { return false; }
+    public get isCompleted(): boolean { return false; }
 }
 
 export class GameRequest_UnfundedEntry extends GameRequestEntry {
@@ -199,7 +205,7 @@ export class GameRequest_UnfundedEntry extends GameRequestEntry {
     }
 
     public override get percentageFunded(): number {
-        return this.pointsContributed / this.pointsRequiredToFund;
+        return this.effectivePoints / this.pointsRequiredToFund;
     }
 
     public override get effectivePoints(): number {
@@ -229,24 +235,12 @@ export class GameRequest_FundedEntry extends GameRequest_UnfundedEntry {
         return new GameRequest_FundedEntry({ gameName: unfundedEntry.gameName, estimatedGameLengthHours: unfundedEntry.estimatedGameLengthHours, pointsRequiredToFund: unfundedEntry.pointsRequiredToFund, contributions: unfundedEntry.contributions, dateRequested: unfundedEntry.dateRequested, originalRequestorId: unfundedEntry.originalRequestorId, originalRequestorName: unfundedEntry.originalRequestorName, dateFunded: dateFunded });
     }
 
+    public override get isFunded(): boolean { return true; }
+
     public override get effectivePoints(): number {
-        const elapsedMilliseconds = Date.now() - this.dateRequested.getTime();
+        const elapsedMilliseconds = Date.now() - this.dateFunded.getTime();
         const elapsedYears = elapsedMilliseconds / (1000 * 60 * 60 * 24 * 365);
         return this.pointsContributed * Math.pow(2, elapsedYears);
-    }
-
-    public getEffectivePointsFormulaForSpreadsheet(): string {
-        const dateDifferenceFormula = `NOW()-(${getDatetimeFormulaForSpreadsheet(this.dateRequested)})`;
-        const elapsedYearsFormula = `int(${dateDifferenceFormula}) / 365`;
-        const pointsContributedFormula = `INDIRECT(ADDRESS(ROW(), COLUMN()-3))`;
-        const effectivePointsFormula = `${pointsContributedFormula} * POW(2, ${elapsedYearsFormula})`;
-        return effectivePointsFormula;
-    }
-
-    public getPercentageFundedFormulaForSpreadsheet(): string {
-        const effectivePointsReferenceFormula = `INDIRECT(ADDRESS(ROW(), COLUMN()-1))`;
-        const pointsRequiredToActivateReferenceFormula = `INDIRECT(ADDRESS(ROW(), COLUMN()-3))`
-        return `${effectivePointsReferenceFormula} / ${pointsRequiredToActivateReferenceFormula}`;
     }
 }
 
@@ -273,14 +267,12 @@ export class GameRequest_InProgressEntry extends GameRequest_FundedEntry {
         return new GameRequest_InProgressEntry({ gameName: fundedEntry.gameName, estimatedGameLengthHours: fundedEntry.estimatedGameLengthHours, pointsRequiredToFund: fundedEntry.pointsRequiredToFund, contributions: fundedEntry.contributions, dateRequested: fundedEntry.dateRequested, originalRequestorId: fundedEntry.originalRequestorId, originalRequestorName: fundedEntry.originalRequestorName, dateFunded: fundedEntry.dateFunded, dateStarted: dateStarted });
     }
 
+    public override get isStarted(): boolean { return true; }
+
     public override get effectivePoints(): number {
-        const elapsedMilliseconds = this.dateStarted.getTime() - this.dateRequested.getTime();
+        const elapsedMilliseconds = this.dateStarted.getTime() - this.dateFunded.getTime();
         const elapsedYears = elapsedMilliseconds / (1000 * 60 * 60 * 24 * 365);
         return this.pointsContributed * Math.pow(2, elapsedYears);
-    }
-
-    public override getPercentageFundedFormulaForSpreadsheet(): string {
-        return `${this.effectivePoints} / ${this.pointsRequiredToFund}`;
     }
 }
 
@@ -304,11 +296,14 @@ export class GameRequest_CompletedEntry extends GameRequest_InProgressEntry {
     }) {
         super({ gameName: args.gameName, estimatedGameLengthHours: args.estimatedGameLengthHours, pointsRequiredToFund: args.pointsRequiredToFund, contributions: args.contributions, dateRequested: args.dateRequested, originalRequestorId: args.originalRequestorId, originalRequestorName: args.originalRequestorName, dateFunded: args.dateFunded, dateStarted: args.dateStarted });
         this.dateCompleted = args.dateCompleted;
+        this.hoursPlayed = args.hoursPlayed;
     }
 
     public static fromInProgressEntry(inProgressEntry: GameRequest_InProgressEntry, dateCompleted: Date, hoursPlayed: number): GameRequest_CompletedEntry {
         return new GameRequest_CompletedEntry({ gameName: inProgressEntry.gameName, estimatedGameLengthHours: inProgressEntry.estimatedGameLengthHours, pointsRequiredToFund: inProgressEntry.pointsRequiredToFund, contributions: inProgressEntry.contributions, dateRequested: inProgressEntry.dateRequested, originalRequestorId: inProgressEntry.originalRequestorId, originalRequestorName: inProgressEntry.originalRequestorName, dateFunded: inProgressEntry.dateFunded, dateStarted: inProgressEntry.dateStarted, dateCompleted: dateCompleted, hoursPlayed: hoursPlayed, });
     }
+
+    public override get isCompleted(): boolean { return true; }
 }
 
 export class GameRequest_UnfundedBlock extends SpreadsheetBlock {
@@ -363,9 +358,9 @@ export class GameRequest_UnfundedBlock extends SpreadsheetBlock {
                         userEnteredFormat: basicEntryFormat,
                     },
                     {
-                        userEnteredValue: { stringValue: `=${getDateFormulaForSpreadsheet(n.dateRequested)}` },
+                        userEnteredValue: { formulaValue: `=${getDatetimeFormulaForSpreadsheet(n.dateRequested)}` },
                         note: n.dateRequested.toISOString(),
-                        userEnteredFormat: basicEntryFormat,
+                        userEnteredFormat: basicDateFormat,
                     },
                     {
                         userEnteredFormat: borderLeft,
@@ -374,7 +369,7 @@ export class GameRequest_UnfundedBlock extends SpreadsheetBlock {
             };
             return rowData;
         });
-        return headerRows.concat(entryRows).concat([getBorderRowBelow(6)]);
+        return headerRows.concat(entryRows).concat([getBorderRowBelow(7)]);
     }
 }
 
@@ -396,6 +391,11 @@ export class GameRequest_FundedBlock extends SpreadsheetBlock {
         // const dateFormat: sheets_v4.Schema$CellFormat = { numberFormat: { type: "DATE_TIME", pattern: "yyyy-mm-dd " } };
         const entryRows = this.entries.sort((a, b) => {
             const percentageComparison = b.percentageFunded - a.percentageFunded;
+            console.log(a.gameName);
+            console.log(a.percentageFunded);
+            console.log(b.gameName);
+            console.log(b.percentageFunded);
+            console.log(percentageComparison);
             if (percentageComparison === 0) {
                 return a.estimatedGameLengthHours - b.estimatedGameLengthHours; // sort ascending
             } else {
@@ -423,17 +423,16 @@ export class GameRequest_FundedBlock extends SpreadsheetBlock {
                     },
                     {
                         // userEnteredValue: { formulaValue: `=${getDatetimeFormulaForSpreadsheet(n.requestDate)}` },
-                        userEnteredValue: { formulaValue: `=${getElapsedTimeFormulaForSpreadsheet(n.dateFunded, false)}` },
-                        note: n.dateFunded.toISOString(),
+                        userEnteredValue: { formulaValue: `=${getElapsedTimeFormulaForSpreadsheet(5, false)}` },
                         //userEnteredFormat: Object.assign({}, unfundedEntryFormat, dateFormat),
                         userEnteredFormat: Object.assign({}, basicEntryFormat, <sheets_v4.Schema$CellFormat>{ horizontalAlignment: "RIGHT" }),
                     },
                     {
-                        userEnteredValue: { formulaValue: `=${n.getEffectivePointsFormulaForSpreadsheet()}` },
+                        userEnteredValue: { formulaValue: `=${getEffectivePointsFormulaForSpreadsheet(-3, 4)}` },
                         userEnteredFormat: basicEntryFormat,
                     },
                     {
-                        userEnteredValue: { formulaValue: `=${n.getPercentageFundedFormulaForSpreadsheet()}` },
+                        userEnteredValue: { formulaValue: `=${getPercentageFundedFormulaForSpreadsheet_NotStarted(-3, -1)}` },
                         userEnteredFormat: Object.assign({}, basicEntryFormat, <sheets_v4.Schema$CellFormat>{ numberFormat: { type: "NUMBER", pattern: "0.0%" } }),
                     },
                     {
@@ -442,9 +441,14 @@ export class GameRequest_FundedBlock extends SpreadsheetBlock {
                         userEnteredFormat: basicEntryFormat,
                     },
                     {
-                        userEnteredValue: { stringValue: `=${getDateFormulaForSpreadsheet(n.dateRequested)}` },
+                        userEnteredValue: { formulaValue: `=${getDatetimeFormulaForSpreadsheet(n.dateRequested)}` },
                         note: n.dateRequested.toISOString(),
-                        userEnteredFormat: basicEntryFormat,
+                        userEnteredFormat: basicDateFormat,
+                    },
+                    {
+                        userEnteredValue: { formulaValue: `=${getDatetimeFormulaForSpreadsheet(n.dateFunded)}` },
+                        note: n.dateFunded.toISOString(),
+                        userEnteredFormat: basicDateFormat,
                     },
                     {
                         userEnteredFormat: borderLeft,
@@ -453,7 +457,7 @@ export class GameRequest_FundedBlock extends SpreadsheetBlock {
             };
             return rowData;
         });
-        return headerRows.concat(entryRows).concat(getBorderRowBelow(8));
+        return headerRows.concat(entryRows).concat(getBorderRowBelow(10));
     }
 }
 
@@ -493,19 +497,20 @@ export class GameRequest_InProgressBlock extends SpreadsheetBlock {
                         userEnteredFormat: basicEntryFormat,
                     },
                     {
-                        userEnteredValue: { stringValue: "-" },
                         userEnteredFormat: basicEntryFormat,
                     },
                     {
-                        userEnteredValue: { stringValue: getDateFormulaForSpreadsheet(n.dateStarted) },
-                        userEnteredFormat: basicEntryFormat,
+                        userEnteredValue: { formulaValue: `=${getDatetimeFormulaForSpreadsheet(n.dateStarted)}` },
+                        note: n.dateStarted.toISOString(),
+                        userEnteredFormat: basicDateFormat,
                     },
                     {
-                        userEnteredValue: { stringValue: getDateFormulaForSpreadsheet(n.dateFunded) },
-                        userEnteredFormat: basicEntryFormat,
+                        userEnteredValue: { formulaValue: `=${getDatetimeFormulaForSpreadsheet(n.dateFunded)}` },
+                        note: n.dateFunded.toISOString(),
+                        userEnteredFormat: basicDateFormat,
                     },
                     {
-                        userEnteredValue: { formulaValue: `=${n.getPercentageFundedFormulaForSpreadsheet()}` },
+                        userEnteredValue: { formulaValue: `=${getPercentageFundedFormulaForSpreadsheet_Started(-4, -1, -2, n.pointsRequiredToFund)}` },
                         note: `${n.pointsRequiredToFund}`,
                         userEnteredFormat: Object.assign({}, basicEntryFormat, <sheets_v4.Schema$CellFormat>{ numberFormat: { type: "NUMBER", pattern: "0.0%" } }),
                     },
@@ -515,9 +520,9 @@ export class GameRequest_InProgressBlock extends SpreadsheetBlock {
                         userEnteredFormat: basicEntryFormat,
                     },
                     {
-                        userEnteredValue: { stringValue: `=${getDateFormulaForSpreadsheet(n.dateRequested)}` },
+                        userEnteredValue: { formulaValue: `=${getDatetimeFormulaForSpreadsheet(n.dateRequested)}` },
                         note: n.dateRequested.toISOString(),
-                        userEnteredFormat: basicEntryFormat,
+                        userEnteredFormat: basicDateFormat,
                     },
                     {
                         userEnteredFormat: borderLeft,
@@ -526,7 +531,7 @@ export class GameRequest_InProgressBlock extends SpreadsheetBlock {
             };
             return rowData;
         });
-        return headerRows.concat(entryRows).concat(getBorderRowBelow(8));
+        return headerRows.concat(entryRows).concat(getBorderRowBelow(9));
     }
 }
 
@@ -557,7 +562,8 @@ export class GameRequest_CompletedBlock extends SpreadsheetBlock {
                         userEnteredFormat: basicEntryFormat,
                     },
                     {
-                        userEnteredValue: { numberValue: n.estimatedGameLengthHours },
+                        userEnteredValue: { numberValue: n.hoursPlayed },
+                        note: `${n.estimatedGameLengthHours}`,
                         userEnteredFormat: basicEntryFormat,
                     },
                     {
@@ -565,17 +571,23 @@ export class GameRequest_CompletedBlock extends SpreadsheetBlock {
                         note: n.contributions.sort((a, b) => b.points - a.points).map(c => `${c.name} • ${c.points}`).join("\n"),
                         userEnteredFormat: basicEntryFormat,
                     },
-                    { }, // Empty Cell
                     {
-                        userEnteredValue: { stringValue: getDateFormulaForSpreadsheet(n.dateStarted) },
-                        userEnteredFormat: basicEntryFormat,
+                        userEnteredValue: { formulaValue: `=${getDatetimeFormulaForSpreadsheet(n.dateCompleted)}` },
+                        note: n.dateCompleted.toISOString(),
+                        userEnteredFormat: basicDateFormat,
                     },
                     {
-                        userEnteredValue: { stringValue: getDateFormulaForSpreadsheet(n.dateFunded) },
-                        userEnteredFormat: basicEntryFormat,
+                        userEnteredValue: { formulaValue: `=${getDatetimeFormulaForSpreadsheet(n.dateStarted)}` },
+                        note: n.dateStarted.toISOString(),
+                        userEnteredFormat: basicDateFormat,
                     },
                     {
-                        userEnteredValue: { formulaValue: `=${n.getPercentageFundedFormulaForSpreadsheet()}` },
+                        userEnteredValue: { formulaValue: `=${getDatetimeFormulaForSpreadsheet(n.dateFunded)}` },
+                        note: n.dateFunded.toISOString(),
+                        userEnteredFormat: basicDateFormat,
+                    },
+                    {
+                        userEnteredValue: { formulaValue: `=${getPercentageFundedFormulaForSpreadsheet_Started(-4, -1, -2, n.pointsRequiredToFund)}` },
                         note: `${n.pointsRequiredToFund}`,
                         userEnteredFormat: Object.assign({}, basicEntryFormat, <sheets_v4.Schema$CellFormat>{ numberFormat: { type: "NUMBER", pattern: "0.0%" } }),
                     },
@@ -585,9 +597,9 @@ export class GameRequest_CompletedBlock extends SpreadsheetBlock {
                         userEnteredFormat: basicEntryFormat,
                     },
                     {
-                        userEnteredValue: { stringValue: `=${getDateFormulaForSpreadsheet(n.dateRequested)}` },
+                        userEnteredValue: { formulaValue: `=${getDatetimeFormulaForSpreadsheet(n.dateRequested)}` },
                         note: n.dateRequested.toISOString(),
-                        userEnteredFormat: basicEntryFormat,
+                        userEnteredFormat: basicDateFormat,
                     },
                     {
                         userEnteredFormat: borderLeft,
@@ -596,7 +608,7 @@ export class GameRequest_CompletedBlock extends SpreadsheetBlock {
             };
             return rowData;
         });
-        return headerRows.concat(entryRows).concat(getBorderRowBelow(8));
+        return headerRows.concat(entryRows).concat(getBorderRowBelow(9));
     }
 }
 
@@ -649,14 +661,14 @@ export function parseGameRequestFundedEntry(row: sheets_v4.Schema$RowData): Game
     const pointsRequiredToFund = row.values[3]
         ? getEntryValue_Number(row.values[3])
         : undefined;
-    const dateFunded = row.values[4].note
-        ? Utils.getDateFromUtcTimestring(row.values[4].note)
-        : getEntryValue_Date(row.values[4]);
     const originalRequestorName = getEntryValue_String(row.values[7]) ?? "";
     const originalRequestorId = row.values[7].note ?? "";
     const dateRequested = row.values[8].note
         ? Utils.getDateFromUtcTimestring(row.values[8].note)
         : getEntryValue_Date(row.values[8]);
+    const dateFunded = row.values[9].note
+        ? Utils.getDateFromUtcTimestring(row.values[9].note)
+        : getEntryValue_Date(row.values[9]);
 
     if (!gameName || !gameLengthHours || !dateRequested || !dateFunded) {
         throw new Error("Required properties not found when parsing funded game request entry: gameName, gameLengthHours, requestDate");
