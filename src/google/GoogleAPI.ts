@@ -44,9 +44,7 @@ export enum FundGameRequestOutcomeType {
 
 export class GoogleAPI {
     public static readonly incentiveSheetId = "1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY";
-    public static readonly gameRequestSubSheetWrite = 1879508954;
-    public static readonly gameRequestSubSheetRead = 431657402;
-    public static readonly gameRequestSubSheetBackup = 384782784;
+    public static readonly gameRequestSubSheet = 384782784;
     public static readonly bidwarSubSheet = 877321766;
     
     protected _gameRequestOverfundingEnabled: boolean = false;
@@ -87,7 +85,7 @@ export class GoogleAPI {
         const future = new Future<void>();
         const task = async (): Promise<void> => {
             try {
-                const gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheetRead);
+                const gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet);
                 const existingEntry = gameRequestSpreadsheet.findEntry(event.user_input);
                 if (!existingEntry) {
                     this._twitchBot.chat(`#${event.broadcaster_user_name}`, `@${event.user_name}, your new game request was received. Please wait for an admin to add it to the spreadsheet before contributing any further points.`);
@@ -152,7 +150,7 @@ export class GoogleAPI {
     public async handleGameRequestFund(respondTo: string, gameName: string, username: string, points: number, timestamp: Date): Promise<FundGameRequestOutcome> {
         const future = new Future<FundGameRequestOutcome>();
         const task = async (): Promise<void> => {
-            const gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheetRead);
+            const gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet);
             const existingEntry = gameRequestSpreadsheet.findEntry(gameName);
             if (!existingEntry) {
                 this._twitchBot.chat(respondTo, `@${username}, your game request was detected as a new request. Please redeem the "Submit a new !GameRequest" reward first in order to add it to the spreadsheet.`);
@@ -162,7 +160,7 @@ export class GoogleAPI {
 
             const completeFunding = async () => {
                 gameRequestSpreadsheet.addPointsToEntry(username, gameName, points, timestamp);
-                await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheetWrite, gameRequestSpreadsheet);
+                await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet, gameRequestSpreadsheet);
                 const entry = gameRequestSpreadsheet.findEntry(gameName);
                 let fundingStr = ``;
                 if (entry) {
@@ -204,7 +202,7 @@ export class GoogleAPI {
         const task = async (): Promise<void> => {
             let gameRequestSpreadsheet: GameRequest_Spreadsheet;
             try {
-                gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheetRead);
+                gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet);
             } catch (err) {
                 this._twitchBot.chat(respondTo, `Failed to read game request spreadsheet. No data altered.`);
                 console.log(err);
@@ -221,7 +219,7 @@ export class GoogleAPI {
             
             gameRequestSpreadsheet.addEntry(gameName, gameLengthHours, pointsToActivate, userId, username, points, timestamp);
             try {
-                await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheetWrite, gameRequestSpreadsheet);
+                await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet, gameRequestSpreadsheet);
                 this._twitchBot.chat(respondTo, `Game request successfully added.`);
                 future.resolve();
             } catch (err) {
@@ -243,7 +241,7 @@ export class GoogleAPI {
         const task = async (): Promise<void> => {
             let gameRequestSpreadsheet: GameRequest_Spreadsheet;
             try {
-                gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheetRead);
+                gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet);
             } catch (err) {
                 this._twitchBot.chat(respondTo, `Failed to read game request spreadsheet. No data altered.`);
                 console.log(err);
@@ -282,7 +280,7 @@ export class GoogleAPI {
             }
 
             try {
-                await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheetWrite, gameRequestSpreadsheet);
+                await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet, gameRequestSpreadsheet);
                 this._twitchBot.chat(respondTo, `Game request successfully started.`);
                 future.resolve();
             } catch (err) {
@@ -304,7 +302,7 @@ export class GoogleAPI {
         const task = async (): Promise<void> => {
             let gameRequestSpreadsheet: GameRequest_Spreadsheet;
             try {
-                gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheetRead);
+                gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet);
             } catch (err) {
                 this._twitchBot.chat(respondTo, `Failed to read game request spreadsheet. No data altered.`);
                 console.log(err);
@@ -337,7 +335,7 @@ export class GoogleAPI {
                 return;
             }
             try {
-                await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheetWrite, gameRequestSpreadsheet);
+                await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet, gameRequestSpreadsheet);
                 this._twitchBot.chat(respondTo, `Game request successfully completed.`);
                 future.resolve();
             } catch (err) {
