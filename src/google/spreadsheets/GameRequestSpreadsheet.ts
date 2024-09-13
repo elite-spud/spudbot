@@ -2,7 +2,7 @@ import { sheets_v4 } from "googleapis";
 import { ChannelPointRequests } from "../../ChannelPointRequests";
 import { Utils } from "../../Utils";
 import { basicDateFormat, basicEntryFormat, borderLeft, getBorderRowBelow } from "./GameRequestSpreadsheetStyle";
-import { SpreadsheetBase, SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getDatetimeFormulaForSpreadsheet, getEffectivePointsFormulaForSpreadsheet, getElapsedTimeFormulaForSpreadsheet, getEntryValue_Date, getEntryValue_Number, getEntryValue_String, getPercentageFundedFormulaForSpreadsheet_NotStarted, getPercentageFundedFormulaForSpreadsheet_Started, headersToRowData, parseHeaderFooterRow } from "./SpreadsheetBase";
+import { SpreadsheetBase, SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getDatetimeFormulaForSpreadsheet, getEntryValue_Date, getEntryValue_Number, getEntryValue_String, headersToRowData, parseHeaderFooterRow } from "./SpreadsheetBase";
 
 export enum GameRequest_Spreadsheet_BlockOrder {
     Completed = 0,
@@ -862,4 +862,38 @@ export function parseContributions(contributionsString: string): { name: string,
         return { name: name, points: points };
     });
     return contributions;
+}
+
+/** https://infoinspired.com/google-docs/spreadsheet/elapsed-days-and-time-between-two-dates-in-sheets/ */
+export function getElapsedTimeFormulaForSpreadsheet(dateFundedCellOffset: number, includeTime: boolean = true): string {
+    const dateDifferenceFormula = `NOW()-INDIRECT(ADDRESS(ROW(), COLUMN()+${dateFundedCellOffset}))`;
+    const elapsedDaysFormula = `int(${dateDifferenceFormula})`;
+    const elapsedHoursFormula = `text(${dateDifferenceFormula}-${elapsedDaysFormula},"HH")`;
+    const formulaStr = includeTime
+        ? `${elapsedDaysFormula}&" days "&${elapsedHoursFormula}&" hours"`
+        : `${elapsedDaysFormula}&" days"`;
+    return formulaStr;
+}
+
+export function getEffectivePointsFormulaForSpreadsheet(pointsContributedCellOffset: number, dateFundedCellOffset: number, dateStartedCellOffset?: number): string {
+    const dateFundedReferenceFormula = `INDIRECT(ADDRESS(ROW(), COLUMN()+${dateFundedCellOffset}))`;
+    const dateStartedReferenceFormula = dateStartedCellOffset
+        ? `INDIRECT(ADDRESS(ROW(), COLUMN()+${dateStartedCellOffset}))`
+        : `NOW()`;
+    const dateDifferenceFormula = `${dateStartedReferenceFormula}-(${dateFundedReferenceFormula})`;
+    const elapsedYearsFormula = `int(${dateDifferenceFormula}) / 365`;
+    const pointsContributedFormula = `INDIRECT(ADDRESS(ROW(), COLUMN()+${pointsContributedCellOffset}))`;
+    const effectivePointsFormula = `${pointsContributedFormula} * POW(2, ${elapsedYearsFormula})`;
+    return effectivePointsFormula;
+}
+
+export function getPercentageFundedFormulaForSpreadsheet_NotStarted(pointsRequiredToFundCellOffset: number, effectivePointsCellOffset: number): string {
+    const effectivePointsReferenceFormula = `INDIRECT(ADDRESS(ROW(), COLUMN()+${effectivePointsCellOffset}))`;
+    const pointsRequiredToFundReferenceFormula = `INDIRECT(ADDRESS(ROW(), COLUMN()+${pointsRequiredToFundCellOffset}))`
+    return `${effectivePointsReferenceFormula} / ${pointsRequiredToFundReferenceFormula}`;
+}
+
+export function getPercentageFundedFormulaForSpreadsheet_Started(pointsContributedCellOffset: number, dateFundedCellOffset: number, dateStartedCellOffset: number, pointsRequiredToFund: number,): string {
+    const effectivePointsFormula = getEffectivePointsFormulaForSpreadsheet(pointsContributedCellOffset, dateFundedCellOffset, dateStartedCellOffset);
+    return `${effectivePointsFormula} / ${pointsRequiredToFund}`;
 }

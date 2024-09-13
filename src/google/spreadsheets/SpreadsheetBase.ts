@@ -183,37 +183,3 @@ export function getTimestampStringForSpreadsheet(date: Date, includeTime: boolea
         .substring(0, includeTime ? 16 : 10);
     return timeStr;
 }
-
-/** https://infoinspired.com/google-docs/spreadsheet/elapsed-days-and-time-between-two-dates-in-sheets/ */
-export function getElapsedTimeFormulaForSpreadsheet(dateFundedCellOffset: number, includeTime: boolean = true): string {
-    const dateDifferenceFormula = `NOW()-INDIRECT(ADDRESS(ROW(), COLUMN()+${dateFundedCellOffset}))`;
-    const elapsedDaysFormula = `int(${dateDifferenceFormula})`;
-    const elapsedHoursFormula = `text(${dateDifferenceFormula}-${elapsedDaysFormula},"HH")`;
-    const formulaStr = includeTime
-        ? `${elapsedDaysFormula}&" days "&${elapsedHoursFormula}&" hours"`
-        : `${elapsedDaysFormula}&" days"`;
-    return formulaStr;
-}
-
-export function getEffectivePointsFormulaForSpreadsheet(pointsContributedCellOffset: number, dateFundedCellOffset: number, dateStartedCellOffset?: number): string {
-    const dateFundedReferenceFormula = `INDIRECT(ADDRESS(ROW(), COLUMN()+${dateFundedCellOffset}))`;
-    const dateStartedReferenceFormula = dateStartedCellOffset
-        ? `INDIRECT(ADDRESS(ROW(), COLUMN()+${dateStartedCellOffset}))`
-        : `NOW()`;
-    const dateDifferenceFormula = `${dateStartedReferenceFormula}-(${dateFundedReferenceFormula})`;
-    const elapsedYearsFormula = `int(${dateDifferenceFormula}) / 365`;
-    const pointsContributedFormula = `INDIRECT(ADDRESS(ROW(), COLUMN()+${pointsContributedCellOffset}))`;
-    const effectivePointsFormula = `${pointsContributedFormula} * POW(2, ${elapsedYearsFormula})`;
-    return effectivePointsFormula;
-}
-
-export function getPercentageFundedFormulaForSpreadsheet_NotStarted(pointsRequiredToFundCellOffset: number, effectivePointsCellOffset: number): string {
-    const effectivePointsReferenceFormula = `INDIRECT(ADDRESS(ROW(), COLUMN()+${effectivePointsCellOffset}))`;
-    const pointsRequiredToFundReferenceFormula = `INDIRECT(ADDRESS(ROW(), COLUMN()+${pointsRequiredToFundCellOffset}))`
-    return `${effectivePointsReferenceFormula} / ${pointsRequiredToFundReferenceFormula}`;
-}
-
-export function getPercentageFundedFormulaForSpreadsheet_Started(pointsContributedCellOffset: number, dateFundedCellOffset: number, dateStartedCellOffset: number, pointsRequiredToFund: number,): string {
-    const effectivePointsFormula = getEffectivePointsFormulaForSpreadsheet(pointsContributedCellOffset, dateFundedCellOffset, dateStartedCellOffset);
-    return `${effectivePointsFormula} / ${pointsRequiredToFund}`;
-}
