@@ -101,8 +101,6 @@ export class GameRequest_Spreadsheet extends SpreadsheetBase {
     }
 
     public completeEntry(gameName: string, timestamp: Date, hoursPlayed: number): void {
-        console.log("Hours Played");
-        console.log(hoursPlayed);
         const inProgressEntryIndex = this.inProgressBlock.entries.findIndex(n => n.gameName.toLowerCase() === gameName.toLowerCase());
         if (inProgressEntryIndex === -1) {
             throw new Error(`Unable to find in-progress entry "${gameName}"`);
@@ -391,11 +389,6 @@ export class GameRequest_FundedBlock extends SpreadsheetBlock {
         // const dateFormat: sheets_v4.Schema$CellFormat = { numberFormat: { type: "DATE_TIME", pattern: "yyyy-mm-dd " } };
         const entryRows = this.entries.sort((a, b) => {
             const percentageComparison = b.percentageFunded - a.percentageFunded;
-            console.log(a.gameName);
-            console.log(a.percentageFunded);
-            console.log(b.gameName);
-            console.log(b.percentageFunded);
-            console.log(percentageComparison);
             if (percentageComparison === 0) {
                 return a.estimatedGameLengthHours - b.estimatedGameLengthHours; // sort ascending
             } else {
