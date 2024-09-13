@@ -624,6 +624,31 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
                 }
             } else if (tokens[1] === "remove") {
                 // TODO: implement this
+            } else if (tokens[1] === "start") {
+                const args = tokens.slice(2);
+                if (args.length === 0) {
+                    this.chat(messageDetail.respondTo, `!gamerequest start <gameName>`);
+                    return;
+                }
+                if (args.length !== 1) {
+                    this.chat(messageDetail.respondTo, `!gameRequest complete command was malformed (expected 1 arguments, but found ${args.length})`);
+                    return;
+                }
+                const gameName = args[0].replaceAll("\"", "");
+                await (await this._googleApi).handleGameRequestStart(messageDetail.respondTo, gameName, new Date());
+            } else if (tokens[1] === "complete") {
+                const args = tokens.slice(2);
+                if (args.length === 0) {
+                    this.chat(messageDetail.respondTo, `!gamerequest complete <gameName> <hoursPlayed>`);
+                    return;
+                }
+                if (args.length !== 2) {
+                    this.chat(messageDetail.respondTo, `!gameRequest complete command was malformed (expected 2 arguments, but found ${args.length})`);
+                    return;
+                }
+                const gameName = args[0].replaceAll("\"", "");
+                const hoursPlayed = Number.parseInt(args[1]);
+                await (await this._googleApi).handleGameRequestComplete(messageDetail.respondTo, gameName, new Date(), hoursPlayed);
             } else if (tokens[1] === "fund") {
                 const args = tokens.slice(2);
                 if (args.length === 0) {
@@ -639,6 +664,7 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
                 }
             } else {
                 this.chat(messageDetail.respondTo, `unknown !gameRequest command ${tokens[1]}`);
+                return;
             }
         }
         const func = this.getCommandFunc({

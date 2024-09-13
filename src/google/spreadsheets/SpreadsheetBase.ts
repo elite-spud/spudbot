@@ -172,11 +172,8 @@ export function getTimeFormulaForSpreadsheet(date: Date): string {
     return `TIMEVALUE(MID("${date.toISOString()}",12,8))`; // of the form 2012-11-04T14:51:06.157Z
 }
 
-export function getDatetimeFormulaForSpreadsheet(date: Date, includeTime: boolean = false): string {
-    let sheetFormula = `${getDateFormulaForSpreadsheet(date)}`;
-    if (includeTime) {
-        sheetFormula += ` + ${getTimeFormulaForSpreadsheet(date)}`;
-    }
+export function getDatetimeFormulaForSpreadsheet(date: Date): string {
+    const sheetFormula = `${getDateFormulaForSpreadsheet(date)} + ${getTimeFormulaForSpreadsheet(date)}`;
     return sheetFormula;
 }
 
@@ -185,15 +182,4 @@ export function getTimestampStringForSpreadsheet(date: Date, includeTime: boolea
         .replace(/T/, " ") // delete the T
         .substring(0, includeTime ? 16 : 10);
     return timeStr;
-}
-
-/** https://infoinspired.com/google-docs/spreadsheet/elapsed-days-and-time-between-two-dates-in-sheets/ */
-export function getElapsedTimeFormulaForSpreadsheet(date: Date, includeTime: boolean = true): string {
-    const dateDifferenceFormula = `NOW()-(${getDatetimeFormulaForSpreadsheet(date)})`;
-    const elapsedDaysFormula = `int(${dateDifferenceFormula})`;
-    const elapsedHoursFormula = `text(${dateDifferenceFormula}-${elapsedDaysFormula},"HH")`;
-    const formulaStr = includeTime
-        ? `${elapsedDaysFormula}&" days "&${elapsedHoursFormula}&" hours"`
-        : `${elapsedDaysFormula}&" days"`;
-    return formulaStr;
 }

@@ -1,13 +1,13 @@
 import { JWT } from "google-auth-library";
 import { google, sheets_v4 } from "googleapis";
 import { Future } from "../Future";
+import { HeldTask } from "../HeldTask";
 import { TaskQueue } from "../TaskQueue";
 import { TwitchBotBase } from "../TwitchBot";
 import { TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Notification_Subscription, TwitchUserDetail } from "../TwitchBotTypes";
 import { Bidwar_Spreadsheet } from "./spreadsheets/BidwarSpreadsheet";
 import { GameRequest_Spreadsheet } from "./spreadsheets/GameRequestSpreadsheet";
 import { pushSpreadsheet } from "./spreadsheets/SpreadsheetBase";
-import { HeldTask } from "../HeldTask";
 
 export interface GoogleAPIConfig {
     oauth: {
@@ -165,24 +165,24 @@ export class GoogleAPI {
                 let fundingStr = ``;
                 if (entry) {
                     fundingStr = entry.percentageFunded <= 1.0
-                        ? ` (${entry.effectivePoints}/${entry.pointsToActivate} points)`
+                        ? ` (${entry.effectivePoints}/${entry.pointsRequiredToFund} points)`
                         : ` (${(entry.percentageFunded * 100).toFixed(1)}% funded)`;
                 }
                 this._twitchBot.chat(respondTo, `@${username}, added ${points} points to requesting ${gameName} on stream!${fundingStr}`);
             }
 
-            const notCurrentlyOverfunded = existingEntry.pointsContributed <= existingEntry.pointsToActivate;
-            const wouldBeOverfunded = existingEntry.pointsContributed + points > existingEntry.pointsToActivate;
+            const notCurrentlyOverfunded = existingEntry.pointsContributed <= existingEntry.pointsRequiredToFund;
+            const wouldBeOverfunded = existingEntry.pointsContributed + points > existingEntry.pointsRequiredToFund;
             if (notCurrentlyOverfunded && wouldBeOverfunded) {
                 if (!this.gameRequestOverfundingEnabled) {
-                    this._twitchBot.chat(respondTo, `@${username}, you've submitted enough channel points to overfund the requested game, ${gameName} by ${existingEntry.pointsContributed + points - existingEntry.pointsToActivate} points, but overfunding is currently disabled. Your points have been returned`);
+                    this._twitchBot.chat(respondTo, `@${username}, you've submitted enough channel points to overfund the requested game, ${gameName} by ${existingEntry.pointsContributed + points - existingEntry.pointsRequiredToFund} points, but overfunding is currently disabled. Your points have been returned`);
                     future.resolve({ type: FundGameRequestOutcomeType.Unfulfilled });
                     return;
                 }
 
                 future.resolve({
                     type: FundGameRequestOutcomeType.PendingConfirmation,
-                    overfundAmount: existingEntry.pointsContributed + points - existingEntry.pointsToActivate,
+                    overfundAmount: existingEntry.pointsContributed + points - existingEntry.pointsRequiredToFund,
                     complete: completeFunding,
                 });
                 return;
@@ -224,6 +224,122 @@ export class GoogleAPI {
                 future.resolve();
             } catch (err) {
                 const chatMessage = `Error adding new game request`;
+                this._twitchBot.chat(respondTo, chatMessage);
+                const errorMessage = `${chatMessage}: ${err.message}`;
+                future.resolve();
+                throw new Error(errorMessage);
+            }
+        }
+        this._taskQueue.addTask(task);
+        this._taskQueue.startQueue();
+
+        return future;
+    }
+
+    public async handleGameRequestStart(respondTo: string, gameName: string, timestamp: Date): Promise<void> {
+        const future = new Future<void>();
+        const task = async (): Promise<void> => {
+            let gameRequestSpreadsheet: GameRequest_Spreadsheet;
+            try {
+                gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet);
+            } catch (err) {
+                this._twitchBot.chat(respondTo, `Failed to read game request spreadsheet. No data altered.`);
+                console.log(err);
+                future.resolve();
+                return;
+            }
+
+            const existingEntry = gameRequestSpreadsheet.findEntry(gameName);
+            if (!existingEntry) {
+                this._twitchBot.chat(respondTo, `Game request "${gameName}" was not found in spreadsheet.`);
+                future.resolve();
+                return;
+            }
+            if (existingEntry.isCompleted) {
+                this._twitchBot.chat(respondTo, `Game request "${gameName}" has already been completed.`);
+                future.resolve();
+                return;
+            }
+            if (existingEntry.isStarted) {
+                this._twitchBot.chat(respondTo, `Game request "${gameName}" has already been started.`);
+                future.resolve();
+                return;
+            }
+            if (!existingEntry.isFunded) {
+                this._twitchBot.chat(respondTo, `Game request "${gameName}" has not yet been funded.`);
+                future.resolve();
+                return;
+            }
+
+            try {
+                gameRequestSpreadsheet.startEntry(gameName, timestamp);
+            } catch (err) {
+                this._twitchBot.chat(respondTo, `Error starting game request: ${err.message}`);
+                future.resolve();
+                return;
+            }
+
+            try {
+                await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet, gameRequestSpreadsheet);
+                this._twitchBot.chat(respondTo, `Game request successfully started.`);
+                future.resolve();
+            } catch (err) {
+                const chatMessage = `Error starting game request. No data altered.`;
+                this._twitchBot.chat(respondTo, chatMessage);
+                const errorMessage = `${chatMessage}: ${err.message}`;
+                future.resolve();
+                throw new Error(errorMessage);
+            }
+        }
+        this._taskQueue.addTask(task);
+        this._taskQueue.startQueue();
+
+        return future;
+    }
+
+    public async handleGameRequestComplete(respondTo: string, gameName: string, timestamp: Date, hoursPlayed: number): Promise<void> {
+        const future = new Future<void>();
+        const task = async (): Promise<void> => {
+            let gameRequestSpreadsheet: GameRequest_Spreadsheet;
+            try {
+                gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet);
+            } catch (err) {
+                this._twitchBot.chat(respondTo, `Failed to read game request spreadsheet. No data altered.`);
+                console.log(err);
+                future.resolve();
+                return;
+            }
+
+            const existingEntry = gameRequestSpreadsheet.findEntry(gameName);
+            if (!existingEntry) {
+                this._twitchBot.chat(respondTo, `Game request "${gameName}" was not found in spreadsheet.`);
+                future.resolve();
+                return;
+            }
+            if (existingEntry.isCompleted) {
+                this._twitchBot.chat(respondTo, `Game request "${gameName}" has already been completed.`);
+                future.resolve();
+                return;
+            }
+            if (!existingEntry.isStarted) {
+                this._twitchBot.chat(respondTo, `Game request "${gameName}" has not yet been started.`);
+                future.resolve();
+                return;
+            }
+            
+            try {
+                gameRequestSpreadsheet.completeEntry(gameName, timestamp, hoursPlayed);
+            } catch (err) {
+                this._twitchBot.chat(respondTo, `Error completing game request: ${err.message}`);
+                future.resolve();
+                return;
+            }
+            try {
+                await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet, gameRequestSpreadsheet);
+                this._twitchBot.chat(respondTo, `Game request successfully completed.`);
+                future.resolve();
+            } catch (err) {
+                const chatMessage = `Error completing game request. No data altered.`;
                 this._twitchBot.chat(respondTo, chatMessage);
                 const errorMessage = `${chatMessage}: ${err.message}`;
                 future.resolve();

@@ -1,5 +1,5 @@
 import { sheets_v4 } from "googleapis";
-import { borderLeft, getBorderRowBelow, headerFormatCenter, pendingEntryFormat } from "./GameRequestSpreadsheetStyle";
+import { borderLeft, getBorderRowBelow, headerFormatCenter, basicEntryFormat } from "./GameRequestSpreadsheetStyle";
 import { SpreadsheetBase, SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getEntryValue_String, getTimestampStringForSpreadsheet, headersToRowData, parseHeaderFooterRow } from "./SpreadsheetBase";
 import { Utils } from "../../Utils";
 
@@ -152,16 +152,16 @@ export class Bidwar_AwaitingBlock extends SpreadsheetBlock {
                     {
                         userEnteredValue: { numberValue: n.amountContributed },
                         note: n.contributions.sort((a, b) => b.amount - a.amount).map(c => `${c.amount} • ${c.name}`).join("\n"),
-                        userEnteredFormat: pendingEntryFormat,
+                        userEnteredFormat: basicEntryFormat,
                     },
                     {
                         userEnteredValue: { stringValue: n.name },
                         note: n.nameNote,
-                        userEnteredFormat: pendingEntryFormat,
+                        userEnteredFormat: basicEntryFormat,
                     },
                     {
                         userEnteredValue: { stringValue: n.note },
-                        userEnteredFormat: pendingEntryFormat,
+                        userEnteredFormat: basicEntryFormat,
                     },
                     {
                         userEnteredFormat: borderLeft,
@@ -197,16 +197,16 @@ export class Bidwar_ActiveBlock extends SpreadsheetBlock {
                     {
                         userEnteredValue: { numberValue: n.amountContributed },
                         note: n.contributions.sort((a, b) => b.amount - a.amount).map(c => `${c.amount} • ${c.name}`).join("\n"),
-                        userEnteredFormat: pendingEntryFormat,
+                        userEnteredFormat: basicEntryFormat,
                     },
                     {
                         userEnteredValue: { stringValue: n.name },
                         note: n.nameNote,
-                        userEnteredFormat: pendingEntryFormat,
+                        userEnteredFormat: basicEntryFormat,
                     },
                     {
                         userEnteredValue: { stringValue: n.note },
-                        userEnteredFormat: pendingEntryFormat,
+                        userEnteredFormat: basicEntryFormat,
                     },
                     {
                         userEnteredFormat: borderLeft,
@@ -318,12 +318,12 @@ export class Bidwar_BankBlock extends SpreadsheetBlock {
                             }
                             return contributionString;
                         }).join("\n"),
-                        userEnteredFormat: pendingEntryFormat,
+                        userEnteredFormat: basicEntryFormat,
                     },
                     {
                         userEnteredValue: { stringValue: n.username },
                         note: n.userId,
-                        userEnteredFormat: pendingEntryFormat,
+                        userEnteredFormat: basicEntryFormat,
                     },
                     {
                         userEnteredFormat: borderLeft,
