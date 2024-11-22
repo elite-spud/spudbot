@@ -5,9 +5,10 @@ import * as open from "open";
 import { WebSocket } from "ws";
 import { ConsoleColors } from "./ConsoleColors";
 import { Future } from "./Future";
-import { IIrcBotAuxCommandGroupConfig, IIrcBotMiscConfig, IJoinMessageDetail, IPartMessageDetail, IPrivMessageDetail, IrcBotBase } from "./IrcBot";
-import { CreateCustomChannelPointRewardArgs, ITwitchBotAuxCommandConfig, ITwitchBotConfig, ITwitchBotConnectionConfig, SubTierPoints, TwitchAppToken, TwitchBadgeTagKeys, TwitchBroadcasterSubscriptionsResponse, TwitchErrorResponse, TwitchEventSub_CreateSubscription, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_SubscriptionEnd, TwitchEventSub_Event_SubscriptionGift, TwitchEventSub_Event_SubscriptionMessage, TwitchEventSub_Event_SubscriptionStart, TwitchEventSub_Notification_Payload, TwitchEventSub_Notification_Subscription, TwitchEventSub_Reconnect_Payload, TwitchEventSub_SubscriptionType, TwitchEventSub_Welcome_Payload, TwitchGetChannelInfo, TwitchGetChannelInfoResponse, TwitchGetCustomChannelPointRewardInfo, TwitchGetCustomChannelPointRewardResponse, TwitchGetStreamInfo, TwitchGetStreamsResponse, TwitchPrivMessageTagKeys, TwitchUserDetail, TwitchUserInfoResponse, TwitchUserToken } from "./TwitchBotTypes";
 import { HeldTaskGroup } from "./HeldTask";
+import { IIrcBotAuxCommandGroupConfig, IIrcBotMiscConfig, IJoinMessageDetail, IPartMessageDetail, IPrivMessageDetail, IrcBotBase } from "./IrcBot";
+import { TaskQueue } from "./TaskQueue";
+import { CreateCustomChannelPointRewardArgs, ITwitchBotAuxCommandConfig, ITwitchBotConfig, ITwitchBotConnectionConfig, SubTierPoints, TwitchAppToken, TwitchBadgeTagKeys, TwitchBroadcasterSubscriptionsResponse, TwitchChatSettings, TwitchErrorResponse, TwitchEventSub_CreateSubscription, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_Raid, TwitchEventSub_Event_SubscriptionEnd, TwitchEventSub_Event_SubscriptionGift, TwitchEventSub_Event_SubscriptionMessage, TwitchEventSub_Event_SubscriptionStart, TwitchEventSub_Notification_Payload, TwitchEventSub_Notification_Subscription, TwitchEventSub_Reconnect_Payload, TwitchEventSub_SubscriptionType, TwitchEventSub_Welcome_Payload, TwitchGetChannelInfo, TwitchGetChannelInfoResponse, TwitchGetCustomChannelPointRewardInfo, TwitchGetCustomChannelPointRewardResponse, TwitchGetShieldModeStatusResponseBody, TwitchGetStreamInfo, TwitchGetStreamsResponse, TwitchPrivMessageTagKeys, TwitchUpdateChatSettingsRequestBody, TwitchUserDetail, TwitchUserInfoResponse, TwitchUserToken } from "./TwitchBotTypes";
 
 export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = TwitchUserDetail> extends IrcBotBase<TUserDetail> {
     public static readonly twitchMaxChatMessageLength = 500;
@@ -22,6 +23,10 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
     protected _twitchEventSubHeartbeatInterval: NodeJS.Timer;
     protected _twitchEventSubTemp: WebSocket | undefined = undefined;
     public readonly heldTasksByUserId: HeldTaskGroup = new HeldTaskGroup();
+
+    protected _raidResponseTaskQueue = new TaskQueue();
+    protected _chatSettingsPriorToRaidOverride?: TwitchChatSettings;
+    protected _raidOverrideTimeouts?: { warning: NodeJS.Timeout, final: NodeJS.Timeout };
 
     protected _currentSubPoints?: number = undefined;
     protected _currentSubs?: number = undefined;
@@ -413,7 +418,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
     protected async loadUserToken(): Promise<void> {
         const clientId = this._config.connection.twitch.oauth.clientId;
         // Keep alphabetical for easier comparison against returned scope in refresh token
-        const scope = `bits:read channel:manage:redemptions channel:read:subscriptions moderator:manage:banned_users`;
+        const scope = `bits:read channel:manage:redemptions channel:read:subscriptions moderator:manage:banned_users moderator:manage:chat_settings moderator:manage:shield_mode`;
 
         const storedTokenString = await getPassword(this.getServiceName(), this._userAccessTokenAccountName);
         if (storedTokenString) {
@@ -598,7 +603,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
             } else if (notificationMessage.subscription.type === "channel.prediction.begin") {
                 
             } else if (notificationMessage.subscription.type === "channel.raid") {
-                
+                await this.handleRaid(notificationMessage.event as TwitchEventSub_Event_Raid, notificationMessage.subscription);
             } else if (notificationMessage.subscription.type === "channel.follow") {
                 
             } else if (notificationMessage.subscription.type === "channel.ad_break.begin") {
@@ -651,6 +656,176 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
     protected abstract handleSubscriptionGift(event: TwitchEventSub_Event_SubscriptionGift, _subscription: TwitchEventSub_Notification_Subscription): Promise<void>;
 
     protected abstract handleCheer(event: TwitchEventSub_Event_Cheer, _subscription: TwitchEventSub_Notification_Subscription): Promise<void>;
+
+    protected async isShieldModeEnabled(): Promise<boolean> {
+        const broadcasterId = await this.getTwitchBroadcasterId();
+        const response = await fetch(`https://api.twitch.tv/helix/moderation/shield_mode?broadcaster_id=${broadcasterId}&moderator_id=${broadcasterId}`, {
+            method: `GET`,
+            headers: {
+                Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
+                "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
+            }
+        });
+
+        if (response.status !== 200) {
+            console.log(`Get Shield Mode request failed: ${response.status} ${response.statusText}`);
+            console.log(response);
+        } else {
+            console.log(`Get Shield Mode request successful.`);
+        }
+
+        const json: TwitchGetShieldModeStatusResponseBody = await response.json();
+        return json.data[0].is_active;
+    }
+
+    protected async updateShieldMode(enable: boolean): Promise<void> {
+        const broadcasterId = await this.getTwitchBroadcasterId();
+        const body = {
+            is_active: enable,
+        };
+        const response = await fetch(`https://api.twitch.tv/helix/moderation/shield_mode?broadcaster_id=${broadcasterId}&moderator_id=${broadcasterId}`, {
+            method: `PUT`,
+            headers: {
+                Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
+                "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
+            },
+            body: JSON.stringify(body),
+        });
+
+        if (response.status !== 200) {
+            console.log(`Update Shield Mode request failed: ${response.status} ${response.statusText}`);
+            console.log(response);
+        } else {
+            console.log(`Update Shield Mode request successful.`);
+        }
+        return;
+    }
+
+    protected async getChatSettings(): Promise<TwitchChatSettings> {
+        const broadcasterId = await this.getTwitchBroadcasterId();
+        const response = await fetch(`https://api.twitch.tv/helix/chat/settings?broadcaster_id=${broadcasterId}&moderator_id=${broadcasterId}`, {
+            method: `GET`,
+            headers: {
+                Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
+                "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
+            }
+        });
+
+        if (response.status !== 200) {
+            console.log(`Get Chat Settings request failed: ${response.status} ${response.statusText}`);
+            console.log(response);
+        } else {
+            console.log(`Get Chat Settings request successful.`);
+        }
+
+        const getChatSettingsJson = await response.json();
+        return getChatSettingsJson.data[0];
+    }
+
+    protected async updateChatSettings(settings: TwitchUpdateChatSettingsRequestBody): Promise<void> {
+        const broadcasterId = await this.getTwitchBroadcasterId();
+        const response = await fetch(`https://api.twitch.tv/helix/chat/settings?broadcaster_id=${broadcasterId}&moderator_id=${broadcasterId}`, {
+            method: `PATCH`,
+            headers: {
+                Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
+                "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
+                "Content-Type": `application/json`,
+            },
+            body: JSON.stringify(settings),
+        });
+
+        if (response.status !== 200) {
+            console.log(`Update Chat Settings request failed: ${response.status} ${response.statusText}`);
+            console.log(response);
+        } else {
+            console.log(`Update Chat Settings request successful.`);
+        }
+
+        return;
+    }
+
+    protected setChatSettingsOverrideTimeouts(overrideMillis: number, warningMillis: number, chatRespondTo: string): void {
+        const finalTimeout = setTimeout(async () => {
+            if (this._chatSettingsPriorToRaidOverride === undefined) { // settings have already been reverted
+                return;
+            }
+            await this.updateChatSettings(this._chatSettingsPriorToRaidOverride);
+            this._chatSettingsPriorToRaidOverride = undefined;
+        }, overrideMillis);
+
+        const warningTimeout = setTimeout(async () => {
+            if (this._chatSettingsPriorToRaidOverride === undefined) { // settings have already been reverted
+                return;
+            }
+            const minutesUntilRevert = (overrideMillis - warningMillis) / 1000 / 60;
+            this.chat(chatRespondTo, `Followers-only mode will be re-enabled in ${minutesUntilRevert} minutes. Consider following the channel if you'd like to keep chatting! eeveeHeart`);
+        }, warningMillis);
+
+        if (this._raidOverrideTimeouts !== undefined) {
+            clearTimeout(this._raidOverrideTimeouts.warning);
+            clearTimeout(this._raidOverrideTimeouts.final);
+            console.log(`Timeouts cleared.`);
+        }
+        this._raidOverrideTimeouts = {
+            final: finalTimeout,
+            warning: warningTimeout,
+        };
+    }
+
+    protected async handleRaid(event: TwitchEventSub_Event_Raid, _subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
+        const future = new Future<void>();
+        const task = async (): Promise<void> => {
+            const shieldModeEnabled: boolean = await this.isShieldModeEnabled();
+            if (shieldModeEnabled) { // Do not interfere at all if shield mode is enabled, because editing settings will edit shield mode
+                future.resolve();
+                return;
+            }
+
+            const chatRespondTo = `#${event.to_broadcaster_user_login}`;
+            
+            const currentChatSettings = await this.getChatSettings();
+            const originalChatSettings = this._chatSettingsPriorToRaidOverride ?? currentChatSettings;
+
+            const overrideMinutes = originalChatSettings.follower_mode_duration * 2;
+            const warningMinutes = originalChatSettings.follower_mode_duration - 3;
+            const overrideMillis = 1000 * 60 * overrideMinutes;
+            const warningMillis = 1000 * 60 * warningMinutes;
+
+            if (!!this._chatSettingsPriorToRaidOverride) { // override in effect
+                this.setChatSettingsOverrideTimeouts(overrideMillis, warningMillis, chatRespondTo);
+                future.resolve();
+                return;
+            }
+
+            const currentChatSettingsAreRestrictive = currentChatSettings.follower_mode === true;
+            if (!currentChatSettingsAreRestrictive) { // no need to override anything
+                future.resolve();
+                return;
+            }
+            this._chatSettingsPriorToRaidOverride = currentChatSettings;
+
+            try {
+                await this.updateChatSettings({
+                    follower_mode: false,
+                });
+                this.chat(chatRespondTo, `Raid incoming! Chat restrictions have been temporarily disabled so that raiders can speak freely. Welcome, @${event.from_broadcaster_user_name} and friends! eeveeHeart`);
+            } catch (err) {
+                const broadcasterId = this.getTwitchBroadcasterId();
+                this.chat(chatRespondTo, `Error disabling chat restrictions in response to incoming raid. @${broadcasterId}, could you please disable them manually?`);
+                future.reject(err);
+                return;
+            }
+
+            this.setChatSettingsOverrideTimeouts(overrideMillis, warningMillis, chatRespondTo);
+
+            future.resolve();
+            return;
+        }
+        this._raidResponseTaskQueue.addTask(task);
+        this._raidResponseTaskQueue.startQueue();
+
+        return future;
+    }
 
     protected async getEventSubSubscriptions(): Promise<any[]> {
         const response = await fetch(`https://api.twitch.tv/helix/eventsub/subscriptions`, {
@@ -736,10 +911,10 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
             },
             body: JSON.stringify(body),
         });
-        const timeoutResponse: any = await response.json();
-        if (timeoutResponse.status !== 200) {
+        const timeoutResponseJson: any = await response.json();
+        if (timeoutResponseJson.status !== 200) {
             console.log(`Timeout request failed: ${response.status} ${response.statusText}`);
-            console.log(timeoutResponse);
+            console.log(timeoutResponseJson);
         } else {
             console.log(`Timeout Successful.`);
         }

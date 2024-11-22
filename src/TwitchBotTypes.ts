@@ -207,6 +207,56 @@ export interface TwitchUserToken {
     user_id?: string;
 }
 
+export interface TwitchChatSettings {
+    broadcaster_id: string,
+    emote_mode: boolean,
+    follower_mode: boolean,
+    follower_mode_duration: number,
+    moderator_id: string,
+    non_moderator_chat_delay: boolean,
+    non_moderator_chat_delay_duration: number,
+    slow_mode: boolean,
+    slow_mode_wait_time: number,
+    subscriber_mode: boolean,
+    unique_chat_mode: boolean,
+}
+
+export interface TwitchGetChatSettingsResponseBody {
+    data: TwitchChatSettings[],
+}
+
+export interface TwitchUpdateChatSettingsRequestBody {
+    emote_mode?: boolean,
+    follower_mode?: boolean,
+    follower_mode_duration?: number,
+    non_moderator_chat_delay?: boolean,
+    non_moderator_chat_delay_duration?: number,
+    slow_mode?: boolean,
+    slow_mode_wait_time?: number,
+    subscriber_mode?: boolean,
+    unique_chat_mode?: boolean,
+}
+
+export interface TwitchGetShieldModeStatusResponseBody {
+    data: {
+        is_active: boolean,
+        moderator_id: string,
+        moderator_login: string,
+        moderator_name: string,
+        last_activated_at: string,
+    }[]
+}
+
+export interface TwitchUpdateShieldModeStatusResponseBody {
+    data: {
+        is_active: boolean,
+        moderator_id: string,
+        moderator_login: string,
+        moderator_name: string,
+        last_activated_at: string,
+    }
+}
+
 export interface TwitchBroadcasterSubscriptionsResponse {
     data: TwitchSubscriptionDetail[];
     pagination: {
@@ -369,6 +419,16 @@ export interface TwitchEventSub_Event_Cheer extends TwitchEventSub_Notification_
     broadcaster_user_name: string;
     message: string;
     bits: number;
+}
+
+export interface TwitchEventSub_Event_Raid extends TwitchEventSub_Notification_Event {
+    from_broadcaster_user_id: string;
+    from_broadcaster_user_login: string;
+    from_broadcaster_user_name: string;
+    to_broadcaster_user_id: string;
+    to_broadcaster_user_login: string;
+    to_broadcaster_user_name: string;
+    viewers: number;
 }
 
 /** https://dev.twitch.tv/docs/api/reference/#create-eventsub-subscription */
