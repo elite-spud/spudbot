@@ -26,20 +26,20 @@ export class Bidwar_Spreadsheet extends SpreadsheetBase {
         this.bankBlock = bankBlock;
     }
 
-    public addBitsToUser(userId: string, username: string, bits: number, timestamp: Date, source?: string): void {
+    public addBitsToUser(userId: string, username: string, bits: number, timestamp: Date, comment?: string): void {
         const user = this.bankBlock.entries.find(n => n.userId === userId);
         if (user === undefined) {
             const newBankUser = new Bidwar_BankEntry({
                 userId: userId,
                 username: username,
-                contributions: [{ amount: bits, timestamp: timestamp, detail: source }],
+                contributions: [{ amount: bits, timestamp: timestamp, comment: comment }],
             });
             this.bankBlock.entries.push(newBankUser);
             return;
         }
 
         user.username = username;
-        user.contributions.unshift({ amount: bits, timestamp: timestamp, detail: source });
+        user.contributions.unshift({ amount: bits, timestamp: timestamp, comment: comment });
     }
     
     public spendBitsOnEntry(userId: string, username: string, gameName: string, bits: number, timestamp: Date): BidwarOperationStatus {
@@ -67,7 +67,7 @@ export class Bidwar_Spreadsheet extends SpreadsheetBase {
         } else {
             entry.contributions.unshift({ name: username, amount: bits });
         }
-        user.contributions.unshift({ amount: -bits, timestamp: timestamp, detail: `-> ${gameName}` });
+        user.contributions.unshift({ amount: -bits, timestamp: timestamp, comment: `-> ${gameName}` });
 
         return { success: true };
     }
@@ -313,8 +313,8 @@ export class Bidwar_BankBlock extends SpreadsheetBlock {
                                 contributionString += `${timeString} • `;
                             }
                             contributionString += `${c.amount >= 0 ? "+" : ""}${c.amount}`;
-                            if (c.detail) {
-                                contributionString += ` • ${c.detail}`;
+                            if (c.comment) {
+                                contributionString += ` • ${c.comment}`;
                             }
                             return contributionString;
                         }).join("\n"),
@@ -339,7 +339,7 @@ export class Bidwar_BankBlock extends SpreadsheetBlock {
 export interface Bidwar_BankEntryContribution {
     amount: number,
     timestamp?: Date,
-    detail?: string
+    comment?: string
 };
 
 export class Bidwar_BankEntry {
@@ -390,7 +390,7 @@ export class Bidwar_BankEntry {
             } else {
                 continue;
             }
-            const contribution: Bidwar_BankEntryContribution = { amount, timestamp, detail };
+            const contribution: Bidwar_BankEntryContribution = { amount, timestamp, comment: detail };
             contributions.push(contribution);
         }
         return contributions;
