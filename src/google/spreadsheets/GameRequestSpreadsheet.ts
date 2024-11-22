@@ -545,7 +545,7 @@ export class GameRequest_CompletedBlock extends SpreadsheetBlock {
         const headerRows = headersToRowData(this.headers);
         // const dateFormat: sheets_v4.Schema$CellFormat = { numberFormat: { type: "DATE_TIME", pattern: "yyyy-mm-dd " } };
         const entryRows = this.entries.sort((a, b) => {
-            const dateStartedComparison = b.dateStarted.getTime() - a.dateStarted.getTime();
+            const dateStartedComparison = b.dateCompleted.getTime() - a.dateCompleted.getTime();
             return dateStartedComparison;
         }).map(n => {
             const rowData: sheets_v4.Schema$RowData = {
