@@ -587,11 +587,6 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
 
     protected async handleGameRequestModular(messageDetail: IPrivMessageDetail): Promise<void> {
         const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
-            const userIsBroadcaster = messageDetail.username === this.twitchChannelName;
-            if (!userIsBroadcaster) { // TODO: detect streamer's name from config or make this a basic configuration with a name/broadcaster option
-                this.chat(messageDetail.respondTo, `only the broadcaster can use this command`);
-                return;
-            }
             const regex = /([^\s"]+|"[^"]*")+/g;
             const tokens = messageDetail.message.match(regex) ?? [];
 
@@ -599,8 +594,14 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
                 return; // Defer to configured command
             }
 
+            const userIsBroadcaster = messageDetail.username === this.twitchChannelName;
+            if (!userIsBroadcaster) { // TODO: detect streamer's name from config or make this a basic configuration with a name/broadcaster option
+                this.chat(messageDetail.respondTo, `only the broadcaster can use this command`);
+                return;
+            }
+
             if (tokens[1] === "help") {
-                const adminHelpMessage = `!gamerequest [add, remove, fund]`;
+                const adminHelpMessage = `!gamerequest [add, fund, start, complete]`;
                 this.chat(messageDetail.respondTo, adminHelpMessage);
                 return;
             }
