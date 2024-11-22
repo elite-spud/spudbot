@@ -1,14 +1,14 @@
 import { Future } from "./Future";
 
 export class HeldTaskGroup {
-    protected _lastHeldTaskByUserId: { [key: string]: HeldTask } = {};
+    protected _lastHeldTaskDict: { [key: string]: HeldTask } = {};
 
     public async addHeldTask(key: string, task: HeldTask, timeoutMillis?: number): Promise<void> {
         await this.cancel(key);
-        this._lastHeldTaskByUserId[key] = task;
+        this._lastHeldTaskDict[key] = task;
         if (timeoutMillis) {
             setTimeout(async () => {
-                const existingTask = this._lastHeldTaskByUserId[key];
+                const existingTask = this._lastHeldTaskDict[key];
                 if (existingTask.id === task.id) {
                     await this.cancel(key);
                 }
@@ -17,7 +17,7 @@ export class HeldTaskGroup {
     }
 
     public async complete(key: string): Promise<boolean | undefined> {
-        const existingTask = this._lastHeldTaskByUserId[key];
+        const existingTask = this._lastHeldTaskDict[key];
         if (existingTask !== undefined) {
             return existingTask.complete();
         }
@@ -25,7 +25,7 @@ export class HeldTaskGroup {
     }
 
     public async cancel(key: string): Promise<boolean | undefined> {
-        const existingTask = this._lastHeldTaskByUserId[key];
+        const existingTask = this._lastHeldTaskDict[key];
         if (existingTask !== undefined) {
             return existingTask.cancel();
         }
