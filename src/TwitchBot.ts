@@ -1191,6 +1191,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         let numDeletedUsers = 0;
         let numOutdatedUsernames = 0;
         let numBannedBots = 0;
+        let numSyncedBans = 0;
         let numUnbannedUsers = 0;
 
         const bannedUsers = await this.getBannedUsers();
@@ -1214,10 +1215,16 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
             }
             userDetail.broadcasterType = userApiInfo.broadcaster_type;
 
-            // Unflag any bans that have been reversed.
-            if (userDetail.isBanned && !bannedUsers.some(n => n.user_id === userDetail.id)) {
+            const userInBannedList = bannedUsers.some(n => n.user_id === userDetail.id);
+
+            if (userDetail.isBanned && !userInBannedList) {
                 numUnbannedUsers++;
                 userDetail.isBanned = false;
+            }
+
+            if (!userDetail.isBanned && userInBannedList) {
+                numSyncedBans++;
+                userDetail.isBanned = true;
             }
 
             const userIsABot = knownBots.some(n => n === userDetail.username);
@@ -1232,6 +1239,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         console.log(`Successfully updated ${numDeletedUsers} / ${userIds.length} as recently deleted.`);
         console.log(`Successfully updated ${numOutdatedUsernames} / ${userIds.length} outdated usernames.`);
         console.log(`Successfully flagged ${numUnbannedUsers} as unbanned.`);
+        console.log(`Successfully synced ${numSyncedBans} active bans.`);
         console.log(`Successfully banned ${numBannedBots} known bots.`);
     }
 }
