@@ -8,7 +8,8 @@ import { Future } from "./Future";
 import { HeldTaskGroup } from "./HeldTask";
 import { IIrcBotAuxCommandGroupConfig, IIrcBotMiscConfig, IJoinMessageDetail, IPartMessageDetail, IPrivMessageDetail, IrcBotBase } from "./IrcBot";
 import { TaskQueue } from "./TaskQueue";
-import { CreateCustomChannelPointRewardArgs, ITwitchBotAuxCommandConfig, ITwitchBotConfig, ITwitchBotConnectionConfig, SubTierPoints, TwitchAppToken, TwitchBadgeTagKeys, TwitchBroadcasterSubscriptionsResponse, TwitchChatSettings, TwitchErrorResponse, TwitchEventSub_CreateSubscription, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_Raid, TwitchEventSub_Event_SubscriptionEnd, TwitchEventSub_Event_SubscriptionGift, TwitchEventSub_Event_SubscriptionMessage, TwitchEventSub_Event_SubscriptionStart, TwitchEventSub_Notification_Payload, TwitchEventSub_Notification_Subscription, TwitchEventSub_Reconnect_Payload, TwitchEventSub_SubscriptionType, TwitchEventSub_Welcome_Payload, TwitchGetChannelInfo, TwitchGetChannelInfoResponse, TwitchGetCustomChannelPointRewardInfo, TwitchGetCustomChannelPointRewardResponse, TwitchGetShieldModeStatusResponseBody, TwitchGetStreamInfo, TwitchGetStreamsResponse, TwitchPrivMessageTagKeys, TwitchUpdateChatSettingsRequestBody, TwitchUserDetail, TwitchUserInfoResponse, TwitchUserToken } from "./TwitchBotTypes";
+import { CreateCustomChannelPointRewardArgs, ITwitchBotAuxCommandConfig, ITwitchBotConfig, ITwitchBotConnectionConfig, SubTierPoints, TwitchAppToken, TwitchBadgeTagKeys, TwitchBannedUser, TwitchBroadcasterSubscriptionsResponse, TwitchChatSettings, TwitchErrorResponse, TwitchEventSub_CreateSubscription, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_Follow, TwitchEventSub_Event_Raid, TwitchEventSub_Event_SubscriptionEnd, TwitchEventSub_Event_SubscriptionGift, TwitchEventSub_Event_SubscriptionMessage, TwitchEventSub_Event_SubscriptionStart, TwitchEventSub_Notification_Payload, TwitchEventSub_Notification_Subscription, TwitchEventSub_Reconnect_Payload, TwitchEventSub_SubscriptionType, TwitchEventSub_Welcome_Payload, TwitchFollowingUser, TwitchGetBannedUsersResponseBody, TwitchGetChannelInfo, TwitchGetChannelInfoResponse, TwitchGetCustomChannelPointRewardInfo, TwitchGetCustomChannelPointRewardResponse, TwitchGetFollowingUsersResponseBody, TwitchGetShieldModeStatusResponseBody, TwitchGetStreamInfo, TwitchGetStreamsResponse, TwitchPrivMessageTagKeys, TwitchSubscriptionDetail, TwitchUpdateChatSettingsRequestBody, TwitchUserAPIInfo, TwitchUserDetail, TwitchUserInfoResponse, TwitchUserToken } from "./TwitchBotTypes";
+import { knownBots } from "./KnownBots";
 
 export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = TwitchUserDetail> extends IrcBotBase<TUserDetail> {
     public static readonly twitchMaxChatMessageLength = 500;
@@ -17,7 +18,6 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
     public declare readonly _config: ITwitchBotConfig;
     protected readonly _userAccessToken = new Future<TwitchUserToken>();
     protected readonly _twitchAppToken = new Future<TwitchAppToken>();
-    protected _twitchIdByUsername: { [key: string]: string } = {}
     protected readonly _userAccessTokenAccountName = "default"; // TODO: find a good replacement for this
     protected _twitchEventSub: WebSocket;
     protected _twitchEventSubHeartbeatInterval: NodeJS.Timer;
@@ -29,7 +29,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
     protected _raidOverrideTimeouts?: { warning: NodeJS.Timeout, final: NodeJS.Timeout };
 
     protected _currentSubPoints?: number = undefined;
-    protected _currentSubs?: number = undefined;
+    protected _currentSubCount?: number = undefined;
 
     protected override get maxChatMessageLength(): number {
         return this._config.misc.maxChatMessageLength ?? TwitchBotBase.twitchMaxChatMessageLength;
@@ -42,18 +42,22 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         ));
     }
 
-    /**
-     * Twitch uses a separate userId that persists across usernames
-     * @param username 
-     * @returns 
-     */
-    protected override async getUserIdForUsername(username: string): Promise<string> {
-        try {
-            const userId = await this.getTwitchIdWithCache(username);
-            return userId;
-        } catch (err) {
-            throw new Error(`Error receiving user id for username ${username} from twitch: ${err.message}`);
+    protected override async getUserIdsForUsernames(usernames: string[]): Promise<{ [username: string]: string | undefined }> {
+        const userIdsByUsername: { [username: string]: string | undefined } = {}
+        const userApiInfoByUserId = await this.getUserApiInfo([], usernames);
+
+        for (const username of usernames) {
+            userIdsByUsername[username] = undefined;
         }
+        
+        for (const userIdKey in userApiInfoByUserId) {
+            const userApiInfo = userApiInfoByUserId[userIdKey];
+            if (userApiInfo) {
+                userIdsByUsername[userApiInfo.login] = userApiInfo.id;
+            }
+        }
+
+        return userIdsByUsername;
     }
 
     protected override async callCommandFunctionFromConfig(command: ITwitchBotAuxCommandConfig, channel: string): Promise<boolean> {
@@ -96,13 +100,22 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         return await super.callCommandFunctionFromConfig(command, channel);
     }
 
-    protected override async trackUsersInChat(secondsToAdd: number): Promise<void> {
+    protected override async trackUsersInChat(secondsToAdd: number, force: boolean = false): Promise<void> {
         const isChannelLive = await this.isChannelLive(this.twitchChannelName);
-        if (!isChannelLive) {
+        if (!force && !isChannelLive) {
             return;
         }
 
         super.trackUsersInChat(secondsToAdd);
+    }
+
+    protected updateUsername(userDetail: TUserDetail, newUsername: string): void {
+        if (userDetail.oldUsernames === undefined) {
+            userDetail.oldUsernames = [];
+        }
+        userDetail.oldUsernames.push({ username: userDetail.username, lastSeenInChat: userDetail.lastSeenInChat ?? new Date() });
+        
+        userDetail.username = newUsername;
     }
 
     protected override async handleJoinMessage(messageDetail: IJoinMessageDetail): Promise<void> {
@@ -110,20 +123,12 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
 
         const userDetail = await this.getUserDetailWithCache(messageDetail.username);
         if (userDetail.username !== messageDetail.username) { // Locally stored username may not match because of a username change on Twitch
-            if (userDetail.oldUsernames === undefined) {
-                userDetail.oldUsernames = [];
-            }
-            userDetail.oldUsernames.push({ username: userDetail.username, lastSeenInChat: userDetail.lastSeenInChat ?? new Date() });
-            
-            userDetail.username = messageDetail.username;
+            this.updateUsername(userDetail, messageDetail.username);
         }
     }
 
     protected override async handlePartMessage(messageDetail: IPartMessageDetail): Promise<void> {
         super.handlePartMessage(messageDetail);
-        
-        // Delete the username-twitchId pair to ensure it is refreshed every time someone joins again
-        delete this._twitchIdByUsername[messageDetail.username];
     }
 
     protected get twitchChannelName(): string {
@@ -142,7 +147,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
     }
 
     protected async getChannelDetails(channelName: string): Promise<TwitchGetChannelInfo> {
-        const broadcasterId = await this.getTwitchIdWithCache(channelName);
+        const broadcasterId = await this.getUserIdForUsername(channelName);
 
         const appToken = await this._twitchAppToken;
         return new Promise<TwitchGetChannelInfo>((resolve, reject) => {
@@ -223,72 +228,107 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         });
     }
 
-    protected async getTwitchIdWithCache(username?: string): Promise<string> {
-        let id: string | undefined = username
-            ? this._twitchIdByUsername[username]
-            : (await this._userAccessToken).user_id;
-        if (!id) {
-            try {
-                id = await this.getTwitchId(username);
-            } catch (err) {
-                throw new Error(`Error retrieving twitch user id: ${err}`);
-            }
-
-            if (username) {
-                this._twitchIdByUsername[username] = id;
-            } else {
-                (await this._userAccessToken).user_id = id;
-            }
-        }
-        
-        return id;
-    }
-
     /**
      * 
-     * @param username Optional. if not provided, retrieves the twitch id for the active user access token
+     * @param userLogin If undefined, this function returns retrieves the twitch id for the active user access token
      * @returns 
      */
-    protected async getTwitchId(username?: string): Promise<string> {
-        return new Promise<string>(async (resolve, reject) => {
-            if (!username) {
-                reject("Cannot retrieve user id for user access token unless token already exists!");
-                return;
+    protected async getUserApiInfoSingle(userLogin?: string): Promise<TwitchUserAPIInfo | undefined> {
+        if (!userLogin) {
+            return this._getUserApiInfoFromToken();
+        }
+
+        const userInfoDict = await this.getUserApiInfo([], [userLogin]);
+        const keys = Object.keys(userInfoDict);
+        if (keys.length === 0) {
+            throw new Error(`Error retrieving API info for username: ${userLogin}`);
+        }
+        const userInfo = userInfoDict[keys[0]];
+        return userInfo;
+    }
+
+    protected async _getUserApiInfoFromToken(): Promise<TwitchUserAPIInfo> {
+        const response = await fetch(`https://api.twitch.tv/helix/users`, {
+            method: `GET`,
+            headers: {
+                Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
+                "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
+            }
+        });
+
+        if (response.status !== 200) {
+            const errMessage = `Get Users (from token) request failed: ${response.status} ${response.statusText}`;
+            console.log(errMessage);
+            console.log(await response.json());
+            throw new Error(errMessage);
+        } else {
+            // console.log(`Get Users request successful.`);
+        }
+
+        const json: TwitchUserInfoResponse = await response.json();
+        const userApiInfoArray = json.data;
+        if (userApiInfoArray.length !== 1) {
+            const errMessage = `Expected 1 user info object in response which represents the provided accessToken`;
+            console.log(errMessage);
+            console.log(await response.json());
+            throw new Error(errMessage);
+        }
+
+        return userApiInfoArray[0];
+    }
+
+    protected async getUserApiInfo(userIds: string[], userLogins: string[]): Promise<{ [userId: string]: TwitchUserAPIInfo | undefined }> {
+        const returnVal: { [userId: string]: TwitchUserAPIInfo | undefined } = {};
+        let numUserIdsQueried = 0;
+        let numUserLoginsQueried = 0;
+        let numEntriesFound = 0;
+        const totalUsersToQuery = userIds.length + userLogins.length;
+        const pageSize = 100;
+
+        while (numUserIdsQueried + numUserLoginsQueried < totalUsersToQuery) {
+            const userIdsInPage = userIds.slice(numUserIdsQueried, numUserIdsQueried + pageSize);
+            const userLoginsInPage = userIdsInPage.length < pageSize
+                ? userLogins.slice(numUserLoginsQueried, numUserLoginsQueried + (pageSize - userIdsInPage.length))
+                : [];
+
+            const idQueryParams = userIdsInPage.map(n => `id=${n}`);
+            const loginQueryParams = userLoginsInPage.map(n => `login=${n}`);
+            const queryParams = [...idQueryParams, ...loginQueryParams].join(`&`);
+            const url = `https://api.twitch.tv/helix/users?${queryParams}`;
+
+            const response = await fetch(url, {
+                method: `GET`,
+                headers: {
+                    Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
+                    "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
+                }
+            });
+
+            if (response.status !== 200) {
+                const errMessage = `Get Users request failed: ${response.status} ${response.statusText}`;
+                console.log(errMessage);
+                console.log(await response.json());
+                console.log(`URL: ${url}`);
+                throw new Error(errMessage);
+            } else {
+                // console.log(`Get Users request successful.`);
             }
 
-            const options = {
-                headers: {
-                    Authorization: username
-                        ? `Bearer ${(await this._twitchAppToken).access_token}`
-                        : `Bearer ${(await this._userAccessToken).access_token}`,
-                    "client-id": `${this._config.connection.twitch.oauth.clientId}`,
-                },
-            };
-            const url = `https://api.twitch.tv/helix/users${username ? `?login=${username}` : ""}`;
-            const request = https.get(url, options, (response) => {
-                response.on("data", (data) => {
-                    const responseJson: TwitchUserInfoResponse | TwitchErrorResponse = JSON.parse(data.toString("utf8"));
-                    const errorResponse = responseJson as TwitchErrorResponse;
-                    if (errorResponse.error) {
-                        reject(`Error retrieving user info for username ${username} from twitch API: ${errorResponse.status} ${errorResponse.error}: ${errorResponse.message}`);
-                        return;
-                    }
+            const json: TwitchUserInfoResponse = await response.json();
 
-                    const userInfoResponse = responseJson as TwitchUserInfoResponse;
-                    const id = userInfoResponse.data[0]?.id;
-                    if (id) {
-                        resolve(id);
-                        return;
-                    }
-                    reject(`Unable to parse user info from twitch API response: ${JSON.stringify(userInfoResponse)}`);
-                });
-            });
-            request.on("error", (err) => {
-                console.log("Error sending auth token request to twitch:");
-                console.log(err);
-                reject(err);
-            });
-        });
+            const userApiInfoArray = json.data;
+            for (const userApiInfo of userApiInfoArray) {
+                returnVal[userApiInfo.id] = userApiInfo;
+            }
+
+            numUserIdsQueried += userIdsInPage.length;
+            numUserLoginsQueried += userLoginsInPage.length;
+            numEntriesFound += userApiInfoArray.length;
+        }
+
+        const totalUsersQueried = numUserIdsQueried + numUserLoginsQueried;
+        console.log(`Found info for ${numEntriesFound} / ${totalUsersQueried} queried users (${numUserIdsQueried} ids + ${numUserLoginsQueried} logins)`);
+        return returnVal;
     }
 
     protected shouldIgnoreTimeoutRestrictions(messageDetail: IPrivMessageDetail): boolean {
@@ -409,7 +449,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         return tokenResponseJson;
     }
 
-    protected storeUserTokenResponse(tokenResponse: TwitchUserToken, ): void {
+    protected storeUserTokenResponse(tokenResponse: TwitchUserToken): void {
         setPassword(this.getServiceName(), this._userAccessTokenAccountName, JSON.stringify(tokenResponse));
         this._userAccessToken.resolve(tokenResponse);
         console.log(`Successfully stored user token response`);
@@ -418,7 +458,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
     protected async loadUserToken(): Promise<void> {
         const clientId = this._config.connection.twitch.oauth.clientId;
         // Keep alphabetical for easier comparison against returned scope in refresh token
-        const scope = `bits:read channel:manage:redemptions channel:read:subscriptions moderator:manage:banned_users moderator:manage:chat_settings moderator:manage:shield_mode`;
+        const scope = `bits:read channel:manage:redemptions channel:read:subscriptions moderator:manage:banned_users moderator:manage:chat_settings moderator:manage:shield_mode moderator:read:followers user:read:follows`;
 
         const storedTokenString = await getPassword(this.getServiceName(), this._userAccessTokenAccountName);
         if (storedTokenString) {
@@ -479,7 +519,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         server.listen(new URL(redirectUrl).port);
 
         const redirect_uri = redirectUrl;
-        const url = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirect_uri}&response_type=code&scope=${scope}`;
+        const url = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirect_uri}&response_type=code&scope=${scope}&force_verify=true`;
         await open(url);
     }
 
@@ -498,10 +538,10 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         this.sendRaw("CAP REQ :twitch.tv/commands"); // Request capability to send & receive twitch-specific commands (timeouts, chat clears, host notifications, subscriptions, etc.)
         this.sendRaw("CAP REQ :twitch.tv/tags"); // Request capability to augment certain IRC messages with tag metadata
 
-        const subDetail = await this.getActiveBroadcasterSubcriptions();
-        this.updateSubscribedUsers(subDetail);
-        this._currentSubs = subDetail.total;
-        this._currentSubPoints = subDetail.points;
+        const activeSubInfo = await this.getActiveBroadcasterSubcriptions();
+        this.updateSubscribedUsers(activeSubInfo.subDetails);
+        this._currentSubCount = activeSubInfo.subCount;
+        this._currentSubPoints = activeSubInfo.subPoints;
     }
 
     protected abstract getTwitchBroadcasterId(): Promise<string>;
@@ -571,6 +611,10 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
             });
             if (subscriptionResponse.status === 202) {
                 numNewSubscriptions++;
+            } else {
+                console.log(`Error subscribing to specific EventSub (${subscriptionResponse.status} response):`);
+                console.log(topic);
+                console.log(await subscriptionResponse.json());
             }
         }
         console.log(`  ${ConsoleColors.FgYellow}Subscribed to ${numNewSubscriptions}/${numAttemptedSubscriptions} EventSub Topics!${ConsoleColors.Reset}\n`);
@@ -605,7 +649,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
             } else if (notificationMessage.subscription.type === "channel.raid") {
                 await this.handleRaid(notificationMessage.event as TwitchEventSub_Event_Raid, notificationMessage.subscription);
             } else if (notificationMessage.subscription.type === "channel.follow") {
-                
+                await this.handleFollow(notificationMessage.event as TwitchEventSub_Event_Follow, notificationMessage.subscription);
             } else if (notificationMessage.subscription.type === "channel.ad_break.begin") {
                 
             }
@@ -620,19 +664,19 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
     protected abstract handleChannelPointRewardRedeem(event: TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, subscription: TwitchEventSub_Notification_Subscription): Promise<void>;
 
     protected async handleSubscriptionStart(event: TwitchEventSub_Event_SubscriptionStart, _subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
-        if (!this._currentSubPoints || !this._currentSubs)
+        if (!this._currentSubPoints || !this._currentSubCount)
             return;
 
         this._currentSubPoints += SubTierPoints.getPointsByTier(event.tier);
-        this._currentSubs += 1;
+        this._currentSubCount += 1;
     }
 
     protected async handleSubscriptionEnd(event: TwitchEventSub_Event_SubscriptionEnd, _subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
-        if (!this._currentSubPoints || !this._currentSubs)
+        if (!this._currentSubPoints || !this._currentSubCount)
             return;
 
         this._currentSubPoints -= SubTierPoints.getPointsByTier(event.tier);
-        this._currentSubs -= 1;
+        this._currentSubCount -= 1;
     }
 
     protected async handleSubscriptionMessage(event: TwitchEventSub_Event_SubscriptionMessage, _subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
@@ -669,7 +713,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
 
         if (response.status !== 200) {
             console.log(`Get Shield Mode request failed: ${response.status} ${response.statusText}`);
-            console.log(response);
+            console.log(await response.json());
         } else {
             console.log(`Get Shield Mode request successful.`);
         }
@@ -694,7 +738,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
 
         if (response.status !== 200) {
             console.log(`Update Shield Mode request failed: ${response.status} ${response.statusText}`);
-            console.log(response);
+            console.log(await response.json());
         } else {
             console.log(`Update Shield Mode request successful.`);
         }
@@ -713,7 +757,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
 
         if (response.status !== 200) {
             console.log(`Get Chat Settings request failed: ${response.status} ${response.statusText}`);
-            console.log(response);
+            console.log(await response.json());
         } else {
             console.log(`Get Chat Settings request successful.`);
         }
@@ -736,7 +780,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
 
         if (response.status !== 200) {
             console.log(`Update Chat Settings request failed: ${response.status} ${response.statusText}`);
-            console.log(response);
+            console.log(await response.json());
         } else {
             console.log(`Update Chat Settings request successful.`);
         }
@@ -827,6 +871,15 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         return future;
     }
 
+    protected async handleFollow(event: TwitchEventSub_Event_Follow, _subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
+        const detail = await this.getUserDetailWithCache(event.user_login);
+        detail.isFollower = true;
+        if (!detail.followDates) {
+            detail.followDates = [];
+        }
+        detail.followDates.push(new Date(event.followed_at));
+    }
+
     protected async getEventSubSubscriptions(): Promise<any[]> {
         const response = await fetch(`https://api.twitch.tv/helix/eventsub/subscriptions`, {
             method: `GET`,
@@ -861,24 +914,57 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         console.log(`  ${ConsoleColors.FgYellow}Deleted ${numDeleted} useless subscriptions${ConsoleColors.Reset}\n`);
     }
 
-    protected async getActiveBroadcasterSubcriptions(): Promise<TwitchBroadcasterSubscriptionsResponse> {
+    protected async getActiveBroadcasterSubcriptions(): Promise<{ subPoints: number, subCount: number, subDetails: TwitchSubscriptionDetail[] }> {
         // TODO: fetch more than 100 subs via paging
         const broadcasterId = await this.getTwitchBroadcasterId();
-        const response = await fetch(`https://api.twitch.tv/helix/subscriptions?broadcaster_id=${broadcasterId}&first=100`, {
-            method: `GET`,
-            headers: {
-                Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
-                "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
-            },
-        });
-        const json: TwitchBroadcasterSubscriptionsResponse = await response.json();
-        console.log(`  ${ConsoleColors.FgYellow}Current number of subs/subpoints: ${json.total}/${json.points}${ConsoleColors.Reset}\n`);
-        return json;
+        const subscribedUsers: TwitchSubscriptionDetail[] = [];
+
+        let cursor: string | undefined = undefined;
+        const pageSize = 100;
+        let subPoints = 0;
+        let subCount = 0;
+        
+        while (true) {
+            const response = await fetch(`https://api.twitch.tv/helix/subscriptions?broadcaster_id=${broadcasterId}&first=${pageSize}${!!cursor ? `&after=${cursor}` : ``}`, {
+                method: `GET`,
+                headers: {
+                    Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
+                    "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
+                },
+            });
+    
+            if (response.status !== 200) {
+                console.log(`Get Active Broadcaster Subscriptions request failed: ${response.status} ${response.statusText}`);
+                const json = await response.json();
+                console.log(json);
+                throw new Error("Get Active Broadcaster Subscriptions request failed");
+            }
+    
+            const json: TwitchBroadcasterSubscriptionsResponse = await response.json();
+            subscribedUsers.push(...json.data);
+
+            if (!json.pagination.cursor) {
+                break;
+            }
+            subPoints = json.points;
+            subCount = json.total;
+            cursor = json.pagination.cursor;
+        }
+        
+        console.log(`  ${ConsoleColors.FgYellow}Current number of subs/subpoints: ${subCount}/${subPoints}${ConsoleColors.Reset}\n`);
+        return {
+            subCount,
+            subPoints,
+            subDetails: subscribedUsers,
+        }
     }
 
-    protected async updateSubscribedUsers(subDetail: TwitchBroadcasterSubscriptionsResponse): Promise<void> {
-        for (const sub of subDetail.data) {
-            const userDetail = await this.getUserDetailWithCache(sub.user_login);
+    protected async updateSubscribedUsers(subDetails: TwitchSubscriptionDetail[]): Promise<void> {
+        const subscribedUserLogins = subDetails.map(n => n.user_login);
+        const userDetailPromisesByUsername = this.getUserDetailsWithCache(subscribedUserLogins);
+
+        for (const sub of subDetails) {
+            const userDetail = await userDetailPromisesByUsername[sub.user_login];
             userDetail.subscriptionTier = sub.tier;
             userDetail.lastKnownSubscribedDate = new Date();
 
@@ -888,13 +974,43 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         }
     }
 
+    public async ban(channelUsername: string, usernameToBan: string): Promise<void> {
+        const userAccessToken = await this._userAccessToken;
+
+        console.log(`Banning ${usernameToBan} in channel #${channelUsername}`);
+        const broadcasterId = await this.getUserIdForUsername(channelUsername);
+        const userIdToBan = await this.getUserIdForUsername(usernameToBan);
+        const body = {
+            data: {
+                user_id: userIdToBan,
+            }
+        }
+
+        const response = await fetch(`https://api.twitch.tv/helix/moderation/bans?broadcaster_id=${broadcasterId}&moderator_id=${broadcasterId}`, { // TODO: sign in with the chatbot account for this
+            method: `POST`,
+            headers: {
+                Authorization: `Bearer ${userAccessToken.access_token}`,
+                "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
+                "Content-Type": `application/json`,
+            },
+            body: JSON.stringify(body),
+        });
+
+        if (response.status !== 200) {
+            const badResponseJson: any = await response.json();
+            console.log(`Ban request failed: ${response.status} ${response.statusText}`);
+            console.log(badResponseJson);
+        } else {
+            console.log(`Ban against ${usernameToBan} (id: ${userIdToBan}) Successful.`);
+        }
+    }
+
     public async timeout(channelUsername: string, usernameToTimeout: string, durationSeconds: number): Promise<void> {
         const userAccessToken = await this._userAccessToken;
 
         console.log(`Timing out ${usernameToTimeout} in channel ${channelUsername}`)
-        const broadcasterId = await this.getTwitchIdWithCache(channelUsername.replace("#", ""));
-        // const chatbotId = await this.getTwitchIdWithCache(this._config.connection.user.nick);
-        const userIdToBan = await this.getTwitchIdWithCache(usernameToTimeout);
+        const broadcasterId = await this.getUserIdForUsername(channelUsername);
+        const userIdToBan = await this.getUserIdForUsername(usernameToTimeout);
         const body = {
             data: {
                 user_id: userIdToBan,
@@ -911,17 +1027,13 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
             },
             body: JSON.stringify(body),
         });
-        const timeoutResponseJson: any = await response.json();
-        if (timeoutResponseJson.status !== 200) {
+        if (response.status !== 200) {
+            const badResponseJson: any = await response.json();
             console.log(`Timeout request failed: ${response.status} ${response.statusText}`);
-            console.log(timeoutResponseJson);
+            console.log(badResponseJson);
         } else {
             console.log(`Timeout Successful.`);
         }
-    }
-
-    public clearTimeout(channel: string, username: string): void {
-        this.timeout(channel, username, 1);
     }
 
     public async getChannelPointRewards(): Promise<TwitchGetCustomChannelPointRewardInfo[]> {
@@ -977,5 +1089,149 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         }
 
         throw new Error(`Unable to update redemption status: ${response.status} error (${(await response.json()).message})`);
+    }
+
+    protected async getBannedUsers(): Promise<TwitchBannedUser[]> {
+        const broadcasterId = await this.getTwitchBroadcasterId();
+        const bannedUsers: TwitchBannedUser[] = [];
+
+        let cursor: string | undefined = undefined
+        const pageSize = 100;
+
+        while (true) {
+            const response = await fetch(`https://api.twitch.tv/helix/moderation/banned?broadcaster_id=${broadcasterId}&first=${pageSize}${!!cursor ? `&after=${cursor}` : ``}`, {
+                method: `GET`,
+                headers: {
+                    Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
+                    "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
+                }
+            });
+    
+            if (response.status !== 200) {
+                console.log(`Get Banned Users request failed: ${response.status} ${response.statusText}`);
+                console.log(await response.json());
+                throw new Error("Get Banned Users request failed");
+            }
+    
+            const json: TwitchGetBannedUsersResponseBody = await response.json();
+            bannedUsers.push(...json.data);
+
+            if (!json.pagination.cursor) {
+                break;
+            }
+            cursor = json.pagination.cursor;
+        }
+
+        console.log(`Get Banned Users successful (${bannedUsers.length} users)`);
+        return bannedUsers;
+    }
+
+    protected async getFollowers(): Promise<TwitchFollowingUser[]> {
+        const broadcasterId = await this.getTwitchBroadcasterId();
+        const followingUsers: TwitchFollowingUser[] = [];
+        let cursor: string | undefined = undefined
+
+        while (true) {
+            const response = await fetch(`https://api.twitch.tv/helix/channels/followers?broadcaster_id=${broadcasterId}&first=${100}${!!cursor ? `&after=${cursor}` : ``}`, {
+                method: `GET`,
+                headers: {
+                    Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
+                    "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
+                }
+            });
+    
+            if (response.status !== 200) {
+                console.log(`Get Following Users request failed: ${response.status} ${response.statusText}`);
+                const json = await response.json();
+                console.log(json);
+                throw new Error("Get Following Users request failed");
+            }
+    
+            const json: TwitchGetFollowingUsersResponseBody = await response.json();
+            followingUsers.push(...json.data);
+
+            if (!json.pagination.cursor) {
+                break;
+            }
+            cursor = json.pagination.cursor;
+        }
+
+        console.log(`Get Following Users successful (${followingUsers.length} users)`);
+        return followingUsers;
+    }
+
+    protected async updateFollowers(): Promise<void> {
+        const followingUsers = await this.getFollowers();
+        const userDetailPromisesByUsername = this.getUserDetailsWithCache(followingUsers.map(n => n.user_login));
+
+        for (const followingUser of followingUsers) {
+            const userDetail = await userDetailPromisesByUsername[followingUser.user_login];
+            userDetail.isFollower = true;
+            userDetail.followDates = [ new Date(followingUser.followed_at) ];
+            if (userDetail.followDates === undefined) {
+                // TODO: fix this
+            }
+        }
+
+        // Flag all non-followers
+        const knownUserIds = Object.keys(this._userDetailByUserId);
+        for (const userId of knownUserIds) {
+            const detail = this._userDetailByUserId[userId];
+            if (!followingUsers.some(n => n.user_id === detail.id)) { // TODO: optimize this (merge the list of userIds and iterate once, perhaps?)
+                detail.isFollower = false;
+            }
+        }
+    }
+
+    protected async updateAllUsers(): Promise<void> {
+        await this.updateFollowers();
+
+        const userIds = Object.keys(this._userDetailByUserId);
+        const userApiInfoByUserId = await this.getUserApiInfo(userIds, []);
+        let numDeletedUsers = 0;
+        let numOutdatedUsernames = 0;
+        let numBannedBots = 0;
+        let numUnbannedUsers = 0;
+
+        const bannedUsers = await this.getBannedUsers();
+
+        for (const userId in userApiInfoByUserId) {
+            const userDetail = this._userDetailByUserId[userId];
+            const userApiInfo = userApiInfoByUserId[userId];
+
+            if (!userApiInfo) {
+                if (!userDetail.isDeleted) {
+                    numDeletedUsers++;
+                    userDetail.isDeleted = true;
+                }
+                continue;
+            }
+
+            userDetail.isDeleted = false;
+            if (userApiInfo.login !== userDetail.username) {
+                this.updateUsername(userDetail, userApiInfo.login);
+                numOutdatedUsernames++;
+            }
+            userDetail.broadcasterType = userApiInfo.broadcaster_type;
+
+            // Unflag any bans that have been reversed.
+            if (userDetail.isBanned && !bannedUsers.some(n => n.user_id === userDetail.id)) {
+                numUnbannedUsers++;
+                userDetail.isBanned = false;
+            }
+
+            const userIsABot = knownBots.some(n => n === userDetail.username);
+            if (userIsABot && userDetail.isBanned !== true) {
+                numBannedBots++;
+                await this.ban(this.twitchChannelName, userDetail.username);
+                userDetail.isBanned = true;
+            }
+        }
+
+        await this.trackUsersInChat(0, true);
+        console.log(`Successfully updated ${numDeletedUsers} / ${userIds.length} as recently deleted.`);
+        console.log(`Successfully updated ${numOutdatedUsernames} / ${userIds.length} outdated usernames.`);
+        console.log(`Successfully flagged ${numUnbannedUsers} as unbanned.`);
+        console.log(`Successfully banned ${numBannedBots} known bots.`);
     }
 }

@@ -44,6 +44,7 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleYes(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleNo(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleMessagePowerup(detail));
+        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleUpdateAllUsers(detail));
 
         try {
             this._bonkCountPath = fs.realpathSync(`${this._config.configDir}/bonkCount.txt`);
@@ -114,6 +115,13 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
             version: `1`,
             condition: {
                 to_broadcaster_user_id: await this.getTwitchBroadcasterId(),
+            }
+        },{
+            name: `channel.follow`,
+            version: `2`,
+            condition: {
+                broadcaster_user_id: await this.getTwitchBroadcasterId(),
+                moderator_user_id: await this.getTwitchBroadcasterId(), // TODO: make this use the chatbot id (must first use a token authorized by the chatbot account)
             }
         }];
     }
@@ -299,7 +307,7 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
             const timeoutSeconds = (randomInt(10) + 1) * 20 + 60;
             if (roll !== 0) {
                 this.chat(messageDetail.respondTo, "💥 BANG!!");
-                this.timeout(messageDetail.respondTo, messageDetail.username, timeoutSeconds);
+                this.timeout(messageDetail.respondTo.replace("#", ""), messageDetail.username, timeoutSeconds);
             } else {
                 this.chat(messageDetail.respondTo, "Click...");
             }
@@ -331,7 +339,7 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
             ]);
             
             this.chat(messageDetail.respondTo, text);
-            this.timeout(messageDetail.respondTo, messageDetail.username, timeoutSeconds);
+            this.timeout(messageDetail.respondTo.replace("#", ""), messageDetail.username, timeoutSeconds);
         }
         const func = this.getCommandFunc({
             messageHandler: messageHandler,
@@ -357,7 +365,7 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
             ]);
             
             this.chat(messageDetail.respondTo, text);
-            this.timeout(messageDetail.respondTo, messageDetail.username, timeoutSeconds);
+            this.timeout(messageDetail.respondTo.replace("#", ""), messageDetail.username, timeoutSeconds);
         }
         const func = this.getCommandFunc({
             messageHandler: messageHandler,
@@ -615,10 +623,16 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
                 if (args.length === 4) {
                     const username = args[2];
                     const userId = await this.getUserIdForUsername(username);
+                    if (!userId) {
+                        return;
+                    }
                     await (await this._googleApi).handleGameRequestAdd(messageDetail.respondTo, gameName, Number.parseInt(args[1]), undefined, userId, username, Number.parseInt(args[3]), new Date());
                 } else if (args.length === 5) {
                     const username = args[3];
                     const userId = await this.getUserIdForUsername(username);
+                    if (!userId) {
+                        return;
+                    }
                     await (await this._googleApi).handleGameRequestAdd(messageDetail.respondTo, gameName, Number.parseInt(args[1]), Number.parseInt(args[2]), userId, username, Number.parseInt(args[4]), new Date());
                 } else {
                     this.chat(messageDetail.respondTo, `!gameRequest add command was malformed (expected at least 4 arguments, but found ${args.length})`);
@@ -757,9 +771,12 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
                 }
                 const amount = Number.parseInt(args[1]);
                 const username = args[0];
-                let userId = "";
+                let userId: string | undefined = undefined;
                 try {
                     userId = await this.getUserIdForUsername(username);
+                    if (!userId) {
+                        return;
+                    }
                 } catch (err) {
                     this.chat(messageDetail.respondTo, `Error retrieving username info for ${username}. Was the command formatted correctly?`);
                     return;
@@ -785,6 +802,9 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
     protected async handleYes(messageDetail: IPrivMessageDetail): Promise<void> {
         const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
             const userId = await this.getUserIdForUsername(messageDetail.username);
+            if (!userId) {
+                return;
+            }
             await this.heldTasksByUserId.complete(userId);
         }
         const func = this.getCommandFunc({
@@ -801,6 +821,9 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
     protected async handleNo(messageDetail: IPrivMessageDetail): Promise<void> {
         const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
             const userId = await this.getUserIdForUsername(messageDetail.username);
+            if (!userId) {
+                return;
+            }
             await this.heldTasksByUserId.cancel(userId);
         }
         const func = this.getCommandFunc({
@@ -822,11 +845,33 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
                     return;
                 }
                 const userId = await this.getUserIdForUsername(messageDetail.username);
+                if (!userId) {
+                    return;
+                }
                 await (await this._googleApi).handleBidwarAddFunds(messageDetail.respondTo, userId, messageDetail.username, this.powerupGigantifyBitsCost, `Powerup: Gigantify`, new Date());
             }
         }
 
         await messageHandler(messageDetail);
+    }
+
+    protected async handleUpdateAllUsers(messageDetail: IPrivMessageDetail): Promise<void> {
+        const messageHandler = async (_messageDetail: IPrivMessageDetail): Promise<void> => {
+            const userIsBroadcaster = messageDetail.username === this.twitchChannelName;
+            if (!userIsBroadcaster) {
+                return;
+            }
+            await this.updateAllUsers();
+        }
+        const func = this.getCommandFunc({
+            messageHandler: messageHandler,
+            triggerPhrases: ["!updateAllUsers"],
+            strictMatch: true,
+            commandId: "!updateAllUsers",
+            globalTimeoutSeconds: 0,
+            userTimeoutSeconds: 0,
+        });
+        await func(messageDetail);
     }
 
     // protected handleStatus(messageDetails: IPrivMessageDetail): void {

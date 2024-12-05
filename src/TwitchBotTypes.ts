@@ -3,6 +3,9 @@ import { IIrcBotAuxCommandConfig, IIrcBotConfig, IIrcBotConnectionConfig, IUserD
 export interface ITwitchUserDetail extends IUserDetail {
     /** globally unique id for a twitch user (persists between username changes) */
     id: string;
+    isBanned?: boolean;
+    isDeleted?: boolean;
+    isFollower?: boolean;
     monthsSubscribed?: number;
     currentSubcriptionStreak?: number;
     subscriptionTier?: string;
@@ -13,6 +16,11 @@ export interface ITwitchUserDetail extends IUserDetail {
 
 export class TwitchUserDetail extends UserDetail implements ITwitchUserDetail {
     public id: string;
+    public isBanned?: boolean;
+    public isDeleted?: boolean;
+    public isFollower?: boolean;
+    public followDates: Date[];
+    public broadcasterType?: "affiliate" | "partner" | "" | string;
     public monthsSubscribed?: number;
     public currentSubcriptionStreak?: number;
     public subscriptionTier?: string;
@@ -23,6 +31,9 @@ export class TwitchUserDetail extends UserDetail implements ITwitchUserDetail {
     public constructor(detail: ITwitchUserDetail) {
         super(detail);
         this.id = detail.id;
+        this.isBanned = detail.isBanned;
+        this.isDeleted = detail.isDeleted;
+        this.isFollower = detail.isFollower;
         this.monthsSubscribed = detail.monthsSubscribed;
         this.currentSubcriptionStreak = detail.currentSubcriptionStreak;
         this.subscriptionTier = detail.subscriptionTier;
@@ -46,13 +57,21 @@ export interface ITwitchBotConnectionConfig extends IIrcBotConnectionConfig {
     }
 }
 
+export interface TwitchUserAPIInfo {
+    id: string;
+    login: string;
+    display_name: string;
+    type: string;
+    broadcaster_type: "affiliate" | "partner" | "" | string;
+    description: string;
+    profile_image_url: string;
+    offline_image_url: string;
+    email?: string;
+    created_at: string;
+}
+
 export interface TwitchUserInfoResponse {
-    data: {
-            id: string;
-            login: string;
-            display_name: string;
-            created_at: string;
-    }[];
+    data: TwitchUserAPIInfo[];
 }
 
 export interface TwitchGetChannelInfo {
@@ -257,6 +276,40 @@ export interface TwitchUpdateShieldModeStatusResponseBody {
     }
 }
 
+export interface TwitchBannedUser {
+    user_id: string;
+    user_login: string;
+    user_name: string;
+    expires_at: string;
+    created_at: string;
+    reason: string;
+    moderator_id: string;
+    moderator_login: string;
+    moderator_name: string;
+}
+
+export interface TwitchGetBannedUsersResponseBody {
+    data: TwitchBannedUser[]
+    pagination: {
+        cursor: string;
+    }
+}
+
+export interface TwitchFollowingUser {
+    user_id: string;
+    user_login: string;
+    user_name: string;
+    followed_at: string;
+}
+
+export interface TwitchGetFollowingUsersResponseBody {
+    data: TwitchFollowingUser[]
+    pagination: {
+        cursor: string;
+    }
+    total: number;
+}
+
 export interface TwitchBroadcasterSubscriptionsResponse {
     data: TwitchSubscriptionDetail[];
     pagination: {
@@ -429,6 +482,17 @@ export interface TwitchEventSub_Event_Raid extends TwitchEventSub_Notification_E
     to_broadcaster_user_login: string;
     to_broadcaster_user_name: string;
     viewers: number;
+}
+
+export interface TwitchEventSub_Event_Follow extends TwitchEventSub_Notification_Event {
+    user_id: string;
+    user_login: string;
+    user_name: string;
+    broadcaster_user_id: string;
+    broadcaster_user_login: string;
+    broadcaster_user_name: string;
+    /** ISO format date string */
+    followed_at: string;
 }
 
 /** https://dev.twitch.tv/docs/api/reference/#create-eventsub-subscription */

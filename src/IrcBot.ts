@@ -4,6 +4,7 @@ import { Parser as CsvParser } from "json2csv";
 import * as net from "net";
 import { ConsoleColors } from "./ConsoleColors";
 import { TimerGroup } from "./TimerGroup";
+import { Future } from "./Future";
 
 export interface IIrcBotConfig {
     connection: IIrcBotConnectionConfig;
@@ -163,10 +164,10 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
     protected readonly _userTimeoutByCommandUsername: { [key: string]: number } = {};
     protected readonly _globalTimeoutByCommand: { [key: string]: number } = {};
 
-    protected readonly _pendingUserDetailByUsername: { [username: string]: Promise<TUserDetail> } = {};
+    protected readonly _pendingUserDetailByUsername: { [username: string]: Future<TUserDetail> } = {};
     /** UserId is a unique identifier that identifies a single user across multiple usernames */
     protected readonly _userDetailByUserId: IUserDetailCollection<TUserDetail>;
-    protected readonly _usernamesInChat: { [key: string]: UserChatStatus } = {};
+    protected readonly _usersInChat: { [key: string]: UserChatStatus } = {};
 
     protected readonly _userDetailsPath: string;
     protected readonly _userDetailsPathCsv: string;
@@ -202,14 +203,17 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
     protected async trackUsersInChat(secondsToAdd: number): Promise<void> {
         // TODO: track daily / per-stream stats
         const userUpdatePromises: Promise<void>[] = [];
-        for (const username of Object.keys(this._usernamesInChat)) {
-            const userUpdatedPromise = this.getUserDetailWithCache(username).then((userDetail) => {
+        const usernamesInChat = Object.keys(this._usersInChat);
+        const userDetailPromisesByUsername = this.getUserDetailsWithCache(usernamesInChat);
+        for (const usernameKey in userDetailPromisesByUsername) {
+            const userDetailPromise = userDetailPromisesByUsername[usernameKey];
+            const updateUserPromise = userDetailPromise.then((userDetail) => {
                 userDetail.secondsInChat += secondsToAdd;
                 userDetail.lastSeenInChat = new Date();
             }).catch((err) => {
-                console.log(`Error adding time to user detail with username ${username}: ${err}`);
+                console.log(`Error adding time to user detail w/ username: ${usernameKey} ${err}`);
             });
-            userUpdatePromises.push(userUpdatedPromise);
+            userUpdatePromises.push(updateUserPromise);
         }
         
         try {
@@ -229,7 +233,6 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
             const csv = this.getCsvUserDetail(this._userDetailByUserId);
             fs.writeFileSync(this._userDetailsPathCsv, csv);
             // console.log(`Successfully wrote userDetail to file: ${this.userDetailsPathCsv}`);
-
         } catch (err) {
             console.log(`Error writing userDetail status to file: ${err}`);
         }
@@ -250,26 +253,52 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
         return csv;
     }
 
-    protected async getUserDetailWithCache(username: string): Promise<TUserDetail> {
-        if (!!this._pendingUserDetailByUsername[username]) {
-            return this._pendingUserDetailByUsername[username];
+    protected async getUserDetailWithCache(userLogin: string): Promise<TUserDetail> {
+        const detailDict = this.getUserDetailsWithCache([userLogin]);
+        const numKeys = Object.keys(detailDict).length;
+        if (numKeys !== 1) {
+            throw new Error(`Expected only a single userDetail for username: ${userLogin} (found ${numKeys})`);
+        }
+
+        return detailDict[userLogin];
+    }
+
+    protected getUserDetailsWithCache(usernames: string[]): { [username: string]: Promise<TUserDetail> } {
+        const returnVal: { [username: string]: Promise<TUserDetail> } = {};
+        const usernamesToQuery: string[] = [];
+
+        for (const username of usernames) {
+            const alreadyBeingQueried = !!this._pendingUserDetailByUsername[username];
+            if (alreadyBeingQueried) {
+                returnVal[username] = this._pendingUserDetailByUsername[username].asPromise();
+            } else {
+                const future = new Future<TUserDetail>();
+                this._pendingUserDetailByUsername[username] = future;
+                returnVal[username] = future.asPromise();
+                usernamesToQuery.push(username);
+            }
         }
 
         // We need the userId here to determine which stored userDetail belongs to the given username (the user may have changed their username)
-        const promise = this.getUserIdForUsername(username).then((userId) => {
-            if (this._userDetailByUserId[userId]) {
-                return this._userDetailByUserId[userId];
+        this.getUserIdsForUsernames(usernamesToQuery).then((userIdsByUsername) => {
+            for (const usernameKey in userIdsByUsername) {
+                const userId = userIdsByUsername[usernameKey];
+                if (!userId) {
+                    this._pendingUserDetailByUsername[usernameKey].reject(`Unable to retrieve user detail for nonexistent userId`);
+                    continue;
+                }
+                if (!!this._userDetailByUserId[userId]) {
+                    this._pendingUserDetailByUsername[usernameKey].resolve(this._userDetailByUserId[userId]);
+                    continue;
+                }
+                const userDetail = this.createFreshUserDetail(usernameKey, userId);
+                this._userDetailByUserId[userId] = userDetail;
+                this._pendingUserDetailByUsername[usernameKey].resolve(userDetail);
+                delete this._pendingUserDetailByUsername[usernameKey];
             }
-
-            const userDetail = this.createFreshUserDetail(username, userId);
-            this._userDetailByUserId[userId] = userDetail;
-
-            delete this._pendingUserDetailByUsername[userId];
-            return userDetail;
         });
 
-        this._pendingUserDetailByUsername[username] = promise;
-        return promise;
+        return returnVal;
     }
 
     protected abstract createFreshUserDetail(username: string, userId: string): TUserDetail;
@@ -515,14 +544,28 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
         console.log("");
     }
 
-    protected async getUserIdForUsername(username: string): Promise<string> {
-        return username;
+    protected async getUserIdForUsername(username: string): Promise<string | undefined> {
+        const userIdsByUsername = await this.getUserIdsForUsernames([username]);
+        const numKeys = Object.keys(userIdsByUsername).length;
+        if (numKeys !== 1) {
+            throw new Error(`Expected only a single userDetail for username: ${username} (found ${numKeys})`)
+        }
+
+        return userIdsByUsername[username];
+    }
+
+    protected async getUserIdsForUsernames(usernames: string[]): Promise<{ [username: string]: string | undefined }> {
+        const userIdsByUsername: { [username: string]: string | undefined} = {};
+        for (const username of usernames) {
+            userIdsByUsername[username] = username;
+        }
+        return userIdsByUsername;
     }
 
     protected async handleJoinMessage(messageDetail: IJoinMessageDetail): Promise<void> {
         console.log(  `${ConsoleColors.FgRed}${messageDetail.username} joined ${messageDetail.channel}${ConsoleColors.Reset}`);
         try {
-            this._usernamesInChat[messageDetail.username] = UserChatStatus.Connected;
+            this._usersInChat[messageDetail.username] = UserChatStatus.Connected;
         } catch (err) {
             console.log(`error adding user to chat: ${err}`);
         }
@@ -532,7 +575,7 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
     protected async handlePartMessage(messageDetail: IPartMessageDetail): Promise<void> {
         console.log(  `${ConsoleColors.FgRed}${messageDetail.username} departed ${messageDetail.channel}${ConsoleColors.Reset}`);
         try {
-            delete this._usernamesInChat[messageDetail.username];
+            delete this._usersInChat[messageDetail.username];
         } catch (err) {
             console.log(`error removing user from chat: ${err}`);
         }
