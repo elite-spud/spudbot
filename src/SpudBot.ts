@@ -725,7 +725,6 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
             if (tokens[1] === "contribute") {
                 const args = tokens.slice(2);
                 if (args.length === 0) {
-                    console.log("foo");
                     this.chat(messageDetail.respondTo, contributeHelpMessage);
                     return;
                 }
@@ -733,7 +732,6 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
                     this.chat(messageDetail.respondTo, `!bidwar contribute was malformed (expected at least 2 arguments, but found ${args.length})`);
                     return;
                 }
-                console.log("bar");
                 const gameName = args[0].replaceAll("\"", "");
                 const amount = Number.parseInt(args[1]);
                 await (await this._googleApi).handleBidwarContribute(messageDetail.respondTo, messageSenderUserId, messageDetail.username, gameName, amount, new Date());
