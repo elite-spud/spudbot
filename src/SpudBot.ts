@@ -699,7 +699,7 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
             const tokens = messageDetail.message.match(regex) ?? [];
 
             const userIsBroadcaster = messageDetail.username === this.twitchChannelName; // TODO: detect streamer's name from config or make this a basic configuration with a name/broadcaster option
-            const contributeHelpMessage = `!bidwar contribute <gameName> <amount>`;
+            const contributeHelpMessage = `!bidwar contribute "<gameName>" <amount>`;
             if (tokens.length <= 1) {
                 return;
             }
@@ -712,11 +712,20 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
                 return;
             }
 
-            const messageSenderUserId = (await this.getUserDetailWithCache(messageDetail.username)).id;
+            let userDetail: ChatWarriorUserDetail | undefined;
+            try {
+                userDetail = await this.getUserDetailWithCache(messageDetail.username);
+            } catch (err) {
+                console.log(`Error retrieving userDetail for user: ${messageDetail.username}`);
+                console.log(err);
+                return;
+            }
+            const messageSenderUserId = userDetail.id;
 
             if (tokens[1] === "contribute") {
                 const args = tokens.slice(2);
                 if (args.length === 0) {
+                    console.log("foo");
                     this.chat(messageDetail.respondTo, contributeHelpMessage);
                     return;
                 }
@@ -724,6 +733,7 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
                     this.chat(messageDetail.respondTo, `!bidwar contribute was malformed (expected at least 2 arguments, but found ${args.length})`);
                     return;
                 }
+                console.log("bar");
                 const gameName = args[0].replaceAll("\"", "");
                 const amount = Number.parseInt(args[1]);
                 await (await this._googleApi).handleBidwarContribute(messageDetail.respondTo, messageSenderUserId, messageDetail.username, gameName, amount, new Date());

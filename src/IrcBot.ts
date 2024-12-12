@@ -582,13 +582,18 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
     }
 
     protected async handleChatMessageCount(messageDetail: IPrivMessageDetail): Promise<void> {
-        const userDetail = await this.getUserDetailWithCache(messageDetail.username);
-        if (!userDetail.numChatMessages) {
-            userDetail.numChatMessages = 0;
+        try {
+            const userDetail = await this.getUserDetailWithCache(messageDetail.username);
+            if (!userDetail.numChatMessages) {
+                userDetail.numChatMessages = 0;
+            }
+            
+            userDetail.numChatMessages++;
+            userDetail.lastChatted = new Date();
+        } catch (err) {
+            console.log(`Error updating chat message count for user: ${messageDetail.username}`);
+            console.log(err);
         }
-        
-        userDetail.numChatMessages++;
-        userDetail.lastChatted = new Date();
     }
 
     protected handlePrivMessageResponse(messageDetail: IPrivMessageDetail): void {

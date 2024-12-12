@@ -121,7 +121,15 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
     protected override async handleJoinMessage(messageDetail: IJoinMessageDetail): Promise<void> {
         super.handleJoinMessage(messageDetail);
 
-        const userDetail = await this.getUserDetailWithCache(messageDetail.username);
+        let userDetail: TUserDetail | undefined;
+        try {
+            userDetail = await this.getUserDetailWithCache(messageDetail.username);
+        } catch (err) {
+            console.log(`Error retrieving userDetail for user: ${messageDetail.username}`);
+            console.log(err);
+            return;
+        }
+
         if (userDetail.username !== messageDetail.username) { // Locally stored username may not match because of a username change on Twitch
             this.updateUsername(userDetail, messageDetail.username);
         }
@@ -680,7 +688,15 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
     }
 
     protected async handleSubscriptionMessage(event: TwitchEventSub_Event_SubscriptionMessage, _subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
-        const userDetail = await this.getUserDetailWithCache(event.user_login);
+        let userDetail: TUserDetail | undefined;
+        try {
+            userDetail = await this.getUserDetailWithCache(event.user_login);
+        } catch (err) {
+            console.log(`Error retrieving userDetail for user: ${event.user_login}`);
+            console.log(err);
+            return;
+        }
+
         userDetail.lastKnownSubscribedDate = new Date();
         userDetail.monthsSubscribed = event.cumulative_months;
         userDetail.currentSubcriptionStreak = event.streak_months ?? 0;
@@ -872,12 +888,20 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
     }
 
     protected async handleFollow(event: TwitchEventSub_Event_Follow, _subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
-        const detail = await this.getUserDetailWithCache(event.user_login);
-        detail.isFollower = true;
-        if (!detail.followDates) {
-            detail.followDates = [];
+        let userDetail: TUserDetail | undefined;
+        try {
+            userDetail = await this.getUserDetailWithCache(event.user_login);
+        } catch (err) {
+            console.log(`Error retrieving userDetail for user: ${event.user_login}`);
+            console.log(err);
+            return;
         }
-        detail.followDates.push(new Date(event.followed_at));
+
+        userDetail.isFollower = true;
+        if (!userDetail.followDates) {
+            userDetail.followDates = [];
+        }
+        userDetail.followDates.push(new Date(event.followed_at));
     }
 
     protected async getEventSubSubscriptions(): Promise<any[]> {
@@ -964,7 +988,14 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         const userDetailPromisesByUsername = this.getUserDetailsWithCache(subscribedUserLogins);
 
         for (const sub of subDetails) {
-            const userDetail = await userDetailPromisesByUsername[sub.user_login];
+            let userDetail: TUserDetail | undefined;
+            try {
+                userDetail = await userDetailPromisesByUsername[sub.user_login];
+            } catch (err) {
+                console.log(`Error updating subscribed user: ${sub.user_login}`);
+                console.log(err);
+                continue;
+            }
             userDetail.subscriptionTier = sub.tier;
             userDetail.lastKnownSubscribedDate = new Date();
 
@@ -1165,12 +1196,20 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         const userDetailPromisesByUsername = this.getUserDetailsWithCache(followingUsers.map(n => n.user_login));
 
         for (const followingUser of followingUsers) {
-            const userDetail = await userDetailPromisesByUsername[followingUser.user_login];
-            userDetail.isFollower = true;
-            userDetail.followDates = [ new Date(followingUser.followed_at) ];
-            if (userDetail.followDates === undefined) {
-                // TODO: fix this
+            let userDetail: TUserDetail | undefined;
+            try {
+                userDetail = await userDetailPromisesByUsername[followingUser.user_login];
+            } catch (err) {
+                console.log(`Error updating subscribed user: ${followingUser.user_login}`);
+                console.log(err);
+                continue;
             }
+
+            userDetail.isFollower = true;
+            if (userDetail.followDates === undefined) {
+                userDetail.followDates = [];
+            }
+            userDetail.followDates.push(new Date(followingUser.followed_at));
         }
 
         // Flag all non-followers
