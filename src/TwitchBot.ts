@@ -44,6 +44,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
 
     protected override async getUserIdsForUsernames(usernames: string[]): Promise<{ [username: string]: string | undefined }> {
         const userIdsByUsername: { [username: string]: string | undefined } = {}
+        // TODO: Make a cache for this that expires every 30 minutes or so?
         const userApiInfoByUserId = await this.getUserApiInfo([], usernames);
 
         for (const username of usernames) {
