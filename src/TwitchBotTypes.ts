@@ -6,12 +6,19 @@ export interface ITwitchUserDetail extends IUserDetail {
     isBanned?: boolean;
     isDeleted?: boolean;
     isFollower?: boolean;
+    followDates?: Date[];
+    broadcasterType?: "affiliate" | "partner" | "" | string;
     monthsSubscribed?: number;
     currentSubcriptionStreak?: number;
     subscriptionTier?: string;
     lastKnownSubscribedDate?: Date;
     firstKnownSubscribedDate?: Date;
-    subsGifted?: number;
+    // hasSubbedViaRecurring?: boolean;
+    // hasSubbedViaPrime?: boolean; // TODO: implement this by listening via EventSub to the channel chat message that follows a prime sub
+    hasReceivedGiftSub?: boolean;
+    lastSubWasGifted?: boolean;
+    // numSubsGifted?: number;
+    // numSubPointsGifted?: number; // TODO: implement this by listening via EventSub for the channel chat message events that follow a gift sub (https://discuss.dev.twitch.com/t/eventsub-gifted-subs-multiple-months-not-working/54424/2)
 }
 
 export class TwitchUserDetail extends UserDetail implements ITwitchUserDetail {
@@ -19,14 +26,19 @@ export class TwitchUserDetail extends UserDetail implements ITwitchUserDetail {
     public isBanned?: boolean;
     public isDeleted?: boolean;
     public isFollower?: boolean;
-    public followDates: Date[];
+    public followDates?: Date[];
     public broadcasterType?: "affiliate" | "partner" | "" | string;
     public monthsSubscribed?: number;
     public currentSubcriptionStreak?: number;
     public subscriptionTier?: string;
     public lastKnownSubscribedDate?: Date;
     public firstKnownSubscribedDate?: Date;
-    public subsGifted?: number;
+    // public hasSubbedViaRecurring?: boolean;
+    // public hasSubbedViaPrime?: boolean;
+    public hasReceivedGiftSub?: boolean;
+    public lastSubWasGifted?: boolean;
+    // public numSubsGifted?: number;
+    // public numSubPointsGifted?: number;
     
     public constructor(detail: ITwitchUserDetail) {
         super(detail);
@@ -34,12 +46,19 @@ export class TwitchUserDetail extends UserDetail implements ITwitchUserDetail {
         this.isBanned = detail.isBanned;
         this.isDeleted = detail.isDeleted;
         this.isFollower = detail.isFollower;
+        this.followDates = detail.followDates === undefined ? undefined : detail.followDates.map(n => new Date(n));
+        this.broadcasterType = detail.broadcasterType;
         this.monthsSubscribed = detail.monthsSubscribed;
         this.currentSubcriptionStreak = detail.currentSubcriptionStreak;
         this.subscriptionTier = detail.subscriptionTier;
         this.lastKnownSubscribedDate = detail.lastKnownSubscribedDate === undefined ? undefined : new Date(detail.lastKnownSubscribedDate);
         this.firstKnownSubscribedDate = detail.firstKnownSubscribedDate === undefined ? undefined : new Date(detail.firstKnownSubscribedDate);
-        this.subsGifted = detail.subsGifted;
+        // this.hasSubbedViaRecurring = detail.hasSubbedViaRecurring;
+        // this.hasSubbedViaPrime = detail.hasSubbedViaPrime;
+        this.hasReceivedGiftSub = detail.hasReceivedGiftSub;
+        this.lastSubWasGifted = detail.lastSubWasGifted;
+        // this.numSubsGifted = detail.numSubsGifted;
+        // this.numSubPointsGifted = detail.numSubPointsGifted;
     }
 }
 

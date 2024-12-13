@@ -714,7 +714,8 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         }
     }
 
-    protected abstract handleSubscriptionGift(event: TwitchEventSub_Event_SubscriptionGift, _subscription: TwitchEventSub_Notification_Subscription): Promise<void>;
+    protected async handleSubscriptionGift(_event: TwitchEventSub_Event_SubscriptionGift, _subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
+    }
 
     protected abstract handleCheer(event: TwitchEventSub_Event_Cheer, _subscription: TwitchEventSub_Notification_Subscription): Promise<void>;
 
@@ -999,6 +1000,10 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
             }
             userDetail.subscriptionTier = sub.tier;
             userDetail.lastKnownSubscribedDate = new Date();
+            userDetail.lastSubWasGifted = sub.is_gift;
+            if (sub.is_gift) {
+                userDetail.hasReceivedGiftSub = sub.is_gift;
+            }
 
             if (!userDetail.firstKnownSubscribedDate) {
                 userDetail.firstKnownSubscribedDate = new Date(userDetail.lastKnownSubscribedDate);

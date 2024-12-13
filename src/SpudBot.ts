@@ -6,7 +6,7 @@ import { IIrcBotAuxCommandGroupConfig, IIrcBotMiscConfig, IPrivMessageDetail, IU
 import { egadd_quotes, f_zero_gx_interview_quotes, f_zero_gx_quotes, f_zero_gx_story_quotes, luigi_quotes } from "./Quotes";
 import { ChatWarriorUserDetail, IChatWarriorUserDetail, ISpudBotConfig, ISpudBotConnectionConfig } from "./SpudBotTypes";
 import { TwitchBotBase } from "./TwitchBot";
-import { CreateCustomChannelPointRewardArgs, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_SubscriptionGift, TwitchEventSub_Notification_Subscription, TwitchEventSub_SubscriptionType } from "./TwitchBotTypes";
+import { CreateCustomChannelPointRewardArgs, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Notification_Subscription, TwitchEventSub_SubscriptionType } from "./TwitchBotTypes";
 import { Utils } from "./Utils";
 import { FundGameRequestOutcomeType, GoogleAPI } from "./google/GoogleAPI";
 
@@ -124,10 +124,6 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
                 moderator_user_id: await this.getTwitchBroadcasterId(), // TODO: make this use the chatbot id (must first use a token authorized by the chatbot account)
             }
         }];
-    }
-
-    protected override async handleSubscriptionGift(_event: TwitchEventSub_Event_SubscriptionGift): Promise<void> {
-        throw new Error("Not Implemented");
     }
 
     protected override async handleCheer(event: TwitchEventSub_Event_Cheer, subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
