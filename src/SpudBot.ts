@@ -11,8 +11,6 @@ import { Utils } from "./Utils";
 import { FundGameRequestOutcomeType, GoogleAPI } from "./google/GoogleAPI";
 
 export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
-    public readonly powerupGigantifyBitsCost = 10;
-
     public declare readonly _config: ISpudBotConfig;
     protected readonly _bonkCountPath: string;
     protected _firstChatterName: string | undefined = undefined;
@@ -22,6 +20,9 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
     protected override getServiceName(): string { return "SpudBot" }
     protected readonly _googleApi = new Future<GoogleAPI>();
 
+    public override get powerupGigantifyBitsCost(): number {
+        return 10;
+    }
 
     public constructor(miscConfig: IIrcBotMiscConfig, connection: ISpudBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], configDir: string) {
         super(miscConfig, connection, auxCommandGroups, configDir);
@@ -43,7 +44,6 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleBidwarModular(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleYes(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleNo(detail));
-        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleMessagePowerup(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleUpdateAllUsers(detail));
 
         try {
@@ -127,6 +127,7 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
     }
 
     protected override async handleCheer(event: TwitchEventSub_Event_Cheer, subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
+        await super.handleCheer(event, subscription);
         (await this._googleApi).handleCheer(event, subscription);
     }
 
@@ -841,7 +842,7 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
         await func(messageDetail);
     }
 
-    protected async handleMessagePowerup(messageDetail: IPrivMessageDetail): Promise<void> {
+    protected override async handleMessagePowerup(messageDetail: IPrivMessageDetail): Promise<void> {
         const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
             if (this.emoteWasGigantified(messageDetail)) {
                 const userIsBroadcaster = messageDetail.username === this.twitchChannelName;

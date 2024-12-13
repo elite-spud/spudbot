@@ -35,11 +35,15 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         return this._config.misc.maxChatMessageLength ?? TwitchBotBase.twitchMaxChatMessageLength;
     }
 
+    public abstract get powerupGigantifyBitsCost(): number; // TODO: track every type of powerup
+
     public constructor(miscConfig: IIrcBotMiscConfig, connection: ITwitchBotConnectionConfig, auxCommandGroups: IIrcBotAuxCommandGroupConfig[], configDir: string) {
         super(Object.assign(
             TwitchBotBase._knownConfig,
             { connection, auxCommandGroups, configDir, misc: miscConfig }
         ));
+
+        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleMessagePowerup(detail));
     }
 
     protected override async getUserIdsForUsernames(usernames: string[]): Promise<{ [username: string]: string | undefined }> {
@@ -717,7 +721,43 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
     protected async handleSubscriptionGift(_event: TwitchEventSub_Event_SubscriptionGift, _subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
     }
 
-    protected abstract handleCheer(event: TwitchEventSub_Event_Cheer, _subscription: TwitchEventSub_Notification_Subscription): Promise<void>;
+    protected async trackUserBits(userLogin: string, numBits: number) {
+        let userDetail: TUserDetail | undefined;
+        try {
+            userDetail = await this.getUserDetailWithCache(userLogin);
+        } catch (err) {
+            console.log(`Error retrieving userDetail for user: ${userLogin}`);
+            console.log(err);
+            return;
+        }
+
+        userDetail.numBitsCheered = userDetail.numBitsCheered === undefined
+            ? numBits
+            : userDetail.numBitsCheered + numBits
+    }
+
+    protected async handleCheer(event: TwitchEventSub_Event_Cheer, _subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
+        if (event.is_anonymous || !event.user_login) {
+            return;
+        }
+
+        await this.trackUserBits(event.user_login, event.bits);
+    }
+
+    protected async handleMessagePowerup(messageDetail: IPrivMessageDetail): Promise<void> {
+        const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
+            if (this.emoteWasGigantified(messageDetail)) {
+                const userIsBroadcaster = messageDetail.username === this.twitchChannelName;
+                if (userIsBroadcaster) { // Broadcasters Do not spend bits to redeem powerups on their own channel, so we should not add bits to the total
+                    return;
+                }
+
+                await this.trackUserBits(messageDetail.username, this.powerupGigantifyBitsCost);
+            }
+        }
+
+        await messageHandler(messageDetail);
+    }
 
     protected async isShieldModeEnabled(): Promise<boolean> {
         const broadcasterId = await this.getTwitchBroadcasterId();
