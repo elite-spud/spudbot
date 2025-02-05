@@ -874,12 +874,14 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         };
     }
 
-    protected async temporarilyDisableChatRestrictions(future: Future<void>, chatRespondTo: string): Promise<void> {
+    protected async temporarilyDisableChatRestrictions(future: Future<void>, broadcasterLogin: string, broadcasterName: string): Promise<void> {
         const shieldModeEnabled: boolean = await this.isShieldModeEnabled();
         if (shieldModeEnabled) { // Do not interfere at all if shield mode is enabled, because editing settings will edit shield mode
             future.resolve();
             return;
         }
+
+        const chatRespondTo = `#${broadcasterLogin}`;
         
         const currentChatSettings = await this.getChatSettings();
         const originalChatSettings = this._chatSettingsPriorToRaidOverride ?? currentChatSettings;
@@ -906,10 +908,9 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
             await this.updateChatSettings({
                 follower_mode: false,
             });
-            this.chat(chatRespondTo, `Raid incoming! Chat restrictions have been temporarily disabled so that raiders can speak freely. Welcome, @${event.from_broadcaster_user_name} and friends! eeveeHeart`);
+            this.chat(chatRespondTo, `Raid incoming! Chat restrictions have been temporarily disabled so that raiders can speak freely.`);
         } catch (err) {
-            const broadcasterId = this.getTwitchBroadcasterId();
-            this.chat(chatRespondTo, `Error disabling chat restrictions in response to incoming raid. @${broadcasterId}, could you please disable them manually?`);
+            this.chat(chatRespondTo, `Error disabling chat restrictions in response to incoming raid. @${broadcasterName}, could you please disable them manually?`);
             future.reject(err);
             return;
         }
@@ -921,19 +922,19 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
     }
 
     protected async handleRaid(event: TwitchEventSub_Event_Raid, _subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
-        const chatRespondTo = `#${event.to_broadcaster_user_login}`;
         const future = new Future<void>();
-        this._raidResponseTaskQueue.addTask(() => this.temporarilyDisableChatRestrictions(future, chatRespondTo));
+        this._raidResponseTaskQueue.addTask(() => this.temporarilyDisableChatRestrictions(future, event.to_broadcaster_user_login, event.to_broadcaster_user_name));
         this._raidResponseTaskQueue.startQueue();
 
         await future;
 
+        const chatRespondTo = `#${event.to_broadcaster_user_login}`;
         const raidingChannelDetails = await this.getChannelDetails(event.from_broadcaster_user_login);
         const andFriendsString = event.viewers > 3
             ? ` and friends`
             : ``;
         const thankYouString = event.viewers > 3
-            ? `Thank you so much for sharing your community with me <3. `
+            ? `Thank you so much for sharing your community with me eeveeHeart `
             : ``;
         this.chat(chatRespondTo, `Welcome @${event.from_broadcaster_user_name}${andFriendsString}! ${thankYouString}I hope your ${raidingChannelDetails.game_name} stream was enjoyable!`);
 
