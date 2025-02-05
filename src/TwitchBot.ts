@@ -874,59 +874,70 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         };
     }
 
-    protected async handleRaid(event: TwitchEventSub_Event_Raid, _subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
-        const future = new Future<void>();
-        const task = async (): Promise<void> => {
-            const shieldModeEnabled: boolean = await this.isShieldModeEnabled();
-            if (shieldModeEnabled) { // Do not interfere at all if shield mode is enabled, because editing settings will edit shield mode
-                future.resolve();
-                return;
-            }
-
-            const chatRespondTo = `#${event.to_broadcaster_user_login}`;
-            
-            const currentChatSettings = await this.getChatSettings();
-            const originalChatSettings = this._chatSettingsPriorToRaidOverride ?? currentChatSettings;
-
-            const overrideMinutes = originalChatSettings.follower_mode_duration * 2;
-            const warningMinutes = originalChatSettings.follower_mode_duration - 3;
-            const overrideMillis = 1000 * 60 * overrideMinutes;
-            const warningMillis = 1000 * 60 * warningMinutes;
-
-            if (!!this._chatSettingsPriorToRaidOverride) { // override in effect
-                this.setChatSettingsOverrideTimeouts(overrideMillis, warningMillis, chatRespondTo);
-                future.resolve();
-                return;
-            }
-
-            const currentChatSettingsAreRestrictive = currentChatSettings.follower_mode === true;
-            if (!currentChatSettingsAreRestrictive) { // no need to override anything
-                future.resolve();
-                return;
-            }
-            this._chatSettingsPriorToRaidOverride = currentChatSettings;
-
-            try {
-                await this.updateChatSettings({
-                    follower_mode: false,
-                });
-                this.chat(chatRespondTo, `Raid incoming! Chat restrictions have been temporarily disabled so that raiders can speak freely. Welcome, @${event.from_broadcaster_user_name} and friends! eeveeHeart`);
-            } catch (err) {
-                const broadcasterId = this.getTwitchBroadcasterId();
-                this.chat(chatRespondTo, `Error disabling chat restrictions in response to incoming raid. @${broadcasterId}, could you please disable them manually?`);
-                future.reject(err);
-                return;
-            }
-
-            this.setChatSettingsOverrideTimeouts(overrideMillis, warningMillis, chatRespondTo);
-
+    protected async temporarilyDisableChatRestrictions(future: Future<void>, chatRespondTo: string): Promise<void> {
+        const shieldModeEnabled: boolean = await this.isShieldModeEnabled();
+        if (shieldModeEnabled) { // Do not interfere at all if shield mode is enabled, because editing settings will edit shield mode
             future.resolve();
             return;
         }
-        this._raidResponseTaskQueue.addTask(task);
+        
+        const currentChatSettings = await this.getChatSettings();
+        const originalChatSettings = this._chatSettingsPriorToRaidOverride ?? currentChatSettings;
+
+        const overrideMinutes = originalChatSettings.follower_mode_duration * 2;
+        const warningMinutes = originalChatSettings.follower_mode_duration - 3;
+        const overrideMillis = 1000 * 60 * overrideMinutes;
+        const warningMillis = 1000 * 60 * warningMinutes;
+
+        if (!!this._chatSettingsPriorToRaidOverride) { // override in effect
+            this.setChatSettingsOverrideTimeouts(overrideMillis, warningMillis, chatRespondTo);
+            future.resolve();
+            return;
+        }
+
+        const currentChatSettingsAreRestrictive = currentChatSettings.follower_mode === true;
+        if (!currentChatSettingsAreRestrictive) { // no need to override anything
+            future.resolve();
+            return;
+        }
+        this._chatSettingsPriorToRaidOverride = currentChatSettings;
+
+        try {
+            await this.updateChatSettings({
+                follower_mode: false,
+            });
+            this.chat(chatRespondTo, `Raid incoming! Chat restrictions have been temporarily disabled so that raiders can speak freely. Welcome, @${event.from_broadcaster_user_name} and friends! eeveeHeart`);
+        } catch (err) {
+            const broadcasterId = this.getTwitchBroadcasterId();
+            this.chat(chatRespondTo, `Error disabling chat restrictions in response to incoming raid. @${broadcasterId}, could you please disable them manually?`);
+            future.reject(err);
+            return;
+        }
+
+        this.setChatSettingsOverrideTimeouts(overrideMillis, warningMillis, chatRespondTo);
+
+        future.resolve();
+        return;
+    }
+
+    protected async handleRaid(event: TwitchEventSub_Event_Raid, _subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
+        const chatRespondTo = `#${event.to_broadcaster_user_login}`;
+        const future = new Future<void>();
+        this._raidResponseTaskQueue.addTask(() => this.temporarilyDisableChatRestrictions(future, chatRespondTo));
         this._raidResponseTaskQueue.startQueue();
 
-        return future;
+        await future;
+
+        const raidingChannelDetails = await this.getChannelDetails(event.from_broadcaster_user_login);
+        const andFriendsString = event.viewers > 3
+            ? ` and friends`
+            : ``;
+        const thankYouString = event.viewers > 3
+            ? `Thank you so much for sharing your community with me <3. `
+            : ``;
+        this.chat(chatRespondTo, `Welcome @${event.from_broadcaster_user_name}${andFriendsString}! ${thankYouString}I hope your ${raidingChannelDetails.game_name} stream was enjoyable!`);
+
+        return;
     }
 
     protected async handleFollow(event: TwitchEventSub_Event_Follow, _subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
