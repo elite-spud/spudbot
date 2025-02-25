@@ -5,6 +5,7 @@ import * as net from "net";
 import { ConsoleColors } from "./ConsoleColors";
 import { TimerGroup } from "./TimerGroup";
 import { Future } from "./Future";
+import path = require("path");
 
 export interface IIrcBotConfig {
     connection: IIrcBotConnectionConfig;
@@ -191,6 +192,7 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
 
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleChatMessageCount(detail));
         
+        this.backupFiles([this._userDetailsPath, this._userDetailsPathCsv]);
         const userDetailJson: string = fs.readFileSync(this._userDetailsPath, { encoding: IrcBotBase.userDetailEncoding });
         const jsonUserCollection = JSON.parse(userDetailJson);
         this._userDetailByUserId = this.createUserCollection(jsonUserCollection); // necessary to instantiate non-primitive fields like Dates
@@ -198,6 +200,25 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
 
         const userTrackingIntervalSeconds = 30;
         setInterval(() => this.trackUsersInChat(userTrackingIntervalSeconds), 1000 * userTrackingIntervalSeconds);
+    }
+
+    protected async backupFiles(filepaths: string[]): Promise<void> {
+        const currentDate = new Date();
+        console.log(currentDate.toISOString());
+        for (const filepath of filepaths) {
+            console.log(`backing up ${filepath}`);
+            const parsedPath = path.parse(filepath);
+            parsedPath.name += `_${currentDate.getUTCFullYear()}-${currentDate.getUTCMonth() + 1}-${currentDate.getUTCDate()}`;
+            parsedPath.base = parsedPath.name + parsedPath.ext;
+            const destFilepath = path.format(parsedPath);
+            try {
+                fs.copyFileSync(filepath, destFilepath);
+                console.log(`Successfully backed up file ${filepath} to ${destFilepath}`)
+            } catch (err) {
+                console.log(`Error backing up file ${filepath}: ${err}`);
+            }
+        }
+        // TODO: clean up old backups from the previous month aside from the earliest one (if there's more than one)
     }
 
     protected async trackUsersInChat(secondsToAdd: number): Promise<void> {
