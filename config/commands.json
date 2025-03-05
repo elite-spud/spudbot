@@ -7,7 +7,7 @@
             {
                 "name": "!therun",
                 "aliases": ["!therungg"],
-                "autoPostGameWhitelist": ["Luigi's Mansion"],
+                "autoPostGameWhitelist": ["Luigi's Mansion", "F-Zero GX"],
                 "responses": [
                     "Interested in seeing extra details and statistics about my splits as I speedrun? Check my profile on TheRun.gg, and click the live button to see realtime updates on my current run! https://therun.gg/live/Elite_Spud"
                 ]
@@ -151,6 +151,22 @@
         ]
     },
     {
+        "timerMinutesOffset": 10,
+        "timerMinutes": 15,
+        "random": true,
+        "commands": [
+            {
+                "name": "!laraidtrain",
+                "expiresAt": "2025-02-17T02:00:00",
+                "autoPostIfTitleContainsAny": ["!raidtrain", "!laraidtrain", "!ladyarcaders", "!latrain"],
+                "aliases": ["!raidtrain"],
+                "responses": [
+                    "The Lady Arcaders are celebrating their 3 year anniversary this year, so the collective has organized a massive raid train event to mark the occasion! https://ladyarcaders.com/raid-train/2025/ For 3 days, dozens of streamers will take their viewers on a scenic tour through the LA community as we raise money for future events. If you're interested in donating to support our organization, click here: https://ko-fi.com/ladyarcaders"
+                ]
+            }
+        ]
+    },
+    {
         "timerMinutesOffset": 75,
         "timerMinutes": 90,
         "random": true,
@@ -202,9 +218,11 @@
                     "Want consistent notifications when the stream is live? Join the Discord server and request a role to always get pinged! https://discord.gg/f4bhKYxPy8",
                     "Enjoy using my sub emotes? You can link your Twitch account with Discord to get access to them on other servers if you're a subscriber. No Nitro required! https://discord.gg/f4bhKYxPy8",
                     "Like seeing Loki and the other kitties on stream? You can see more of them and other folks' animals in the community Discord! https://discord.gg/f4bhKYxPy8",
-                    "Wanna talk about music you love or discovered recently? We've got a Discord channel for that! https://discord.gg/f4bhKYxPy8",
+                    "Wanna talk about music you love or discovered recently? We've got a space for that! https://discord.gg/f4bhKYxPy8",
                     "Do you like to cook or consider yourself a food-lover? See what the community's been dining on recently in our Discord server: https://discord.gg/f4bhKYxPy8",
-                    "Interested in talking about all the intricacies that go into streaming? Hear my thoughts and others' in our dedicated channels for stream/tech talk in the Discord https://discord.gg/f4bhKYxPy8"
+                    "Interested in talking about all the intricacies that go into streaming? Hear what the fine folks here have to say in our dedicated Discord channels for stream/tech talk https://discord.gg/f4bhKYxPy8",
+                    "Sometimes I don't know what to play on stream, and I run a poll to find out what folks wanna see! Cast your vote in the community Discord server https://discord.gg/f4bhKYxPy8",
+                    "Want to participate in the community celebration streams we organize every so often? Hop in the discord to join the games we play together! https://discord.gg/f4bhKYxPy8"
                 ]
             },
             {
@@ -220,7 +238,7 @@
                 "name": "!instagram",
                 "aliases": ["!cats", "!insta", "!ig"],
                 "responses": [
-                    "I have an instagram where I post pictures of my cats and also cool places I travel to https://www.instagram.com/elite.spud/",
+                    "I have an instagram where I post pictures of my cats and also cool places I travel https://www.instagram.com/elite.spud/",
                     "Hey, wanna see some cute cats? https://www.instagram.com/elite.spud/",
                     "I might not consider myself much of a photographer, but I do like to stop and take pictures of flowers and other beautiful things I see from day to day https://www.instagram.com/elite.spud/"
                 ]
@@ -252,7 +270,7 @@
                 "aliases": ["!bot", "!chatbot", "!code", "!sourcecode"],
                 "responses": [
                     "I (Spud) wrote this chatbot myself because I'm a big nerd. If you fancy yourself a nerd too, you can peruse the source code on GitHub here: https://github.com/elite-spud/spudbot",
-                    "This chatbot is © Spud Inc., which maintains an open policy of showcasing all the programming mistakes of the chatbot author for all to see here: https://github.com/elite-spud/spudbot",
+                    "This chatbot is © Spud Inc., which maintains an open policy of showcasing the programming mistakes of the author for all to see here: https://github.com/elite-spud/spudbot",
                     "I'm a software engineer by day, and this chatbot is actually one of my side-projects! If you want to see how it works, you can find all the source code here: https://github.com/elite-spud/spudbot",
                     "I'm not a potato, I'm a bot! Get a peek at my source code here: https://github.com/elite-spud/spudbot"
                 ]
@@ -270,7 +288,7 @@
             {
                 "name": "!twitchnotifications",
                 "responses": [
-                    "Twitch notifications are sometimes inconsistent, but I try to include special little messages in my going live pings for each stream, so turn 'em on if you wanna be implicated in my goofin' around! You can manage your notifications in detail here: https://www.twitch.tv/settings/notifications"
+                    "Twitch notifications are sometimes inconsistent, but I try to include silly little messages in my going live pings for each stream, so turn 'em on if you wanna be implicated in my shenanigans! You can manage your notifications in detail here: https://www.twitch.tv/settings/notifications"
                 ]
             },
             {
@@ -285,11 +303,12 @@
                 "aliases": ["!gamesuggestion", "!recommendation", "!request", "!requests", "!GameRequest", "!GameRequests", "!gamerequest", "!gamerequests", "!ViewerRequest", "!viewerrequest", "!viewerRequest", "!ViewerRequests"],
                 "strict": true,
                 "responses": [
-                    "Channel points can be used to request games that you want me to play on stream! Submit your favorite title, challenge me with something super difficult, get weird/goofy with it, or help fund someone else's suggestion! Almost anything is fair game so long as I have the means to play it! (e.g. no VR, foreign visual novels, etc.) Check out the spreadsheet to see everyone's requests! https://docs.google.com/spreadsheets/d/1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY/edit?gid=384782784"
+                    "Channel points can be used to request games that you want me to play on stream! Submit your favorite title, challenge me with something super difficult, share the weirdest game you know of, or help fund someone else's suggestion! Almost anything is fair game so long as I have the means to play it! (e.g. no VR, foreign visual novels, etc.) Check out the spreadsheet to see everyone's requests! https://docs.google.com/spreadsheets/d/1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY/edit?gid=384782784"
                 ]
             },
             {
                 "name": "!bidwar",
+                "expiresAt": "2025-01-01T02:00:00",
                 "strict": true,
                 "aliases": ["!incentive", "!incentives", "!goals"],
                 "responses": [
@@ -533,12 +552,6 @@
                 ]
             },
             {
-                "name": "!laraidtrain",
-                "responses": [
-                    "The Lady Arcaders are celebrating their 2 year anniversary, so the collective has organized a massive raid train event to mark the occasion! https://ladyarcaders.com/raid-train For a little more than 2 days, 25 streamers will take their viewers on a scenic tour through the LA community, and my channel is the first stop! I'm hoping to get this engine up to speed before I pass things off to @EikoTheBlue 4 hours in, so I hope you'll stick around! nevVERS"
-                ]
-            },
-            {
                 "name": "!cutscenes",
                 "responses": [
                     "\"Why are you watching the cutscenes? I thought this was a speedrun! You've already seen them before!\" - Because I wanna lol"
@@ -581,7 +594,7 @@
             {
                 "name": "!autosplitter",
                 "responses": [
-                    "I use Toufool's Autosplitter https://github.com/Toufool/AutoSplit to control LiveSplit by comparing my video capture feed against a set of reference frames. Because I made my own images for F-Zero GX, they're unlikely to work for everyone else out-of-the-box due to the specific way I capture my game. DM me if you want help setting it up, yourself, though!"
+                    "I use Toufool's Autosplitter https://github.com/Toufool/AutoSplit to control LiveSplit by comparing my video capture feed against a set of reference frames. Because I made my own imageset for F-Zero GX, they're unlikely to work for anyone else out-of-the-box due to the specific way I capture my game. DM me if you want help setting it up, yourself, though!"
                 ]
             },
             {
@@ -620,6 +633,41 @@
                 "name": "!fanart",
                 "responses": [
                     "Look at this awesome artwork that CaptainSnide drew!! https://bsky.app/profile/captainsnide.bsky.social/post/3lbg6zs7fs22j"
+                ]
+            },
+            {
+                "name": "!fzgxunleashed",
+                "aliases": ["!unleashed", "!gxunleashed"],
+                "responses": [
+                    "F-Zero GX: Unleashed is a gameplay rebalancing mod for F-Zero GX created by @AKC_12 that was recently updated to version 5.0! https://gamebanana.com/mods/40471"
+                ]
+            },
+            {
+                "name": "!luigithon",
+                "expiresAt": "2025-04-01T02:00:00",
+                "responses": [
+                    "Through the end of March, I’ll be streaming PAL Luigi’s Mansion speedruns almost exclusively to finally give myself some dedicated time for honing my skills. On March 4, I set a top-6 time in PAL Any% (No OoB), and if I don't do the same for PAL 100% by April 1st, I’ll gift 10 subs"
+                ]
+            },
+            {
+                "name": "!laraid2",
+                "expiresAt": "2025-04-01T02:00:00",
+                "responses": [
+                    "🚂🚂🚂 CHOO CHOO! IT'S THE LADY ARCADERS RAID TRAIN! 🚂🚂🚂"
+                ]
+            },
+            {
+                "name": "!laschedule",
+                "expiresAt": "2025-04-01T02:00:00",
+                "responses": [
+                    "View the Lady Arcaders Raid Train schedule here: https://ldy.gg/3yrs"
+                ]
+            },
+            {
+                "name": "!ladonate",
+                "expiresAt": "2025-04-01T02:00:00",
+                "responses": [
+                    "If you wish to contribute to funding for future in-person Lady Arcaders events, donate through our Ko-fi page @ https://ldy.gg/donate or subscribe to our Twitch channel @ladyarcaders!"
                 ]
             }
         ]
