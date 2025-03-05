@@ -216,9 +216,25 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
                 console.log(`Successfully backed up file ${filepath} to ${destFilepath}`)
             } catch (err) {
                 console.log(`Error backing up file ${filepath}: ${err}`);
+                continue;
             }
+
+            // TODO: clean up old backups from the previous month aside from the earliest one (if there's more than one)
+            // const dir = fs.readdirSync(parsedPath.dir);
+            // const oneDayMillis = 24 * 60 * 60 * 1000;
+            // dir.some(n => {
+            //     const oldBackupPath = path.parse(n);
+            //     const filenameParts = oldBackupPath.name.split(`_`);
+            //     if (filenameParts.length !== 2) {
+            //         return false;
+            //     }
+            //     const asDate = new Date(filenameParts[1]);
+            //     const dateDiff = currentDate - asDate;
+            //     if (asDate ) {
+            //         console.log(asDate);
+            //     }
+            // });
         }
-        // TODO: clean up old backups from the previous month aside from the earliest one (if there's more than one)
     }
 
     protected async trackUsersInChat(secondsToAdd: number): Promise<void> {
