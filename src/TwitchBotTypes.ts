@@ -332,6 +332,31 @@ export interface TwitchGetFollowingUsersResponseBody {
     total: number;
 }
 
+export interface TwitchUpdateChannelInformationRequestBody {
+    game_id?: string;
+    broadcaster_language?: string;
+    title?: string;
+    /** Partner only */
+    delay?: number;
+    tags?: string[];
+    content_classification_labels?: {
+        id: string;
+        is_enabled: boolean;
+    }[];
+    is_branded_content?: boolean;
+}
+
+export interface TwitchGame {
+    id: string;
+    name: string;
+    box_art_url: string;
+    igdb_id: string;
+}
+
+export interface TwitchGetGamesResponseBody {
+    data: TwitchGame[];
+}
+
 export interface TwitchBroadcasterSubscriptionsResponse {
     data: TwitchSubscriptionDetail[];
     pagination: {

@@ -45,6 +45,8 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleYes(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleNo(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleUpdateAllUsers(detail));
+        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleTitle(detail));
+        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleGame(detail));
 
         try {
             this._bonkCountPath = fs.realpathSync(`${this._config.configDir}/bonkCount.txt`);
@@ -873,6 +875,69 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
             triggerPhrases: ["!updateAllUsers"],
             strictMatch: true,
             commandId: "!updateAllUsers",
+            globalTimeoutSeconds: 0,
+            userTimeoutSeconds: 0,
+        });
+        await func(messageDetail);
+    }
+
+    protected async handleTitle(messageDetail: IPrivMessageDetail): Promise<void> {
+        const messageHandler = async (_messageDetail: IPrivMessageDetail): Promise<void> => {
+            const messageTags = this.parseTwitchMessageTags(messageDetail.tags);
+            const userIsMod = messageTags.mod === "1";
+            const userIsBroadcaster = messageDetail.username === this.twitchChannelName;
+            if (!userIsMod && !userIsBroadcaster) {
+                this.chat(messageDetail.respondTo, `@${messageDetail.username} only moderators can use the !title command`);
+                return;
+            }
+
+            const input = messageDetail.message.split(" ").slice(1).join(" ").trim(); // Trim the "!title" off the front & send the rest along
+            if (input === "") {
+                this.chat(messageDetail.respondTo, `@${messageDetail.username} title must consist of more than whitespace characters`);
+                return;
+            }
+            
+            try {
+                await this.updateChannelTitle(input);
+                this.chat(messageDetail.respondTo, `@${messageDetail.username} title updated successfully.`);
+            } catch (err) {
+                this.chat(messageDetail.respondTo, `@${messageDetail.username} unable to update title.`);
+            }
+        }
+        const func = this.getCommandFunc({
+            messageHandler: messageHandler,
+            triggerPhrases: ["!title"],
+            strictMatch: false, // !title requires something after the command itself
+            commandId: "!title",
+            globalTimeoutSeconds: 0,
+            userTimeoutSeconds: 0,
+        });
+        await func(messageDetail);
+    }
+
+    protected async handleGame(messageDetail: IPrivMessageDetail): Promise<void> {
+        const messageHandler = async (_messageDetail: IPrivMessageDetail): Promise<void> => {
+            const messageTags = this.parseTwitchMessageTags(messageDetail.tags);
+            const userIsMod = messageTags.mod === "1";
+            const userIsBroadcaster = messageDetail.username === this.twitchChannelName;
+            if (!userIsMod && !userIsBroadcaster) {
+                this.chat(messageDetail.respondTo, `@${messageDetail.username} only moderators can use the !game command`);
+                return;
+            }
+
+            const input = messageDetail.message.split(" ").slice(1).join(" "); // Trim the "!title" off the front & send the rest along
+            try {
+                await this.updateChannelGame(input);
+                this.chat(messageDetail.respondTo, `@${messageDetail.username} game updated successfully.`);
+            } catch (err) {
+                this.chat(messageDetail.respondTo, `@${messageDetail.username} unable to update game.`);
+            }
+        }
+        const func = this.getCommandFunc({
+            messageHandler: messageHandler,
+            triggerPhrases: ["!game"],
+            strictMatch: false, // !game requires something after the command itself
+            commandId: "!game",
             globalTimeoutSeconds: 0,
             userTimeoutSeconds: 0,
         });

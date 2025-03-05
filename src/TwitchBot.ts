@@ -8,7 +8,7 @@ import { Future } from "./Future";
 import { HeldTaskGroup } from "./HeldTask";
 import { IIrcBotAuxCommandGroupConfig, IIrcBotMiscConfig, IJoinMessageDetail, IPartMessageDetail, IPrivMessageDetail, IrcBotBase } from "./IrcBot";
 import { TaskQueue } from "./TaskQueue";
-import { CreateCustomChannelPointRewardArgs, ITwitchBotAuxCommandConfig, ITwitchBotConfig, ITwitchBotConnectionConfig, SubTierPoints, TwitchAppToken, TwitchBadgeTagKeys, TwitchBannedUser, TwitchBroadcasterSubscriptionsResponse, TwitchChatSettings, TwitchErrorResponse, TwitchEventSub_CreateSubscription, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_Follow, TwitchEventSub_Event_Raid, TwitchEventSub_Event_SubscriptionEnd, TwitchEventSub_Event_SubscriptionGift, TwitchEventSub_Event_SubscriptionMessage, TwitchEventSub_Event_SubscriptionStart, TwitchEventSub_Notification_Payload, TwitchEventSub_Notification_Subscription, TwitchEventSub_Reconnect_Payload, TwitchEventSub_SubscriptionType, TwitchEventSub_Welcome_Payload, TwitchFollowingUser, TwitchGetBannedUsersResponseBody, TwitchGetChannelInfo, TwitchGetChannelInfoResponse, TwitchGetCustomChannelPointRewardInfo, TwitchGetCustomChannelPointRewardResponse, TwitchGetFollowingUsersResponseBody, TwitchGetShieldModeStatusResponseBody, TwitchGetStreamInfo, TwitchGetStreamsResponse, TwitchPrivMessageTagKeys, TwitchSubscriptionDetail, TwitchUpdateChatSettingsRequestBody, TwitchUserAPIInfo, TwitchUserDetail, TwitchUserInfoResponse, TwitchUserToken } from "./TwitchBotTypes";
+import { CreateCustomChannelPointRewardArgs, ITwitchBotAuxCommandConfig, ITwitchBotConfig, ITwitchBotConnectionConfig, SubTierPoints, TwitchAppToken, TwitchBadgeTagKeys, TwitchBannedUser, TwitchBroadcasterSubscriptionsResponse, TwitchChatSettings, TwitchErrorResponse, TwitchEventSub_CreateSubscription, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_Follow, TwitchEventSub_Event_Raid, TwitchEventSub_Event_SubscriptionEnd, TwitchEventSub_Event_SubscriptionGift, TwitchEventSub_Event_SubscriptionMessage, TwitchEventSub_Event_SubscriptionStart, TwitchEventSub_Notification_Payload, TwitchEventSub_Notification_Subscription, TwitchEventSub_Reconnect_Payload, TwitchEventSub_SubscriptionType, TwitchEventSub_Welcome_Payload, TwitchFollowingUser, TwitchGame, TwitchGetBannedUsersResponseBody, TwitchGetChannelInfo, TwitchGetChannelInfoResponse, TwitchGetCustomChannelPointRewardInfo, TwitchGetCustomChannelPointRewardResponse, TwitchGetFollowingUsersResponseBody, TwitchGetGamesResponseBody, TwitchGetShieldModeStatusResponseBody, TwitchGetStreamInfo, TwitchGetStreamsResponse, TwitchPrivMessageTagKeys, TwitchSubscriptionDetail, TwitchUpdateChannelInformationRequestBody, TwitchUpdateChatSettingsRequestBody, TwitchUserAPIInfo, TwitchUserDetail, TwitchUserInfoResponse, TwitchUserToken } from "./TwitchBotTypes";
 import { knownBots } from "./KnownBots";
 
 export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = TwitchUserDetail> extends IrcBotBase<TUserDetail> {
@@ -345,20 +345,20 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
     }
 
     protected shouldIgnoreTimeoutRestrictions(messageDetail: IPrivMessageDetail): boolean {
-        const tags = this.parseTwitchTags(messageDetail.tags);
-        const badgeVersionsByBadgeName = this.parseTwitchBadges(tags.badges);
-        if (badgeVersionsByBadgeName.broadcaster || badgeVersionsByBadgeName.moderator) {
+        const tags = this.parseTwitchMessageTags(messageDetail.tags);
+        const badgeVersionsByBadgeName = this.parseTwitchMessageBadges(tags.badges);
+        if (badgeVersionsByBadgeName.broadcaster || badgeVersionsByBadgeName.moderator) { // TODO: do this entirely using tags
             return true;
         }
         return false;
     }
 
     protected emoteWasGigantified(messageDetail: IPrivMessageDetail): boolean {
-        const tags = this.parseTwitchTags(messageDetail.tags);
+        const tags = this.parseTwitchMessageTags(messageDetail.tags);
         return tags["msg-id"] === "gigantified-emote-message";
     }
 
-    protected parseTwitchBadges(badges?: string): { [badgeName in TwitchBadgeTagKeys]: string } {
+    protected parseTwitchMessageBadges(badges?: string): { [badgeName in TwitchBadgeTagKeys]: string } {
         if (!badges) {
             return {};
         }
@@ -378,7 +378,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         return badgeVersionsByBadgeName;
     }
 
-    protected parseTwitchTags(tags?: string): { [key in TwitchPrivMessageTagKeys]: string } {
+    protected parseTwitchMessageTags(tags?: string): { [key in TwitchPrivMessageTagKeys]: string } {
         if (!tags) {
             return {};
         }
@@ -471,7 +471,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
     protected async loadUserToken(): Promise<void> {
         const clientId = this._config.connection.twitch.oauth.clientId;
         // Keep alphabetical for easier comparison against returned scope in refresh token
-        const scope = `bits:read channel:manage:redemptions channel:read:subscriptions moderator:manage:banned_users moderator:manage:chat_settings moderator:manage:shield_mode moderator:read:followers user:read:follows`;
+        const scope = `bits:read channel:manage:broadcast channel:manage:redemptions channel:read:subscriptions moderator:manage:banned_users moderator:manage:chat_settings moderator:manage:shield_mode moderator:read:followers user:read:follows`;
 
         const storedTokenString = await getPassword(this.getServiceName(), this._userAccessTokenAccountName);
         if (storedTokenString) {
@@ -1338,5 +1338,66 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         console.log(`Successfully flagged ${numUnbannedUsers} as unbanned.`);
         console.log(`Successfully synced ${numSyncedBans} active bans.`);
         console.log(`Successfully banned ${numBannedBots} known bots.`);
+    }
+
+    protected async updateChannelTitle(title: string): Promise<void> {
+        await this.updateChannelInfo({ title: title });
+        return;
+    }
+
+    protected async updateChannelGame(gameName?: string): Promise<void> {
+        if (!gameName) {
+            await this.updateChannelInfo({ game_id: "" });
+            return;
+        }
+
+        const gameInfo = await this.getGame(gameName);
+        await this.updateChannelInfo({ game_id: gameInfo.id });
+        return;
+    }
+
+    protected async updateChannelInfo(settings: TwitchUpdateChannelInformationRequestBody): Promise<void> {
+        const broadcasterId = await this.getTwitchBroadcasterId();
+        const response = await fetch(`https://api.twitch.tv/helix/channels?broadcaster_id=${broadcasterId}`, {
+            method: `PATCH`,
+            headers: {
+                Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
+                "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
+                "Content-Type": `application/json`,
+            },
+            body: JSON.stringify(settings),
+        });
+
+        if (response.status !== 204) {
+            const errMessage = `Update Channel Information request failed: ${response.status} ${response.statusText}`;
+            console.log(errMessage);
+            console.log(await response.json());
+            throw new Error(errMessage);
+        } else {
+            console.log(`Update Channel Information request successful.`);
+        }
+    }
+
+    protected async getGame(gameName: string): Promise<TwitchGame> {
+        const appToken = await this._twitchAppToken;
+        const response = await fetch(`https://api.twitch.tv/helix/games?name=${gameName}`, {
+            method: `GET`,
+            headers: {
+                Authorization: `Bearer ${appToken.access_token}`,
+                "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
+            }
+        });
+
+        if (response.status !== 200) {
+            const errMessage = `Get Games request failed: ${response.status} ${response.statusText}`;
+            console.log(errMessage);
+            console.log(await response.json());
+            throw new Error(errMessage);
+        } else {
+            console.log(`Get Games request successful.`);
+        }
+
+        const json: TwitchGetGamesResponseBody = await response.json();
+        return json.data[0];
     }
 }
