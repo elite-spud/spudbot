@@ -289,14 +289,14 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
         return csv;
     }
 
-    protected async getUserDetailWithCache(userLogin: string): Promise<TUserDetail> {
-        const detailDict = this.getUserDetailsWithCache([userLogin]);
+    protected async getUserDetailWithCache(username: string): Promise<TUserDetail> {
+        const detailDict = this.getUserDetailsWithCache([username]);
         const numKeys = Object.keys(detailDict).length;
         if (numKeys !== 1) {
-            throw new Error(`Expected only a single userDetail for username: ${userLogin} (found ${numKeys})`);
+            throw new Error(`Expected only a single userDetail for username: ${username} (found ${numKeys})`);
         }
 
-        return detailDict[userLogin];
+        return detailDict[username];
     }
 
     protected getUserDetailsWithCache(usernames: string[]): { [username: string]: Promise<TUserDetail> } {
