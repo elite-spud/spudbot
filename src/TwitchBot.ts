@@ -46,19 +46,41 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleMessagePowerup(detail));
     }
 
+    protected isValidTwitchUserLogin(username: string): boolean {
+        const regex = /^[a-zA-Z0-9_]{4,25}$/;
+        return regex.test(username);
+    }
+
     protected override async getUserIdsForUsernames(usernames: string[]): Promise<{ [username: string]: string | undefined }> {
         const userIdsByUsername: { [username: string]: string | undefined } = {}
-        // TODO: Make a cache for this that expires every 30 minutes or so?
-        const userApiInfoByUserId = await this.getUserApiInfo([], usernames);
+        const usernamesByUserLogin: { [userLogin: string]: string[] | undefined } = {};
+        const usernamesToQuery: string[] = [];
 
         for (const username of usernames) {
             userIdsByUsername[username] = undefined;
+            if (this.isValidTwitchUserLogin(username)) {
+                const userLogin = username.toLowerCase();
+                if (usernamesByUserLogin[userLogin] === undefined) {
+                    usernamesByUserLogin[userLogin] = [];
+                }
+                usernamesByUserLogin[userLogin]!.push(username);
+                usernamesToQuery.push(userLogin);
+            } else {
+                console.log(`Cannot retrieve user info for invalid username: ${username}`);
+            }
         }
-        
+
+        const userApiInfoByUserId = await this.getUserApiInfo([], usernamesToQuery);
         for (const userIdKey in userApiInfoByUserId) {
             const userApiInfo = userApiInfoByUserId[userIdKey];
             if (userApiInfo) {
-                userIdsByUsername[userApiInfo.login] = userApiInfo.id;
+                const usernamesForUserLogin = usernamesByUserLogin[userApiInfo.login];
+                if (usernamesForUserLogin === undefined) {
+                    continue;
+                }
+                for (const username of usernamesForUserLogin) {
+                    userIdsByUsername[username] = userApiInfo.id;
+                }
             }
         }
 
