@@ -6,7 +6,7 @@
             "request": "launch",
             "type": "node",
             "runtimeExecutable": "npm",
-            "runtimeArgs": ["run", "start"],
+            "runtimeArgs": ["run", "start-debug"],
             "cwd": "${workspaceFolder}",
             "outFiles": [
                 "${workspaceFolder}/**/*.js"

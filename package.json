@@ -12,7 +12,8 @@
         "build": "tsc --outDir ./lib/",
         "clean": "rimraf lib",
         "lint": "eslint ./src/***.ts",
-        "start": "node --enable-source-maps ./lib/main.js"
+        "start": "node --enable-source-maps ./lib/main.js",
+        "start-debug": "npm run build && npm run start"
     },
     "dependencies": {
         "googleapis": "^137.1.0",
