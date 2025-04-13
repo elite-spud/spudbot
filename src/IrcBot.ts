@@ -204,9 +204,8 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
 
     protected async backupFiles(filepaths: string[]): Promise<void> {
         const currentDate = new Date();
-        console.log(currentDate.toISOString());
         for (const filepath of filepaths) {
-            console.log(`backing up ${filepath}`);
+            console.log(`Backing up ${filepath}`);
             const parsedPath = path.parse(filepath);
             parsedPath.name += `_${currentDate.getUTCFullYear()}-${currentDate.getUTCMonth() + 1}-${currentDate.getUTCDate()}`;
             parsedPath.base = parsedPath.name + parsedPath.ext;
