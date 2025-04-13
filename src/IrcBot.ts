@@ -305,7 +305,7 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
 
         for (const username of usernames) {
             const alreadyBeingQueried = !!this._pendingUserDetailByUsername[username];
-            if (alreadyBeingQueried) {
+            if (alreadyBeingQueried) { // TODO: invalidate this cache after... 30 minutes or so?
                 returnVal[username] = this._pendingUserDetailByUsername[username].asPromise();
             } else {
                 const future = new Future<TUserDetail>();
@@ -313,6 +313,10 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
                 returnVal[username] = future.asPromise();
                 usernamesToQuery.push(username);
             }
+        }
+
+        if (usernamesToQuery.length === 0) {
+            return returnVal;
         }
 
         // We need the userId here to determine which stored userDetail belongs to the given username (the user may have changed their username)
