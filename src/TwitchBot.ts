@@ -1339,11 +1339,13 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
             if (userDetail.isBanned && !userInBannedList) {
                 numUnbannedUsers++;
                 userDetail.isBanned = false;
+                console.log(`Synced unban against ${userDetail.username}`);
             }
 
             if (!userDetail.isBanned && userInBannedList) {
                 numSyncedBans++;
                 userDetail.isBanned = true;
+                console.log(`Synced ban against ${userDetail.username}`);
             }
 
             const userIsABot = knownBots.some(n => n === userDetail.username);
