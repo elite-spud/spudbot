@@ -81,6 +81,27 @@ export class GoogleAPI {
         this._gameRequestOverfundingEnabled = enable;
     }
 
+    public async handleGameRequestRefresh(respondTo: string): Promise<void> {
+        const future = new Future<void>();
+        const task = async (): Promise<void> => {
+            try {
+                const gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet);
+                await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet, gameRequestSpreadsheet);
+                this._twitchBot.chat(respondTo, `Game request successfully completed.`);
+                future.resolve();
+                return;
+            } catch (err) {
+                const errorMessage = `Error handling game request refresh: ${err.message}`;
+                future.resolve();
+                throw new Error(errorMessage);
+            }
+        }
+        this._taskQueue.addTask(task);
+        this._taskQueue.startQueue();
+
+        return future;
+    }
+
     public async handleGameRequestAddRedeem(event: TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd) : Promise<void> {
         const future = new Future<void>();
         const task = async (): Promise<void> => {

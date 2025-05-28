@@ -41,7 +41,7 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleFZeroGXQuote(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleCreateGameRequestRewards(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleGameRequestModular(detail));
-        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleBidwarModular(detail));
+        // this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleBidwarModular(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleYes(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleNo(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleUpdateAllUsers(detail));
@@ -608,7 +608,7 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
             }
 
             if (tokens[1] === "help") {
-                const adminHelpMessage = `!gamerequest [add, fund, start, complete]`;
+                const adminHelpMessage = `!gamerequest [add, fund, start, complete, refresh]`;
                 this.chat(messageDetail.respondTo, adminHelpMessage);
                 return;
             }
@@ -676,6 +676,8 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
                         await outcome.complete(); // force this through
                     }
                 }
+            } else if (tokens[1] === "refresh") {
+                await (await this._googleApi).handleGameRequestRefresh(messageDetail.respondTo);
             } else {
                 this.chat(messageDetail.respondTo, `unknown !gameRequest command ${tokens[1]}`);
                 return;

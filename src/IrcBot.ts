@@ -336,6 +336,13 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
                 this._pendingUserDetailByUsername[usernameKey].resolve(userDetail);
                 delete this._pendingUserDetailByUsername[usernameKey];
             }
+        }).catch((err) => {
+            for (const username of usernames) {
+                if (!!this._pendingUserDetailByUsername[username]) {
+                    this._pendingUserDetailByUsername[username].reject(`Unable to retrieve user id from API: ${err}`);
+                    delete this._pendingUserDetailByUsername[username]
+                }
+            }
         });
 
         return returnVal;
