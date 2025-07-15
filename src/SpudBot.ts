@@ -685,7 +685,7 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
         }
         const func = this.getCommandFunc({
             messageHandler: messageHandler,
-            triggerPhrases: ["!gamerequest"],
+            triggerPhrases: ["!gamerequest", "!request"],
             strictMatch: false, // requesting a game requires input after the command
             commandId: "!gamerequest",
             globalTimeoutSeconds: 0,
