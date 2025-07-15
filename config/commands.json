@@ -1,5 +1,6 @@
 [
     {
+        "title": "special events & triggers",
         "timerMinutesOffset": 15,
         "timerMinutes": 90,
         "random": true,
@@ -63,20 +64,30 @@
                 ]
             },
             {
-                "name": "!gdqhotfix",
-                "aliases": ["!hotfix"],
-                "expiresAt": "2024-06-28T02:00:00",
-                "autoPostIfTitleContainsAny": ["!hotfix", "!gdqhotfix"],
+                "name": "!laraidtrain",
+                "expiresAt": "2025-02-17T02:00:00",
+                "autoPostIfTitleContainsAny": ["!raidtrain", "!laraidtrain", "!ladyarcaders", "!latrain"],
+                "aliases": ["!raidtrain"],
                 "responses": [
-                    "I'll be appearing on @Mr_Shasta's GDQ Hotfix show, Do All the Things!, on June 27th at 7:00 PM EST where I'll playing some Luigi's Mansion 100% [PAL] in a race with @KaiiRunz!"
+                    "The Lady Arcaders are celebrating their 3 year anniversary this year, so the collective has organized a massive raid train event to mark the occasion! https://ladyarcaders.com/raid-train/2025/ For 3 days, dozens of streamers will take their viewers on a scenic tour through the LA community as we raise money for future events. If you're interested in donating to support our organization, click here: https://ko-fi.com/ladyarcaders"
+                ]
+            },
+            {
+                "name": "!gdqhotfix",
+                "aliases": ["!hotfix", "!Hotfix", "!GDQHotfix"],
+                "expiresAt": "2025-05-03T02:00:00",
+                "autoPostIfTitleContainsAny": ["!hotfix", "!Hotfix", "!gdqhotfix"],
+                "responses": [
+                    "On Saturday, July 19 at 2:09 PM ET, I'll be appearing on GDQ Hotfix running the F-Zero GX Story Mode WITH A RACING WHEEL as part of the Non-Binary People's Day celebration! @AKC_12 will be joining me on comms! Full schedule here: https://bsky.app/profile/gamesdonequick.com/post/3ltx47prdfs2e"
                 ]
             },
             {
                 "name": "!gdq",
                 "expiresAt": "2024-10-12T02:00:00",
-                "autoPostIfTitleContainsAny": ["!gdq", "GDQ"],
+                "aliases": ["!sgdq", "!GDQ", "!SGDQ"],
+                "autoPostIfTitleContainsAny": ["!gdq", "GDQ", "!sgdq"],
                 "responses": [
-                    "I'll be appearing on GDQ's Disaster Relief Done Quick marathon this Friday, playing Luigi's Mansion Any% (No OoB) [PAL]! Check out the full schedule here: https://gamesdonequick.com/schedule/53"
+                    "I will unfortunately not be attending SGDQ 2025 https://bsky.app/profile/elite-spud.bsky.social/post/3lo7cep7ipk2p"
                 ]
             },
             {
@@ -98,11 +109,11 @@
             },
             {
                 "name": "!charity",
-                "expiresAt": "2024-10-01T02:00:00",
-                "aliases": ["!donate", "!fundraiser", "!fundraising", "!gameovert1d", "!tiltify", "!campaign", "!charitycampaign"],
+                "expiresAt": "2024-07-19T02:00:00",
+                "aliases": ["!Charity", "!donate", "!fundraiser", "!fundraising", "!gameovert1d", "!tiltify", "!campaign", "!charitycampaign"],
                 "autoPostIfTitleContainsAny": ["jdrf", "fundraiser", "fundraising", "!gameovert1d", "!tiltify", "!campaign", "!charitycampaign", "!donate"],
                 "responses": [
-                    "Through the end of September, I'll be raising money to support Breakthrough T1D (formerly JDRF), the world's largest nonprofit funder of Type 1 Diabetes research. On Sep 29th, the fundraising campaign will culminate in a Luigi's Mansion Crowd Control stream, which you can facilitate by donating to BT1D through the CC interface! https://interact.crowdcontrol.live/#/twitch/47243772/coins. Any donations made prior to the 29th will still earn you coins that can be used to fuel the chaos!            If you'd prefer to donate directly without any Crowd Control involvement, please use the main campaign link here: https://tiltify.com/@elite-spud/game-over-t1d-2024"
+                    "Through July 18th, I'll be matching donations made to the Trevor Project through my Twitch channel 1-to-1 (up to what is financially feasible for me). For ways you can support without donating, please read this call to action from the Trevor Project: https://www.thetrevorproject.org/blog/act-now-to-save-critical-suicide-prevention-services-for-lgbtq-youth/. If nothing else, I encourage people to sign the petition to congress that is linked there."
                 ]
             },
             {
@@ -151,36 +162,11 @@
         ]
     },
     {
-        "timerMinutesOffset": 10,
-        "timerMinutes": 15,
-        "random": true,
-        "commands": [
-            {
-                "name": "!laraidtrain",
-                "expiresAt": "2025-02-17T02:00:00",
-                "autoPostIfTitleContainsAny": ["!raidtrain", "!laraidtrain", "!ladyarcaders", "!latrain"],
-                "aliases": ["!raidtrain"],
-                "responses": [
-                    "The Lady Arcaders are celebrating their 3 year anniversary this year, so the collective has organized a massive raid train event to mark the occasion! https://ladyarcaders.com/raid-train/2025/ For 3 days, dozens of streamers will take their viewers on a scenic tour through the LA community as we raise money for future events. If you're interested in donating to support our organization, click here: https://ko-fi.com/ladyarcaders"
-                ]
-            }
-        ]
-    },
-    {
+        "title": "hydration notifications",
         "timerMinutesOffset": 75,
         "timerMinutes": 90,
         "random": true,
         "commands": [
-            {
-                "name": "!response",
-                "responses": [
-                    "Ask a question but didn't get an answer? Feel free to ask again in a few minutes with an @ if I don't respond the first time!",
-                    "I often get tunnel vision when playing video games on stream, so it's tough to keep up with chat sometimes. If your question isn't answered, please ask again after a little while!",
-                    "Sorry if I miss any of your questions! I promise it's not intentional. Please @ me and ask again if I don't get around to your message the first time.",
-                    "I'm easily distracted, and often go on tangents while in the middle of talking about things. If I get sidetracked while talking about something you found interesting, please feel free to bring it up again so I can finish sharing my thoughts!",
-                    "I sometimes stream games which require a lot of focus to play, so it's not uncommon for me to miss important chat messages while I'm in the zone. If it seems like I missed your message, or didn't address anything to your satisfaction, please ask me to clarify or elaborate further and I'll be more than happy to oblige."
-                ]
-            },
             {
                 "name": "!hydrate",
                 "aliases": ["!meds", "!vitamins"],
@@ -191,6 +177,15 @@
         ]
     },
     {
+        "title": "extra timer 1",
+        "timerMinutesOffset": 10,
+        "timerMinutes": 15,
+        "random": true,
+        "commands": [
+        ]
+    },
+    {
+        "title": "extra timer 2",
         "timerMinutesOffset": 90,
         "timerMinutes": 90,
         "random": true,
@@ -198,8 +193,9 @@
         ]
     },
     {
-        "timerMinutesOffset": 45,
-        "timerMinutes": 90,
+        "title": "routine notifications",
+        "timerMinutesOffset": 105,
+        "timerMinutes": 120,
         "random": true,
         "commands": [
             {
@@ -313,6 +309,16 @@
                 "aliases": ["!incentive", "!incentives", "!goals"],
                 "responses": [
                     "Have you cheered bits on the channel before? You might have a balance in the bidwar bank! The current bidwar will be active until the end of 2024, so make sure to use your points to vote on your favorite option. Type '!bidwar contribute' to get started! https://docs.google.com/spreadsheets/d/1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY/edit?gid=877321766"
+                ]
+            },
+            {
+                "name": "!response",
+                "responses": [
+                    "Ask a question but didn't get an answer? Feel free to ask again in a few minutes with an @ if I don't respond the first time!",
+                    "I often get tunnel vision when playing video games on stream, so it's tough to keep up with chat sometimes. If your question isn't answered, please ask again after a little while!",
+                    "Sorry if I miss any of your questions! I promise it's not intentional. Please @ me and ask again if I don't get around to your message the first time.",
+                    "I'm easily distracted, and often go on tangents while in the middle of talking about things. If I get sidetracked while talking about something you found interesting, please feel free to bring it up again so I can finish sharing my thoughts!",
+                    "I sometimes stream games which require a lot of focus to play, so it's not uncommon for me to miss important chat messages while I'm in the zone. If it seems like I missed your message, or didn't address anything to your satisfaction, please ask me to clarify or elaborate further and I'll be more than happy to oblige."
                 ]
             }
         ]
@@ -505,9 +511,10 @@
             },
             {
                 "name": "!lmtournament",
-                "aliases": ["!tournament, !tourney", "!Tournament"],
+                "aliases": ["!tournament", "!tourney", "!Tournament", "!Tourney"],
+                "autoPostIfTitleContainsAny": ["!tournament", "!Tournament", "!tourney", "!Tourney"],
                 "responses": [
-                    "I'm participating in the annual Luigi's Mansion Any% No OoB tournament this year as both a runner and a commentator! Check out the bracket https://challonge.com/LMTournament2024 and the schedule https://schedule.speedgaming.org/lm/ to keep up with the event!"
+                    "I'm participating in the annual Luigi's Mansion Any% (No OoB) tournament this year as both a runner and a commentator! Check out the bracket https://challonge.com/LMTournament2025 and the schedule https://schedule.speedgaming.org/lm/ to keep up with the event!"
                 ]
             },
             {
@@ -528,7 +535,7 @@
                 "name": "!baby",
                 "aliases": ["!bebe"],
                 "responses": [
-                    "We recently welcomed our new baby! Her name is Lilah and she's quite the handful right now, so expect the stream schedule to be a little sporadic for a while!"
+                    "We're having another baby soon! Her name is Nia, and she's set to arrive before the end of August. Expect the stream schedule to pause for a while once our new Tater Tot gets here https://www.instagram.com/p/DJ1c724udp1/"
                 ]
             },
             {
@@ -646,7 +653,7 @@
                 "name": "!luigithon",
                 "expiresAt": "2025-04-01T02:00:00",
                 "responses": [
-                    "Through the end of March, I’ll be streaming PAL Luigi’s Mansion speedruns almost exclusively to finally give myself some dedicated time for honing my skills. On March 4, I set a top-6 time in PAL Any% (No OoB), and if I don't do the same for PAL 100% by April 1st, I’ll gift 10 subs"
+                    "Through the end of March, I’ll be streaming PAL Luigi’s Mansion speedruns almost exclusively to finally give myself some dedicated time to hone my skills. On March 4th, I set a top 6 time in PAL Any% (No OoB), and on March 14th, I set a top 4 time in PAL 100%. My current goal is to improve my PAL 100% time to top 3 by the end of the month"
                 ]
             },
             {
@@ -668,6 +675,27 @@
                 "expiresAt": "2025-04-01T02:00:00",
                 "responses": [
                     "If you wish to contribute to funding for future in-person Lady Arcaders events, donate through our Ko-fi page @ https://ldy.gg/donate or subscribe to our Twitch channel @ladyarcaders!"
+                ]
+            },
+            {
+                "name": "!lmrandomizer",
+                "aliases": ["!lmrando", "!rando", "!randomizer"],
+                "responses": [
+                    "The Luigi's Mansion randomizer is currently in open Beta, and can be played by following the instructions here: https://github.com/BootsinSoots/Archipelago/blob/Luigi's-Mansion-AP/worlds/luigismansion/docs/setup_en.md"
+                ]
+            },
+            {
+                "name": "!blindfolded",
+                "responses": [
+                    "I beat the NTSC version of Luigi's Mansion blindfolded in 2022 https://www.youtube.com/playlist?list=PLGcf4grZ1OXpY2endocMJ13y-wK52pVcg. The PAL version is significantly harder and less forgiving. I fully believe that it is possible, although I have no idea how I'm going to deal with King Boo"
+                ]
+            },
+            {
+                "name": "!noGlitchesAllowed",
+                "expiresAt": "2025-04-24T02:00:00",
+                "aliases": ["!noga", "!NoGA", "!NoGlitchesAllowed"],
+                "responses": [
+                    "On Wednesday, April 23 at 9:05PM ET, I'll be running Luigi's Mansion No R-Pump (No OoB) for No Glitches Allowed 2025! @millie_494 will be joining me on comms to help me explain what's probably the most goofy and arbitrary category in the game."
                 ]
             }
         ]
