@@ -29,6 +29,7 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleEcho(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleFirst(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleSlot(detail));
+        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleFlip(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleTimeout(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleGiveaway(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handlePlay(detail));
@@ -316,6 +317,26 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
             triggerPhrases: ["!slot"],
             strictMatch: true,
             commandId: "!slot",
+            globalTimeoutSeconds: 0,
+            userTimeoutSeconds: 0,
+        });
+        await func(messageDetail);
+    }
+
+    protected async handleFlip(messageDetail: IPrivMessageDetail): Promise<void> {
+        const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
+            const flip = randomInt(2);
+            if (flip === 0) {
+                this.chat(messageDetail.respondTo, "Heads");
+            } else {
+                this.chat(messageDetail.respondTo, "Tails");
+            }
+        }
+        const func = this.getCommandFunc({
+            messageHandler: messageHandler,
+            triggerPhrases: ["!flip"],
+            strictMatch: true,
+            commandId: "!flip",
             globalTimeoutSeconds: 0,
             userTimeoutSeconds: 0,
         });
@@ -871,6 +892,7 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
                 return;
             }
             await this.updateAllUsers();
+            this.chat(messageDetail.respondTo, `Successfully updated all cached users`);
         }
         const func = this.getCommandFunc({
             messageHandler: messageHandler,
