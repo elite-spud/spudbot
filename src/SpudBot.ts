@@ -3,7 +3,7 @@ import * as fs from "fs";
 import { ChannelPointRequests } from "./ChannelPointRequests";
 import { Future } from "./Future";
 import { IIrcBotAuxCommandGroupConfig, IIrcBotMiscConfig, IPrivMessageDetail, IUserDetailCollection } from "./IrcBot";
-import { egadd_quotes, f_zero_gx_interview_quotes, f_zero_gx_quotes, f_zero_gx_story_quotes, luigi_quotes } from "./Quotes";
+import { egadd_quotes, f_zero_gx_interview_quotes, f_zero_gx_quotes, f_zero_gx_story_quotes, lm_quotes, luigi_quotes } from "./Quotes";
 import { ChatWarriorUserDetail, IChatWarriorUserDetail, ISpudBotConfig, ISpudBotConnectionConfig } from "./SpudBotTypes";
 import { TwitchBotBase } from "./TwitchBot";
 import { CreateCustomChannelPointRewardArgs, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Notification_Subscription, TwitchEventSub_SubscriptionType } from "./TwitchBotTypes";
@@ -35,6 +35,7 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handlePlay(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleUptime(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleBonk(detail));
+        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleLmQuote(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleEgaddQuote(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleLuigiQuote(detail));
         this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleFZeroGXStoryQuote(detail));
@@ -447,6 +448,23 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
             commandId: "!uptime",
             globalTimeoutSeconds: 10,
             userTimeoutSeconds: 120,
+        });
+        await func(messageDetail);
+    }
+
+    protected async handleLmQuote(messageDetail: IPrivMessageDetail): Promise<void> {
+        const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
+            const quoteIndex = randomInt(lm_quotes.length);
+            const quoteText = lm_quotes[quoteIndex];
+            this.chat(messageDetail.respondTo, quoteText);
+        }
+        const func = this.getCommandFunc({
+            messageHandler: messageHandler,
+            triggerPhrases: ["!lmquote"],
+            strictMatch: false,
+            commandId: "!lmquote",
+            globalTimeoutSeconds: 0,
+            userTimeoutSeconds: 0,
         });
         await func(messageDetail);
     }

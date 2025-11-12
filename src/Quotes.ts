@@ -196,6 +196,8 @@ export const luigi_quotes = [
     "Exquisite...",
 ];
 
+export const lm_quotes = luigi_quotes.concat(egadd_quotes);
+
 export const f_zero_gx_story_quotes = [
     "Help... Aaaargh... Just give me one more chance! (Black Shadow - Prologue)",
     "One more chance is all you get. Win this F-ZERO Grand Prix or - you know the price of failure... (Deathborn - Prologue)",
