@@ -41,9 +41,9 @@
                 "name": "!crowdcontrolchallenge",
                 "aliases": ["!ccc", "!challenge", "!ccmax"],
                 "expiresAt": "2024-10-01T02:00:00",
-                "autoPostIfTitleContainsAny": ["!cc"],
+                "autoPostIfTitleContainsAny": ["!cc", "!ccmax"],
                 "responses": [
-                    "Welcome to our 2nd annual Luigi's Mansion Crowd Control Max% playthrough! If you're unfamiliar with what the heck is going on here, you can type !cc or !max% to learn more, but in a nutshell, I'm trying to collect as much in-game money as possible while chat tries to thwart those plans through the power of real-world money. For every 500,000G that I'm missing by the end of my playthrough, I'll send an additional $5 to Breakthrough T1D https://tiltify.com/@elite-spud/game-over-t1d-2024!"
+                    "Welcome to the 3nd annual Luigi's Mansion Crowd Control Max% playthrough! If you're unfamiliar with what the heck is going on here, you can type !cc and !max% to learn more, but in a nutshell, I'm trying to collect as much in-game money as possible while chat tries to stop me with the power of real-world money. For every 500,000G that I'm missing at the end of my playthrough, I'll donate an additional $5 to The Trevor Project"
                 ]
             },
             {
@@ -51,7 +51,7 @@
                 "aliases": ["!incentives", "!goals", "!subgoals"],
                 "autoPostIfTitleContainsAny": ["!incentive", "!incentives"],
                 "responses": [
-                    "Current subgoal incentives: https://docs.google.com/spreadsheets/d/1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY (see the other sub-sheets for active bidwars and channel point requests)"
+                    "$290 = Put on fox ears • $315 = Part my hair the wrong way • $350 = F-Zero GX Music Tier List • $400 = Cursed racing wheel controls stream (future)"
                 ]
             },
             {
@@ -84,10 +84,10 @@
             {
                 "name": "!gdq",
                 "expiresAt": "2024-10-12T02:00:00",
-                "aliases": ["!sgdq", "!GDQ", "!SGDQ"],
-                "autoPostIfTitleContainsAny": ["!gdq", "GDQ", "!sgdq"],
+                "aliases": ["!agdq", "!GDQ", "!AGDQ", "!sgdq", "!SGDQ", "!luigithon"],
+                "autoPostIfTitleContainsAny": ["!gdq", "GDQ", "!agdq", "!AGDQ", "!sgdq", "!SGDQ"],
                 "responses": [
-                    "I will unfortunately not be attending SGDQ 2025 https://bsky.app/profile/elite-spud.bsky.social/post/3lo7cep7ipk2p"
+                    "I'm going to AGDQ 2026! I'll be running either Luigi's Mansion Any% (No OoB) [PAL] or 100% [PAL], with the latter being unlocked as a category upgrade. See y'all in Pittsburgh!"
                 ]
             },
             {
@@ -109,11 +109,11 @@
             },
             {
                 "name": "!charity",
-                "expiresAt": "2024-07-19T02:00:00",
-                "aliases": ["!Charity", "!donate", "!fundraiser", "!fundraising", "!gameovert1d", "!tiltify", "!campaign", "!charitycampaign"],
-                "autoPostIfTitleContainsAny": ["jdrf", "fundraiser", "fundraising", "!gameovert1d", "!tiltify", "!campaign", "!charitycampaign", "!donate"],
+                "expiresAt": "2025-10-30T02:00:00",
+                "aliases": ["!Charity", "!donate", "!fundraiser", "!fundraising"],
+                "autoPostIfTitleContainsAny": ["!charity", "fundraiser", "fundraising", "!campaign", "!charitycampaign", "!donate"],
                 "responses": [
-                    "Through July 18th, I'll be matching donations made to the Trevor Project through my Twitch channel 1-to-1 (up to what is financially feasible for me). For ways you can support without donating, please read this call to action from the Trevor Project: https://www.thetrevorproject.org/blog/act-now-to-save-critical-suicide-prevention-services-for-lgbtq-youth/. If nothing else, I encourage people to sign the petition to congress that is linked there."
+                    "We're fundraising in support of The Trevor Project, a nonprofit organization focused on suicide prevention for LGBTQIA+ youth. If you'd like to donate, there are two ways to do so! Donating through Crowd Control gives you access to extra coins that can be used to fuel the chaos on-stream https://interact.crowdcontrol.live/#/twitch/47243772 but if you'd prefer to contribute without dealing with all of that, please follow this direct link to the fundraising campaign: https://tilt.fyi/4zHfmGHrPJ"
                 ]
             },
             {
@@ -137,7 +137,7 @@
                 "name": "!runningthroughwonderland",
                 "aliases": ["!rtw", "!wonderland"],
                 "expiresAt": "2024-10-12T02:00:00",
-                "autoPostIfTitleContainsAny": ["!runningthroughwonderland", "!wonderland", "!showcase", "!rtw"],
+                "autoPostIfTitleContainsAny": ["!runningthroughwonderland", "!wonderland", "!rtw"],
                 "responses": [
                     "On Saturday, October 19th at 8:00 PM EST, I'll be running Luigi's Mansion 100% as part of a charity marathon in support of AliceAtWonderlandGames! LuckyOwl360 will be joining me on comms, and we'll have a category upgrade incentive to potentially have me showcase PAL 100% for an even more exciting run! Check out the full schedule here: https://horaro.org/rtw/schedule"
                 ]
@@ -157,6 +157,15 @@
                 "aliases": ["!lta", "!LTA", "!pace", "!PACE", "!PACELTA", "!pacelta"],
                 "responses": [
                     "On Monday, November 4th, 7 Luigi's Mansion runners will participate in an in-person Live Time Attack competition at PACE's Fall 2024 event. I'll be assisting with comms for this event, which will last for 9 straight hours from 11 AM - 8PM Eastern time. Check out the full schedule to see the runners involved as well as other games being featured! https://horaro.org/pace24f/schedule"
+                ]
+            },
+            {
+                "name": "!questforquet",
+                "aliases": ["!quest", "!quet", "!qfq", "!q4q", "!Q4Q", "!showcase", "!Showcase"],
+                "expiresAt": "2025-07-28T02:00:00",
+                "autoPostIfTitleContainsAny": ["!quest", "!questforquet", "!qfq", "!QfQ", "!q4q", "!Q4Q", "!Showcase", "!showcase"],
+                "responses": [
+                    "On Saturday, July 26th at 12:00 PM ET, I'll be running F-Zero GX - Story Mode (Very Hard) as part of a charity marathon in support of @TrainerAnade, who's in need of a new service dog 💜. @debeaunairVT will be joining me on comms, and we'll have an incentive open ahead of the run to watch all the cutscenes, so if you'd like to donate, make sure to pop in early to fund that goal! Check out the full schedule here: https://horaro.org/qfq/schedule"
                 ]
             }
         ]
@@ -306,7 +315,6 @@
                 "name": "!bidwar",
                 "expiresAt": "2025-01-01T02:00:00",
                 "strict": true,
-                "aliases": ["!incentive", "!incentives", "!goals"],
                 "responses": [
                     "Have you cheered bits on the channel before? You might have a balance in the bidwar bank! The current bidwar will be active until the end of 2024, so make sure to use your points to vote on your favorite option. Type '!bidwar contribute' to get started! https://docs.google.com/spreadsheets/d/1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY/edit?gid=877321766"
                 ]
@@ -319,6 +327,12 @@
                     "Sorry if I miss any of your questions! I promise it's not intentional. Please @ me and ask again if I don't get around to your message the first time.",
                     "I'm easily distracted, and often go on tangents while in the middle of talking about things. If I get sidetracked while talking about something you found interesting, please feel free to bring it up again so I can finish sharing my thoughts!",
                     "I sometimes stream games which require a lot of focus to play, so it's not uncommon for me to miss important chat messages while I'm in the zone. If it seems like I missed your message, or didn't address anything to your satisfaction, please ask me to clarify or elaborate further and I'll be more than happy to oblige."
+                ]
+            },
+            {
+                "name": "!avquality",
+                "responses": [
+                    "Does the stream audio sound extra crunchy today? Video appear out of sync, jittery, or fuzzy? Let me know about any perceived technical problems so I can address them and provide everyone with the best quality stream that I can offer!"
                 ]
             }
         ]
@@ -340,6 +354,7 @@
             },
             {
                 "name": "!trans",
+                "aliases": ["!gender"],
                 "responses": [
                     "Non-binary transfeminine. They/She pronouns. Sapphic. Hormone therapy since Dec 2020. Bottom surgery in 2022."
                 ]
@@ -535,7 +550,7 @@
                 "name": "!baby",
                 "aliases": ["!bebe"],
                 "responses": [
-                    "We're having another baby soon! Her name is Nia, and she's set to arrive before the end of August. Expect the stream schedule to pause for a while once our new Tater Tot gets here https://www.instagram.com/p/DJ1c724udp1/"
+                    "We welcomed our second child, Nia, at the start of August! Expect the stream schedule to say a bit erratic for a while while our new Tater Tot settles in https://www.instagram.com/p/DNGuaqpvYuj"
                 ]
             },
             {
@@ -653,7 +668,7 @@
                 "name": "!luigithon",
                 "expiresAt": "2025-04-01T02:00:00",
                 "responses": [
-                    "Through the end of March, I’ll be streaming PAL Luigi’s Mansion speedruns almost exclusively to finally give myself some dedicated time to hone my skills. On March 4th, I set a top 6 time in PAL Any% (No OoB), and on March 14th, I set a top 4 time in PAL 100%. My current goal is to improve my PAL 100% time to top 3 by the end of the month"
+                    "Through the end of December, I’ll be streaming PAL Luigi’s Mansion speedruns almost exclusively to prep for AGDQ!"
                 ]
             },
             {
