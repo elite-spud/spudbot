@@ -25,7 +25,7 @@
     },
     "devDependencies": {
         "@types/json2csv": "^5.0.3",
-        "@types/node": "^20.2.5",
+        "@types/node": "^20.19.6",
         "@types/ws": "^8.5.10",
         "@typescript-eslint/eslint-plugin": "^4.7.0",
         "@typescript-eslint/parser": "^4.7.0",
