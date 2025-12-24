@@ -137,6 +137,11 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
 
     protected override async handleChannelPointRewardRedeem(event: TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, _subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
         // TODO: Make this a config file
+        const broadcasterName = this._config.connection.server.channel.substring(1);
+        if (!this._firstChatterName && event.user_login !== broadcasterName) {
+            this._firstChatterName = event.user_name;
+        }
+
         if (event.reward.title === "Hi, I'm Lurking!") {
             this.chat(`#${event.broadcaster_user_name}`, `${event.user_name}, enjoy your lurk elites72Heart`);
         }
