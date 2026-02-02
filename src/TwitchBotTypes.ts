@@ -79,6 +79,12 @@ export interface ITwitchBotConnectionConfig extends IIrcBotConnectionConfig {
     }
 }
 
+export interface TwitchRequestArgs {
+    method: string;
+    url: string, getHeaders: () => Promise<HeadersInit>;
+    body?: BodyInit;
+}
+
 export interface TwitchUserAPIInfo {
     id: string;
     login: string;
