@@ -589,6 +589,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
 
         try {
             await this.loadUserTokenSilent();
+            return;
         } catch (err) {
             console.log(`Unable to load user token silently. ${err}`);
         }
