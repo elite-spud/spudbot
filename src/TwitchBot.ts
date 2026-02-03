@@ -299,6 +299,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         let response = await makeRequest();
         const autoRetryResponses = [401];
         while (autoRetryResponses.includes(response.status) && retryCount < maxRetries) {
+            console.log(`Auto-retry attempt #${maxRetries}. Received status ${response.status}`);
             retryCount++;
             if (response.status === 401) { // Unauthorized
                 await this.loadUserTokenSilent();
@@ -308,9 +309,12 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         }
 
         if (autoRetryResponses.includes(response.status)) {
-            throw new Error(`Unable to get auto-correct Twitch response after ${maxRetries} retries. Received code ${response.status}.`);
+            const message = `Unable to auto-correct Twitch response after ${retryCount} retries. Received code ${response.status}.`;
+            console.log(message)
+            throw new Error(message);
         }
-
+        
+        console.log(`Retry successful after ${retryCount} attempts! Received response ${response.status}`);
         return response;
     }
 
