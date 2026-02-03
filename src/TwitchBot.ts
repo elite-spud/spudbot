@@ -314,7 +314,9 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
             throw new Error(message);
         }
         
-        console.log(`Retry successful after ${retryCount} attempts! Received response ${response.status}`);
+        if (retryCount > 0) {
+            console.log(`Retry successful after ${retryCount} attempts! Received response ${response.status}`);
+        }
         return response;
     }
 
