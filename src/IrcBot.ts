@@ -552,7 +552,7 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
     }
 
     protected onError(err: Error): void {
-        console.log(`CAUGHT SOCKET ERROR`);
+        console.log(`CAUGHT SOCKET ERROR:`);
         console.log(err.stack);
     }
 

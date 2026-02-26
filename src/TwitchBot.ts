@@ -286,9 +286,12 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
 
     protected async sendTwitchRequest(args: TwitchRequestArgs): Promise<Response> {
         const makeRequest = async () => {
+            const headers = await args.getHeaders();
+            console.log(`Making request to Twitch with the following headers:`);
+            console.log(headers);
             const response = await fetch(args.url, {
                 method: args.method,
-                headers: await args.getHeaders(),
+                headers: headers,
                 body: args.body,
             });
             return response;
@@ -311,6 +314,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         if (autoRetryResponses.includes(response.status)) {
             const message = `Unable to auto-correct Twitch response after ${retryCount} retries. Received code ${response.status}.`;
             console.log(message)
+            console.log(response);
             throw new Error(message);
         }
         
@@ -583,7 +587,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
             if (refreshTokenResponse.scope.join(" ") !== this.userTokenScope) {
                 throw new Error(`Refresh token scope does not match requested scope (${this.userTokenScope} !== ${refreshTokenResponse.scope.join(" ")})`);
             }
-            this.storeUserTokenResponse(refreshTokenResponse);
+            await this.storeUserTokenResponse(refreshTokenResponse);
         } catch (err) {
             console.log(`Token Refresh failed: ${err}`);
             throw new Error(`Unable to obtain user token via refresh: ${err}`);
@@ -636,7 +640,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
                 console.log(tokenResponseJson);
                 throw new Error(errMessage);
             }
-            this.storeUserTokenResponse(tokenResponseJson);
+            await this.storeUserTokenResponse(tokenResponseJson);
         };
         const server = http.createServer(handleRequest);
         server.listen(new URL(redirectUrl).port);
