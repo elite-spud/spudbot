@@ -1,7 +1,7 @@
 import { Future } from "./Future";
 
 export class TaskQueue {
-    protected _tasks: (() => void)[] = [];
+    protected _tasks: (() => Promise<void>)[] = [];
 
     protected _runningFuture: Future<void> | undefined;
 

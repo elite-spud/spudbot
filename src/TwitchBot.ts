@@ -7,18 +7,20 @@ import { ConsoleColors } from "./ConsoleColors";
 import { Future } from "./Future";
 import { HeldTaskGroup } from "./HeldTask";
 import { IIrcBotAuxCommandGroupConfig, IIrcBotMiscConfig, IJoinMessageDetail, IPartMessageDetail, IPrivMessageDetail, IrcBotBase } from "./IrcBot";
-import { TaskQueue } from "./TaskQueue";
-import { CreateCustomChannelPointRewardArgs, ITwitchBotAuxCommandConfig, ITwitchBotConfig, ITwitchBotConnectionConfig, SubTierPoints, TwitchAppToken, TwitchBadgeTagKeys, TwitchBannedUser, TwitchBroadcasterSubscriptionsResponse, TwitchChatSettings, TwitchErrorResponse, TwitchEventSub_CreateSubscription, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_Follow, TwitchEventSub_Event_Raid, TwitchEventSub_Event_SubscriptionEnd, TwitchEventSub_Event_SubscriptionGift, TwitchEventSub_Event_SubscriptionMessage, TwitchEventSub_Event_SubscriptionStart, TwitchEventSub_Notification_Payload, TwitchEventSub_Notification_Subscription, TwitchEventSub_Reconnect_Payload, TwitchEventSub_SubscriptionType, TwitchEventSub_Welcome_Payload, TwitchFollowingUser, TwitchGame, TwitchGetBannedUsersResponseBody, TwitchGetChannelInfo, TwitchGetChannelInfoResponse, TwitchGetCustomChannelPointRewardInfo, TwitchGetCustomChannelPointRewardResponse, TwitchGetFollowingUsersResponseBody, TwitchGetGamesResponseBody, TwitchGetShieldModeStatusResponseBody, TwitchGetStreamInfo, TwitchGetStreamsResponse, TwitchPrivMessageTagKeys, TwitchSubscriptionDetail, TwitchUpdateChannelInformationRequestBody, TwitchUpdateChatSettingsRequestBody, TwitchUserAPIInfo, TwitchUserDetail, TwitchUserInfoResponse, TwitchUserToken } from "./TwitchBotTypes";
 import { knownBots } from "./KnownBots";
+import { TaskQueue } from "./TaskQueue";
+import { CreateCustomChannelPointRewardArgs, ITwitchBotAuxCommandConfig, ITwitchBotConfig, ITwitchBotConnectionConfig, SubTierPoints, TwitchAppToken, TwitchBadgeTagKeys, TwitchBannedUser, TwitchBroadcasterSubscriptionsResponse, TwitchChatSettings, TwitchErrorResponse, TwitchEventSub_CreateSubscription, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_Follow, TwitchEventSub_Event_Raid, TwitchEventSub_Event_SubscriptionEnd, TwitchEventSub_Event_SubscriptionGift, TwitchEventSub_Event_SubscriptionMessage, TwitchEventSub_Event_SubscriptionStart, TwitchEventSub_Notification_Payload, TwitchEventSub_Notification_Subscription, TwitchEventSub_Reconnect_Payload, TwitchEventSub_SubscriptionType, TwitchEventSub_Welcome_Payload, TwitchFollowingUser, TwitchGame, TwitchGetBannedUsersResponseBody, TwitchGetChannelInfo, TwitchGetChannelInfoResponse, TwitchGetCustomChannelPointRewardInfo, TwitchGetCustomChannelPointRewardResponse, TwitchGetFollowingUsersResponseBody, TwitchGetGamesResponseBody, TwitchGetShieldModeStatusResponseBody, TwitchGetStreamInfo, TwitchGetStreamsResponse, TwitchPrivMessageTagKeys, TwitchRequestArgs, TwitchSubscriptionDetail, TwitchUpdateChannelInformationRequestBody, TwitchUpdateChatSettingsRequestBody, TwitchUserAPIInfo, TwitchUserDetail, TwitchUserInfoResponse, TwitchUserToken } from "./TwitchBotTypes";
 
 export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = TwitchUserDetail> extends IrcBotBase<TUserDetail> {
     public static readonly twitchMaxChatMessageLength = 500;
     protected static readonly _knownConfig: { encoding: "utf8" } = { encoding: "utf8" };
 
     public declare readonly _config: ITwitchBotConfig;
-    protected readonly _userAccessToken = new Future<TwitchUserToken>();
+    // Keep alphabetical for easier comparison against returned scope in refresh token
+    protected readonly userTokenScope = `bits:read channel:manage:broadcast channel:manage:redemptions channel:read:subscriptions moderator:manage:banned_users moderator:manage:chat_settings moderator:manage:shield_mode moderator:read:followers user:read:follows`;
     protected readonly _twitchAppToken = new Future<TwitchAppToken>();
     protected readonly _userAccessTokenAccountName = "default"; // TODO: find a good replacement for this
+    protected _currentUserTokenRefreshPromise: Promise<TwitchUserToken> | undefined = undefined;
     protected _twitchEventSub: WebSocket;
     protected _twitchEventSubHeartbeatInterval: NodeJS.Timer;
     protected _twitchEventSubTemp: WebSocket | undefined = undefined;
@@ -282,14 +284,60 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         return userInfo;
     }
 
+    protected async sendTwitchRequest(args: TwitchRequestArgs): Promise<Response> {
+        const makeRequest = async () => {
+            const headers = await args.getHeaders();
+            console.log(`Making request to Twitch with the following headers:`);
+            console.log(headers);
+            const response = await fetch(args.url, {
+                method: args.method,
+                headers: headers,
+                body: args.body,
+            });
+            return response;
+        }
+
+        const maxRetries = 1;
+        let retryCount = 0;
+        let response = await makeRequest();
+        const autoRetryResponses = [401];
+        while (autoRetryResponses.includes(response.status) && retryCount < maxRetries) {
+            console.log(`Auto-retry attempt #${maxRetries}. Received status ${response.status}`);
+            retryCount++;
+            if (response.status === 401) { // Unauthorized
+                await this.loadUserTokenSilent();
+                response = await makeRequest();
+                continue;
+            }
+        }
+
+        if (autoRetryResponses.includes(response.status)) {
+            const message = `Unable to auto-correct Twitch response after ${retryCount} retries. Received code ${response.status}.`;
+            console.log(message)
+            console.log(response);
+            throw new Error(message);
+        }
+        
+        if (retryCount > 0) {
+            console.log(`Retry successful after ${retryCount} attempts! Received response ${response.status}`);
+        }
+        return response;
+    }
+
     protected async _getUserApiInfoFromToken(): Promise<TwitchUserAPIInfo> {
-        const response = await fetch(`https://api.twitch.tv/helix/users`, {
-            method: `GET`,
-            headers: {
-                Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
+        const getHeaders = async () => {
+            const token = await this.getStoredUserTokenResponse();
+            return {
+                Authorization: `Bearer ${token?.access_token ?? ""}`,
                 "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
             }
-        });
+        }
+        const requestArgs: TwitchRequestArgs = {
+            method: `GET`,
+            url: `https://api.twitch.tv/helix/users`,
+            getHeaders: getHeaders,
+        };
+        const response = await this.sendTwitchRequest(requestArgs);
 
         if (response.status !== 200) {
             const errMessage = `Get Users (from token) request failed: ${response.status} ${response.statusText}`;
@@ -331,13 +379,19 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
             const queryParams = [...idQueryParams, ...loginQueryParams].join(`&`);
             const url = `https://api.twitch.tv/helix/users?${queryParams}`;
 
-            const response = await fetch(url, {
-                method: `GET`,
-                headers: {
-                    Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
+            const getHeaders = async () => {
+                const token = await this.getStoredUserTokenResponse();
+                return {
+                    Authorization: `Bearer ${token?.access_token ?? ""}`,
                     "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
                 }
-            });
+            }
+            const requestArgs: TwitchRequestArgs = {
+                method: `GET`,
+                url: url,
+                getHeaders: getHeaders,
+            };
+            const response = await this.sendTwitchRequest(requestArgs);
 
             if (response.status !== 200) {
                 const errMessage = `Get Users request failed: ${response.status} ${response.statusText}`;
@@ -460,7 +514,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
 
     protected abstract getServiceName(): string;
 
-    protected async refreshUserToken(refreshToken: string): Promise<TwitchUserToken> {
+    protected async _refreshUserToken(refreshToken: string): Promise<TwitchUserToken> {
         console.log(`Attempting to obtain user access token via refresh token...`);
 
         const tokenRequestBodyProps: { [key: string]: string } = {
@@ -484,32 +538,70 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         return tokenResponseJson;
     }
 
-    protected storeUserTokenResponse(tokenResponse: TwitchUserToken): void {
-        setPassword(this.getServiceName(), this._userAccessTokenAccountName, JSON.stringify(tokenResponse));
-        this._userAccessToken.resolve(tokenResponse);
+    protected async refreshUserToken(refreshToken: string): Promise<TwitchUserToken> {
+        if (!!this._currentUserTokenRefreshPromise) {
+            return this._currentUserTokenRefreshPromise;
+        }
+
+        const future = new Future<TwitchUserToken>();
+        this._currentUserTokenRefreshPromise = future.asPromise();
+
+        try {
+            const token = await this._refreshUserToken(refreshToken);
+            future.resolve(token);
+        } catch (err) {
+            future.reject(err);
+        }
+
+        this._currentUserTokenRefreshPromise = undefined;
+        return future;
+    }
+
+    protected async storeUserTokenResponse(tokenResponse: TwitchUserToken): Promise<void> {
+        await setPassword(this.getServiceName(), this._userAccessTokenAccountName, JSON.stringify(tokenResponse));
         console.log(`Successfully stored user token response`);
+    }
+
+    protected async getStoredUserTokenResponse(): Promise<TwitchUserToken | undefined> {
+        const storedTokenString = await getPassword(this.getServiceName(), this._userAccessTokenAccountName);
+        if (storedTokenString === null) {
+            return undefined;
+        }
+        // console.log(`Successfully retrieved stored user token response`); // TODO: log this at trace level
+        const token = JSON.parse(storedTokenString);
+        // console.log(`Successfully parsed stored user token response`); // TODO: log this at trace level
+        return token;
+    }
+
+    protected async loadUserTokenSilent(): Promise<void> {
+        const storedToken = await this.getStoredUserTokenResponse();
+        if (!storedToken) {
+            const message = `Unable to obtain user token silently: stored token string not found`;
+            console.log(message);
+            throw new Error(message);
+        }
+        console.log(`Stored user access token found.`);
+
+        try {
+            const refreshTokenResponse = await this.refreshUserToken(storedToken.refresh_token);
+            if (refreshTokenResponse.scope.join(" ") !== this.userTokenScope) {
+                throw new Error(`Refresh token scope does not match requested scope (${this.userTokenScope} !== ${refreshTokenResponse.scope.join(" ")})`);
+            }
+            await this.storeUserTokenResponse(refreshTokenResponse);
+        } catch (err) {
+            console.log(`Token Refresh failed: ${err}`);
+            throw new Error(`Unable to obtain user token via refresh: ${err}`);
+        }
     }
 
     protected async loadUserToken(): Promise<void> {
         const clientId = this._config.connection.twitch.oauth.clientId;
-        // Keep alphabetical for easier comparison against returned scope in refresh token
-        const scope = `bits:read channel:manage:broadcast channel:manage:redemptions channel:read:subscriptions moderator:manage:banned_users moderator:manage:chat_settings moderator:manage:shield_mode moderator:read:followers user:read:follows`;
 
-        const storedTokenString = await getPassword(this.getServiceName(), this._userAccessTokenAccountName);
-        if (storedTokenString) {
-            console.log(`Stored user access token found.`);
-            // console.log(storedTokenString); // TODO: log this at Trace level
-            const storedToken: TwitchUserToken = JSON.parse(storedTokenString);
-            try {
-                const refreshTokenResponse = await this.refreshUserToken(storedToken.refresh_token);
-                if (refreshTokenResponse.scope.join(" ") !== scope) {
-                    throw new Error(`Refresh token scope does not match requested scope (${scope} !== ${refreshTokenResponse.scope.join(" ")})`);
-                }
-                this.storeUserTokenResponse(refreshTokenResponse);
-                return;
-            } catch (err) {
-                console.log(`Token Refresh failed: ${err}`);
-            }
+        try {
+            await this.loadUserTokenSilent();
+            return;
+        } catch (err) {
+            console.log(`Unable to load user token silently. ${err}`);
         }
         
         console.log(`Obtaining user access token from scratch...`);
@@ -548,13 +640,13 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
                 console.log(tokenResponseJson);
                 throw new Error(errMessage);
             }
-            this.storeUserTokenResponse(tokenResponseJson);
+            await this.storeUserTokenResponse(tokenResponseJson);
         };
         const server = http.createServer(handleRequest);
         server.listen(new URL(redirectUrl).port);
 
         const redirect_uri = redirectUrl;
-        const url = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirect_uri}&response_type=code&scope=${scope}&force_verify=true`;
+        const url = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirect_uri}&response_type=code&scope=${this.userTokenScope}&force_verify=true`;
         await open(url);
     }
 
@@ -635,15 +727,22 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
                 }
             };
             // Websockets are read-only (aside from PONG responses), so subscriptions are set up via HTTP instead (just like webhooks)
-            const subscriptionResponse = await fetch(`https://api.twitch.tv/helix/eventsub/subscriptions`, {
-                method: `POST`,
-                headers: {
-                    Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
+            const getHeaders = async () => {
+                const token = await this.getStoredUserTokenResponse();
+                return {
+                    Authorization: `Bearer ${token?.access_token ?? ""}`,
                     "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
                     "Content-Type": `application/json`,
-                },
+                }
+            }
+            const requestArgs: TwitchRequestArgs = {
+                method: `POST`,
+                url: `https://api.twitch.tv/helix/eventsub/subscriptions`,
+                getHeaders: getHeaders,
                 body: JSON.stringify(body),
-            });
+            };
+            const subscriptionResponse = await this.sendTwitchRequest(requestArgs);
+
             if (subscriptionResponse.status === 202) {
                 numNewSubscriptions++;
             } else {
@@ -783,13 +882,19 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
 
     protected async isShieldModeEnabled(): Promise<boolean> {
         const broadcasterId = await this.getTwitchBroadcasterId();
-        const response = await fetch(`https://api.twitch.tv/helix/moderation/shield_mode?broadcaster_id=${broadcasterId}&moderator_id=${broadcasterId}`, {
-            method: `GET`,
-            headers: {
-                Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
+        const getHeaders = async () => {
+            const token = await this.getStoredUserTokenResponse();
+            return {
+                Authorization: `Bearer ${token?.access_token ?? ""}`,
                 "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
             }
-        });
+        }
+        const requestArgs: TwitchRequestArgs = {
+            method: `GET`,
+            url: `https://api.twitch.tv/helix/moderation/shield_mode?broadcaster_id=${broadcasterId}&moderator_id=${broadcasterId}`,
+            getHeaders: getHeaders,
+        };
+        const response = await this.sendTwitchRequest(requestArgs);
 
         if (response.status !== 200) {
             console.log(`Get Shield Mode request failed: ${response.status} ${response.statusText}`);
@@ -807,14 +912,20 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         const body = {
             is_active: enable,
         };
-        const response = await fetch(`https://api.twitch.tv/helix/moderation/shield_mode?broadcaster_id=${broadcasterId}&moderator_id=${broadcasterId}`, {
-            method: `PUT`,
-            headers: {
-                Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
+        const getHeaders = async () => {
+            const token = await this.getStoredUserTokenResponse();
+            return {
+                Authorization: `Bearer ${token?.access_token ?? ""}`,
                 "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
-            },
+            }
+        }
+        const requestArgs: TwitchRequestArgs = {
+            method: `PUT`,
+            url: `https://api.twitch.tv/helix/moderation/shield_mode?broadcaster_id=${broadcasterId}&moderator_id=${broadcasterId}`,
+            getHeaders: getHeaders,
             body: JSON.stringify(body),
-        });
+        };
+        const response = await this.sendTwitchRequest(requestArgs);
 
         if (response.status !== 200) {
             console.log(`Update Shield Mode request failed: ${response.status} ${response.statusText}`);
@@ -827,13 +938,19 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
 
     protected async getChatSettings(): Promise<TwitchChatSettings> {
         const broadcasterId = await this.getTwitchBroadcasterId();
-        const response = await fetch(`https://api.twitch.tv/helix/chat/settings?broadcaster_id=${broadcasterId}&moderator_id=${broadcasterId}`, {
-            method: `GET`,
-            headers: {
-                Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
+        const getHeaders = async () => {
+            const token = await this.getStoredUserTokenResponse();
+            return {
+                Authorization: `Bearer ${token?.access_token ?? ""}`,
                 "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
             }
-        });
+        }
+        const requestArgs: TwitchRequestArgs = {
+            method: `GET`,
+            url: `https://api.twitch.tv/helix/chat/settings?broadcaster_id=${broadcasterId}&moderator_id=${broadcasterId}`,
+            getHeaders: getHeaders,
+        };
+        const response = await this.sendTwitchRequest(requestArgs);
 
         if (response.status !== 200) {
             console.log(`Get Chat Settings request failed: ${response.status} ${response.statusText}`);
@@ -848,15 +965,20 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
 
     protected async updateChatSettings(settings: TwitchUpdateChatSettingsRequestBody): Promise<void> {
         const broadcasterId = await this.getTwitchBroadcasterId();
-        const response = await fetch(`https://api.twitch.tv/helix/chat/settings?broadcaster_id=${broadcasterId}&moderator_id=${broadcasterId}`, {
-            method: `PATCH`,
-            headers: {
-                Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
+        const getHeaders = async () => {
+            const token = await this.getStoredUserTokenResponse();
+            return {
+                Authorization: `Bearer ${token?.access_token ?? ""}`,
                 "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
-                "Content-Type": `application/json`,
-            },
+            }
+        }
+        const requestArgs: TwitchRequestArgs = {
+            method: `PATCH`,
+            url: `https://api.twitch.tv/helix/chat/settings?broadcaster_id=${broadcasterId}&moderator_id=${broadcasterId}`,
+            getHeaders: getHeaders,
             body: JSON.stringify(settings),
-        });
+        };
+        const response = await this.sendTwitchRequest(requestArgs);
 
         if (response.status !== 200) {
             console.log(`Update Chat Settings request failed: ${response.status} ${response.statusText}`);
@@ -981,31 +1103,44 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
     }
 
     protected async getEventSubSubscriptions(): Promise<any[]> {
-        const response = await fetch(`https://api.twitch.tv/helix/eventsub/subscriptions`, {
-            method: `GET`,
-            headers: {
-                Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
+        const getHeaders = async () => {
+            const token = await this.getStoredUserTokenResponse();
+            return {
+                Authorization: `Bearer ${token?.access_token ?? ""}`,
                 "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
                 "Content-Type": `application/json`,
-            },
-        });
+            }
+        }
+        const requestArgs: TwitchRequestArgs = {
+            method: `GET`,
+            url: `https://api.twitch.tv/helix/eventsub/subscriptions`,
+            getHeaders: getHeaders,
+        };
+        const response = await this.sendTwitchRequest(requestArgs);
         const json = await response.json();
         console.log(`  ${ConsoleColors.FgYellow}Current number of EventSub Subscriptions: ${json.total}${ConsoleColors.Reset}\n`);
         return json.data;
     }
 
     protected async deleteUnusedEventSubSubscriptions(subs: any[]): Promise<void> {
+        const getHeaders = async () => {
+            const token = await this.getStoredUserTokenResponse();
+            return {
+                Authorization: `Bearer ${token?.access_token ?? ""}`,
+                "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
+                "Content-Type": `application/json`,
+            }
+        }
+
         let numDeleted = 0;
         for (const sub of subs) { // TODO: fix subs not iterable error
             if (sub.status === "websocket_failed_ping_pong" || "websocket_disconnected") {
-                const deleteResponse = await fetch(`https://api.twitch.tv/helix/eventsub/subscriptions?id=${sub.id}`, {
+                const requestArgs: TwitchRequestArgs = {
                     method: `DELETE`,
-                    headers: {
-                        Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
-                        "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
-                        "Content-Type": `application/json`,
-                    },
-                });
+                    url: `https://api.twitch.tv/helix/eventsub/subscriptions?id=${sub.id}`,
+                    getHeaders: getHeaders,
+                };
+                const deleteResponse = await this.sendTwitchRequest(requestArgs);
                 if (deleteResponse.status === 204) {
                     numDeleted++;
                 }
@@ -1024,14 +1159,22 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         let subPoints = 0;
         let subCount = 0;
         
+        const getHeaders = async () => {
+            const token = await this.getStoredUserTokenResponse();
+            return {
+                Authorization: `Bearer ${token?.access_token ?? ""}`,
+                "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
+                "Content-Type": `application/json`,
+            }
+        }
+        
         while (true) {
-            const response = await fetch(`https://api.twitch.tv/helix/subscriptions?broadcaster_id=${broadcasterId}&first=${pageSize}${!!cursor ? `&after=${cursor}` : ``}`, {
+            const requestArgs: TwitchRequestArgs = {
                 method: `GET`,
-                headers: {
-                    Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
-                    "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
-                },
-            });
+                url: `https://api.twitch.tv/helix/subscriptions?broadcaster_id=${broadcasterId}&first=${pageSize}${!!cursor ? `&after=${cursor}` : ``}`,
+                getHeaders: getHeaders,
+            };
+            const response = await this.sendTwitchRequest(requestArgs);
     
             if (response.status !== 200) {
                 console.log(`Get Active Broadcaster Subscriptions request failed: ${response.status} ${response.statusText}`);
@@ -1086,8 +1229,6 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
     }
 
     public async ban(channelUsername: string, usernameToBan: string): Promise<void> {
-        const userAccessToken = await this._userAccessToken;
-
         console.log(`Banning ${usernameToBan} in channel #${channelUsername}`);
         const broadcasterId = await this.getUserIdForUsername(channelUsername);
         const userIdToBan = await this.getUserIdForUsername(usernameToBan);
@@ -1097,15 +1238,21 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
             }
         }
 
-        const response = await fetch(`https://api.twitch.tv/helix/moderation/bans?broadcaster_id=${broadcasterId}&moderator_id=${broadcasterId}`, { // TODO: sign in with the chatbot account for this
-            method: `POST`,
-            headers: {
-                Authorization: `Bearer ${userAccessToken.access_token}`,
+        const getHeaders = async () => {
+            const token = await this.getStoredUserTokenResponse();
+            return {
+                Authorization: `Bearer ${token?.access_token ?? ""}`, // TODO: sign in with the chatbot account for this
                 "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
                 "Content-Type": `application/json`,
-            },
+            }
+        }
+        const requestArgs: TwitchRequestArgs = {
+            method: `POST`,
+            url: `https://api.twitch.tv/helix/moderation/bans?broadcaster_id=${broadcasterId}&moderator_id=${broadcasterId}`,
+            getHeaders: getHeaders,
             body: JSON.stringify(body),
-        });
+        };
+        const response = await this.sendTwitchRequest(requestArgs);
 
         if (response.status !== 200) {
             const badResponseJson: any = await response.json();
@@ -1116,9 +1263,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         }
     }
 
-    public async timeout(channelUsername: string, usernameToTimeout: string, durationSeconds: number): Promise<void> {
-        const userAccessToken = await this._userAccessToken;
-
+    public async timeout(channelUsername: string, usernameToTimeout: string, durationSeconds?: number): Promise<void> {
         console.log(`Timing out ${usernameToTimeout} in channel ${channelUsername}`)
         const broadcasterId = await this.getUserIdForUsername(channelUsername);
         const userIdToBan = await this.getUserIdForUsername(usernameToTimeout);
@@ -1129,15 +1274,21 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
             }
         }
 
-        const response = await fetch(`https://api.twitch.tv/helix/moderation/bans?broadcaster_id=${broadcasterId}&moderator_id=${broadcasterId}`, { // TODO: sign in with the chatbot account for this
-            method: `POST`,
-            headers: {
-                Authorization: `Bearer ${userAccessToken.access_token}`,
+        const getHeaders = async () => {
+            const token = await this.getStoredUserTokenResponse();
+            return {
+                Authorization: `Bearer ${token?.access_token ?? ""}`, // TODO: sign in with the chatbot account for this
                 "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
                 "Content-Type": `application/json`,
-            },
+            }
+        }
+        const requestArgs: TwitchRequestArgs = {
+            method: `POST`,
+            url: `https://api.twitch.tv/helix/moderation/bans?broadcaster_id=${broadcasterId}&moderator_id=${broadcasterId}`,
+            getHeaders: getHeaders,
             body: JSON.stringify(body),
-        });
+        };
+        const response = await this.sendTwitchRequest(requestArgs);
         if (response.status !== 200) {
             const badResponseJson: any = await response.json();
             console.log(`Timeout request failed: ${response.status} ${response.statusText}`);
@@ -1148,14 +1299,20 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
     }
 
     public async getChannelPointRewards(): Promise<TwitchGetCustomChannelPointRewardInfo[]> {
-        const response = await fetch(`https://api.twitch.tv/helix/channel_points/custom_rewards?broadcaster_id=${await this.getTwitchBroadcasterId()}`, {
-            method: "GET",
-            headers: {
-                Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
+        const getHeaders = async () => {
+            const token = await this.getStoredUserTokenResponse();
+            return {
+                Authorization: `Bearer ${token?.access_token ?? ""}`,
                 "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
                 "Content-Type": `application/json`,
-            },
-        });
+            }
+        }
+        const requestArgs: TwitchRequestArgs = {
+            method: `GET`,
+            url: `https://api.twitch.tv/helix/channel_points/custom_rewards?broadcaster_id=${await this.getTwitchBroadcasterId()}`,
+            getHeaders: getHeaders,
+        };
+        const response = await this.sendTwitchRequest(requestArgs);
         if (response.status === 200) {
             const json: TwitchGetCustomChannelPointRewardResponse = await response.json();
             return json.data;
@@ -1165,15 +1322,21 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
     }
 
     public async createChannelPointReward(body: CreateCustomChannelPointRewardArgs): Promise<void> {
-        const response = await fetch(`https://api.twitch.tv/helix/channel_points/custom_rewards?broadcaster_id=${await this.getTwitchBroadcasterId()}`, {
-            method: "POST",
-            headers: {
-                Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
+        const getHeaders = async () => {
+            const token = await this.getStoredUserTokenResponse();
+            return {
+                Authorization: `Bearer ${token?.access_token ?? ""}`,
                 "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
                 "Content-Type": `application/json`,
-            },
+            }
+        }
+        const requestArgs: TwitchRequestArgs = {
+            method: `POST`,
+            url: `https://api.twitch.tv/helix/channel_points/custom_rewards?broadcaster_id=${await this.getTwitchBroadcasterId()}`,
+            getHeaders: getHeaders,
             body: JSON.stringify(body),
-        });
+        };
+        const response = await this.sendTwitchRequest(requestArgs);
         if (response.status === 200) {
             return;
         }
@@ -1185,15 +1348,21 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         const body = {
             status: fulfill ? "FULFILLED" : "CANCELED",
         };
-        const response = await fetch(`https://api.twitch.tv/helix/channel_points/custom_rewards/redemptions?broadcaster_id=${broadcaster_id}&reward_id=${reward_id}&id=${redemption_id}`, {
-            method: `PATCH`,
-            headers: {
-                Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
+        const getHeaders = async () => {
+            const token = await this.getStoredUserTokenResponse();
+            return {
+                Authorization: `Bearer ${token?.access_token ?? ""}`,
                 "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
                 "Content-Type": `application/json`,
-            },
+            }
+        }
+        const requestArgs: TwitchRequestArgs = {
+            method: `PATCH`,
+            url: `https://api.twitch.tv/helix/channel_points/custom_rewards/redemptions?broadcaster_id=${broadcaster_id}&reward_id=${reward_id}&id=${redemption_id}`,
+            getHeaders: getHeaders,
             body: JSON.stringify(body),
-        });
+        };
+        const response = await this.sendTwitchRequest(requestArgs);
         if (response.status === 200) {
             return;
             // const json: TwitchUpdateChannelPointRedemptionStatusResponse = await response.json();
@@ -1209,15 +1378,22 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         let cursor: string | undefined = undefined
         const pageSize = 100;
 
+        const getHeaders = async () => {
+            const token = await this.getStoredUserTokenResponse();
+            return {
+                Authorization: `Bearer ${token?.access_token ?? ""}`,
+                "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
+            }
+        }
+
         while (true) {
-            const response = await fetch(`https://api.twitch.tv/helix/moderation/banned?broadcaster_id=${broadcasterId}&first=${pageSize}${!!cursor ? `&after=${cursor}` : ``}`, {
+            const requestArgs: TwitchRequestArgs = {
                 method: `GET`,
-                headers: {
-                    Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
-                    "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
-                }
-            });
-    
+                url: `https://api.twitch.tv/helix/moderation/banned?broadcaster_id=${broadcasterId}&first=${pageSize}${!!cursor ? `&after=${cursor}` : ``}`,
+                getHeaders: getHeaders,
+            };
+            const response = await this.sendTwitchRequest(requestArgs);
+
             if (response.status !== 200) {
                 console.log(`Get Banned Users request failed: ${response.status} ${response.statusText}`);
                 console.log(await response.json());
@@ -1242,14 +1418,21 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         const followingUsers: TwitchFollowingUser[] = [];
         let cursor: string | undefined = undefined
 
+        const getHeaders = async () => {
+            const token = await this.getStoredUserTokenResponse();
+            return {
+                Authorization: `Bearer ${token?.access_token ?? ""}`,
+                "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
+            }
+        }
+
         while (true) {
-            const response = await fetch(`https://api.twitch.tv/helix/channels/followers?broadcaster_id=${broadcasterId}&first=${100}${!!cursor ? `&after=${cursor}` : ``}`, {
+            const requestArgs: TwitchRequestArgs = {
                 method: `GET`,
-                headers: {
-                    Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
-                    "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
-                }
-            });
+                url: `https://api.twitch.tv/helix/channels/followers?broadcaster_id=${broadcasterId}&first=${100}${!!cursor ? `&after=${cursor}` : ``}`,
+                getHeaders: getHeaders,
+            };
+            const response = await this.sendTwitchRequest(requestArgs);
     
             if (response.status !== 200) {
                 console.log(`Get Following Users request failed: ${response.status} ${response.statusText}`);
@@ -1382,15 +1565,21 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
 
     protected async updateChannelInfo(settings: TwitchUpdateChannelInformationRequestBody): Promise<void> {
         const broadcasterId = await this.getTwitchBroadcasterId();
-        const response = await fetch(`https://api.twitch.tv/helix/channels?broadcaster_id=${broadcasterId}`, {
-            method: `PATCH`,
-            headers: {
-                Authorization: `Bearer ${(await this._userAccessToken).access_token}`,
+        const getHeaders = async () => {
+            const token = await this.getStoredUserTokenResponse();
+            return {
+                Authorization: `Bearer ${token?.access_token ?? ""}`,
                 "Client-Id": `${this._config.connection.twitch.oauth.clientId}`,
                 "Content-Type": `application/json`,
-            },
+            }
+        }
+        const requestArgs: TwitchRequestArgs = {
+            method: `PATCH`,
+            url: `https://api.twitch.tv/helix/channels?broadcaster_id=${broadcasterId}`,
+            getHeaders: getHeaders,
             body: JSON.stringify(settings),
-        });
+        };
+        const response = await this.sendTwitchRequest(requestArgs);
 
         if (response.status !== 204) {
             const errMessage = `Update Channel Information request failed: ${response.status} ${response.statusText}`;
