@@ -1,7 +1,7 @@
 import { sheets_v4 } from "googleapis";
-import { ChannelPointRequests } from "../../ChannelPointRequests";
-import { Utils } from "../../Utils";
-import { basicDateFormat, basicEntryFormat, borderLeft, getBorderRowBelow } from "./GameRequestSpreadsheetStyle";
+import { ChannelPointRequests } from "../../../ChannelPointRequests";
+import { Utils } from "../../../Utils";
+import { basicDateFormat, basicEntryFormat, borderLeft, getBorderRowBelow } from "./GameRequestSpreadsheetStyleV1";
 import { SpreadsheetBase, SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getDatetimeFormulaForSpreadsheet, getEntryValue_Date, getEntryValue_Number, getEntryValue_String, headersToRowData, parseHeaderFooterRow } from "./SpreadsheetBase";
 
 export enum GameRequest_Spreadsheet_BlockOrder {
