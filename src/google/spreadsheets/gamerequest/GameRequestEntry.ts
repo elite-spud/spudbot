@@ -1,4 +1,5 @@
 import { ChannelPointRequests } from "../../../ChannelPointRequests";
+import { GameRequest_CompletedEntry, GameRequest_FundedEntry, GameRequest_InProgressEntry, GameRequest_UnfundedEntry } from "./legacy/GameRequestSpreadsheetV1";
 
 export enum GameRequestEntry_IterationPhase {
     Unfunded = 0,
@@ -274,5 +275,118 @@ export class GameRequestEntry {
             pointsRequiredToFundOverride: pointsRequiredToFundOverride,
         });
         this.iterations.push(iteration);
+    }
+
+    public fromV1Unfunded(entryV1: GameRequest_UnfundedEntry): GameRequestEntry {
+        const contributions = entryV1.contributions.map(n => {
+            const contribution: GameRequestContribution = {
+                name: n.name,
+                id: "", // TODO
+                points: n.points,
+                timestamp: entryV1.dateRequested,
+            };
+            return contribution;
+        });
+        const iteration = new GameRequestIteration({
+            dateRequested: entryV1.dateRequested,
+            requestorId: entryV1.originalRequestorId,
+            requestorName: entryV1.originalRequestorName,
+            estimatedGameLengthHours: entryV1.estimatedGameLengthHours,
+            contributions: contributions,
+            pointsRequiredToFundOverride: entryV1.pointsRequiredToFund,
+        });
+        
+        const entry = new GameRequestEntry({
+            gameName: entryV1.gameName,
+            iterations: [iteration],
+        });
+        return entry;
+    }
+
+    public fromV1Funded(entryV1: GameRequest_FundedEntry): GameRequestEntry {
+        const contributions = entryV1.contributions.map(n => {
+            const contribution: GameRequestContribution = {
+                name: n.name,
+                id: "", // TODO
+                points: n.points,
+                timestamp: entryV1.dateFunded,
+            };
+            return contribution;
+        });
+        const iteration = new GameRequestIteration({
+            dateRequested: entryV1.dateRequested,
+            requestorId: entryV1.originalRequestorId,
+            requestorName: entryV1.originalRequestorName,
+            estimatedGameLengthHours: entryV1.estimatedGameLengthHours,
+            contributions: contributions,
+            pointsRequiredToFundOverride: entryV1.pointsRequiredToFund,
+            dateFunded: entryV1.dateFunded,
+        });
+        
+        const entry = new GameRequestEntry({
+            gameName: entryV1.gameName,
+            iterations: [iteration],
+        });
+        return entry;
+    }
+
+    public fromV1Started(entryV1: GameRequest_InProgressEntry): GameRequestEntry {
+        const contributions = entryV1.contributions.map(n => {
+            const contribution: GameRequestContribution = {
+                name: n.name,
+                id: "", // TODO
+                points: n.points,
+                timestamp: entryV1.dateFunded,
+            };
+            return contribution;
+        });
+        const iteration = new GameRequestIteration({
+            dateRequested: entryV1.dateRequested,
+            requestorId: entryV1.originalRequestorId,
+            requestorName: entryV1.originalRequestorName,
+            estimatedGameLengthHours: entryV1.estimatedGameLengthHours,
+            contributions: contributions,
+            pointsRequiredToFundOverride: entryV1.pointsRequiredToFund,
+            dateFunded: entryV1.dateFunded,
+            dateSelected: entryV1.dateStarted,
+            dateStarted: entryV1.dateStarted,
+        });
+        
+        const entry = new GameRequestEntry({
+            gameName: entryV1.gameName,
+            iterations: [iteration],
+        });
+        return entry;
+    }
+
+    public fromV1Completed(entryV1: GameRequest_CompletedEntry): GameRequestEntry {
+        const contributions = entryV1.contributions.map(n => {
+            const contribution: GameRequestContribution = {
+                name: n.name,
+                id: "", // TODO
+                points: n.points,
+                timestamp: entryV1.dateFunded,
+            };
+            return contribution;
+        });
+        const iteration = new GameRequestIteration({
+            dateRequested: entryV1.dateRequested,
+            requestorId: entryV1.originalRequestorId,
+            requestorName: entryV1.originalRequestorName,
+            estimatedGameLengthHours: entryV1.estimatedGameLengthHours,
+            contributions: contributions,
+            pointsRequiredToFundOverride: entryV1.pointsRequiredToFund,
+            dateFunded: entryV1.dateFunded,
+            dateSelected: entryV1.dateStarted,
+            dateStarted: entryV1.dateStarted,
+            dateCompleted: entryV1.dateCompleted,
+            hoursPlayed: entryV1.hoursPlayed,
+        });
+        
+        const entry = new GameRequestEntry({
+            gameName: entryV1.gameName,
+            iterations: [iteration],
+        });
+        return entry;
     }
 }
