@@ -1,14 +1,18 @@
 import { sheets_v4 } from "googleapis";
-import { ChannelPointRequests } from "../../../ChannelPointRequests";
-import { Utils } from "../../../Utils";
+import { ChannelPointRequests } from "../../../../ChannelPointRequests";
+import { Utils } from "../../../../Utils";
 import { basicDateFormat, basicEntryFormat, borderLeft, getBorderRowBelow } from "./GameRequestSpreadsheetStyleV1";
-import { SpreadsheetBase, SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getDatetimeFormulaForSpreadsheet, getEntryValue_Date, getEntryValue_Number, getEntryValue_String, headersToRowData, parseHeaderFooterRow } from "./SpreadsheetBase";
+import { SpreadsheetBase, SpreadsheetRow, extractBlockArray, getDatetimeFormulaForSpreadsheet, getEntryValue_Date, getEntryValue_Number, getEntryValue_String, headersToRowData, parseHeaderFooterRow } from "../../SpreadsheetBase";
 
 export enum GameRequest_Spreadsheet_BlockOrder {
     Completed = 0,
     InProgress = 1,
     Funded = 2,
     Unfunded = 3,
+}
+
+export abstract class SpreadsheetBlock {
+    public abstract toRowData(): sheets_v4.Schema$RowData[];
 }
 
 export class GameRequest_Spreadsheet extends SpreadsheetBase {

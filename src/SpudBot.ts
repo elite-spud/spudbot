@@ -652,7 +652,7 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
             }
 
             if (tokens[1] === "help") {
-                const adminHelpMessage = `!gamerequest [add, fund, start, complete, refresh]`;
+                const adminHelpMessage = `!gamerequest [add, fund, start, complete, continue, refresh]`;
                 this.chat(messageDetail.respondTo, adminHelpMessage);
                 return;
             }
@@ -707,6 +707,19 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
                 const gameName = args[0].replaceAll("\"", "");
                 const hoursPlayed = Number.parseInt(args[1]);
                 await (await this._googleApi).handleGameRequestComplete(messageDetail.respondTo, gameName, new Date(), hoursPlayed);
+            } else if (tokens[1] === "continue") {
+                const args = tokens.slice(2);
+                if (args.length === 0) {
+                    this.chat(messageDetail.respondTo, `!gamerequest continue <gameName> <hoursToAdd>`);
+                    return;
+                }
+                if (args.length !== 2) {
+                    this.chat(messageDetail.respondTo, `!gameRequest continue command was malformed (expected 2 arguments, but found ${args.length})`);
+                    return;
+                }
+                const gameName = args[0].replaceAll("\"", "");
+                const hoursToAdd = Number.parseInt(args[1]);
+                // TODO await (await this._googleApi).handleGameRequestContinue(messageDetail.respondTo, gameName, new Date(), hoursToAdd);
             } else if (tokens[1] === "fund") {
                 const args = tokens.slice(2);
                 if (args.length === 0) {

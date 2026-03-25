@@ -1,8 +1,9 @@
 import { sheets_v4 } from "googleapis";
-import { borderLeft, headerFormatCenter } from "./GameRequestSpreadsheetStyle";
 import { Utils } from "../../Utils";
+import { borderLeft, headerFormatCenter } from "./SpreadsheetBaseStyle";
 
-export type SpreadsheetRow = (string | number | undefined)[];
+export type SpreadsheetValue = (string | number | undefined);
+export type SpreadsheetRow = SpreadsheetValue[];
 export function headersToRowData(rows: SpreadsheetRow[]): sheets_v4.Schema$RowData[] {
     const rowDataArray = rows.map(row => {
         const rowData: sheets_v4.Schema$RowData = {
@@ -58,10 +59,6 @@ async function updateSheet(sheetsApi: sheets_v4.Sheets, sheetId: string, subShee
 }
 
 export abstract class SpreadsheetBase {
-    public abstract toRowData(): sheets_v4.Schema$RowData[];
-}
-
-export abstract class SpreadsheetBlock {
     public abstract toRowData(): sheets_v4.Schema$RowData[];
 }
 

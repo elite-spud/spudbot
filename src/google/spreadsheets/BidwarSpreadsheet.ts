@@ -1,5 +1,5 @@
 import { sheets_v4 } from "googleapis";
-import { borderLeft, getBorderRowBelow, headerFormatCenter, basicEntryFormat } from "./GameRequestSpreadsheetStyle";
+import { borderLeft, getBorderRowBelow, headerFormatCenter, basicEntryFormat } from "./legacy/GameRequestSpreadsheetStyleV1";
 import { SpreadsheetBase, SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getEntryValue_String, getTimestampStringForSpreadsheet, headersToRowData, parseHeaderFooterRow } from "./SpreadsheetBase";
 import { Utils } from "../../Utils";
 
