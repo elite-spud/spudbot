@@ -1,6 +1,6 @@
 import { sheets_v4 } from "googleapis";
 import { Utils } from "../../Utils";
-import { borderLeft, headerFormatCenter } from "./SpreadsheetBaseStyle";
+import { basicEntryFormat, borderLeft, headerFormatCenter } from "./SpreadsheetBaseStyle";
 
 export type SpreadsheetValue = (string | number | undefined);
 export type SpreadsheetRow = SpreadsheetValue[];
@@ -20,9 +20,9 @@ export function headersToRowData(rows: SpreadsheetRow[]): sheets_v4.Schema$RowDa
     return rowDataArray;
 }
 
-export async function pushSpreadsheet(sheetsApi: sheets_v4.Sheets, sheetId: string, subSheetId: number, spreadsheet: SpreadsheetBase): Promise<void> {    
+export async function pushSpreadsheet(sheetsApi: sheets_v4.Sheets, sheetId: string, subSheetId: number, rowProvider: SheetsRowProvider): Promise<void> {    
     await clearSheet(sheetsApi, sheetId, subSheetId);
-    await updateSheet(sheetsApi, sheetId, subSheetId, spreadsheet.toRowData());
+    await updateSheet(sheetsApi, sheetId, subSheetId, rowProvider.toRowData());
 }
 
 async function clearSheet(sheetsApi: sheets_v4.Sheets, sheetId: string, subSheetId: number): Promise<void> {
@@ -58,8 +58,8 @@ async function updateSheet(sheetsApi: sheets_v4.Sheets, sheetId: string, subShee
     });
 }
 
-export abstract class SpreadsheetBase {
-    public abstract toRowData(): sheets_v4.Schema$RowData[];
+export interface SheetsRowProvider {
+    toRowData(): sheets_v4.Schema$RowData[];
 }
 
 export function getEntryValue_String(cell: sheets_v4.Schema$CellData): string | undefined {
@@ -179,4 +179,11 @@ export function getTimestampStringForSpreadsheet(date: Date, includeTime: boolea
         .replace(/T/, " ") // delete the T
         .substring(0, includeTime ? 16 : 10);
     return timeStr;
+}
+
+export function getCell_Empty(): sheets_v4.Schema$CellData {
+    return {
+        userEnteredValue: undefined,
+        userEnteredFormat: basicEntryFormat,
+    };
 }

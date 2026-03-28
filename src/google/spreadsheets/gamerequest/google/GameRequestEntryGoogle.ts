@@ -1,8 +1,8 @@
 import { sheets_v4 } from "googleapis";
 import { Utils } from "../../../../Utils";
-import { getDatetimeFormulaForSpreadsheet, SpreadsheetRow } from "../../SpreadsheetBase";
+import { getDatetimeFormulaForSpreadsheet, SpreadsheetRow, getCell_Empty } from "../../SpreadsheetBase";
 import { GameRequestEntry } from "../GameRequestEntry";
-import { basicDateFormat, basicEntryFormat, borderLeft, getBorderRowBelow } from "../../SpreadsheetBaseStyle";
+import { basicDateFormat, basicEntryFormat, borderLeft, decimalNumberFormat, getBorderRowBelow } from "../../SpreadsheetBaseStyle";
 import { getWaitTimeMultiplierFormulaForSpreadsheet } from "../GameRequestUtils";
 
 export abstract class GameRequestEntryGoogle {
@@ -99,7 +99,7 @@ export abstract class GameRequestEntryGoogle {
             : 1;
         return {
             userEnteredValue: { formulaValue: `=${waitTimeMultiplierFormula}` },
-            userEnteredFormat: basicEntryFormat,
+            userEnteredFormat: decimalNumberFormat,
         };
     }
 
@@ -148,7 +148,7 @@ export abstract class GameRequestEntryGoogle {
     protected getContributionsString(): string {
         return this._entry.iterations.map(i =>
             i.contributions.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()).map(c =>
-                `${c.timestamp} • ${c.points} • ${c.name} • ${c.id}`).join("\n")).join("\n\n");
+                `${c.timestamp.toISOString()} • ${c.points} • ${c.name} • ${c.id}`).join("\n")).join("\n\n");
     }
 
     protected parseUtcDates(datesString: string): Date[] {
@@ -172,11 +172,11 @@ export class GameRequestEntryGoogleUnfunded extends GameRequestEntryGoogle {
                 this.getCell_HoursPlayed(),
                 this.getCell_PointsContributedOverall(),
                 this.getCell_PercentageFundedOverall(),
-                this.getCell_DateFunded(),
-                this.getCell_DateSelected(),
+                getCell_Empty(),
+                getCell_Empty(),
                 this.getCell_WaitTimeMultiplier(-2, -1),
-                this.getCell_DateStarted(),
-                this.getCell_DateCompleted(),
+                getCell_Empty(),
+                getCell_Empty(),
                 this.getCell_DateRequested(),
                 this.getCell_RequestorName(),
                 this.getCell_BorderRight(),
@@ -202,10 +202,10 @@ export class GameRequestEntryGoogleFunded extends GameRequestEntryGoogle {
                 this.getCell_PointsContributedOverall(),
                 this.getCell_PercentageFundedOverall(),
                 this.getCell_DateFunded(),
-                this.getCell_DateSelected(),
+                getCell_Empty(),
                 this.getCell_WaitTimeMultiplier(-2, -1),
-                this.getCell_DateStarted(),
-                this.getCell_DateCompleted(),
+                getCell_Empty(),
+                getCell_Empty(),
                 this.getCell_DateRequested(),
                 this.getCell_RequestorName(),
                 this.getCell_BorderRight(),
@@ -233,8 +233,8 @@ export class GameRequestEntryGoogleSelected extends GameRequestEntryGoogle {
                 this.getCell_DateFunded(),
                 this.getCell_DateSelected(),
                 this.getCell_WaitTimeMultiplier(-2, -1),
-                this.getCell_DateStarted(),
-                this.getCell_DateCompleted(),
+                getCell_Empty(),
+                getCell_Empty(),
                 this.getCell_DateRequested(),
                 this.getCell_RequestorName(),
                 this.getCell_BorderRight(),
@@ -263,7 +263,7 @@ export class GameRequestEntryGoogleInProgress extends GameRequestEntryGoogle {
                 this.getCell_DateSelected(),
                 this.getCell_WaitTimeMultiplier(-2, -1),
                 this.getCell_DateStarted(),
-                this.getCell_DateCompleted(),
+                getCell_Empty(),
                 this.getCell_DateRequested(),
                 this.getCell_RequestorName(),
                 this.getCell_BorderRight(),

@@ -277,7 +277,7 @@ export class GameRequestEntry {
         this.iterations.push(iteration);
     }
 
-    public fromV1Unfunded(entryV1: GameRequest_UnfundedEntry): GameRequestEntry {
+    public static fromV1Unfunded(entryV1: GameRequest_UnfundedEntry): GameRequestEntry {
         const contributions = entryV1.contributions.map(n => {
             const contribution: GameRequestContribution = {
                 name: n.name,
@@ -303,7 +303,7 @@ export class GameRequestEntry {
         return entry;
     }
 
-    public fromV1Funded(entryV1: GameRequest_FundedEntry): GameRequestEntry {
+    public static fromV1Funded(entryV1: GameRequest_FundedEntry): GameRequestEntry {
         const contributions = entryV1.contributions.map(n => {
             const contribution: GameRequestContribution = {
                 name: n.name,
@@ -330,7 +330,7 @@ export class GameRequestEntry {
         return entry;
     }
 
-    public fromV1Started(entryV1: GameRequest_InProgressEntry): GameRequestEntry {
+    public static fromV1Started(entryV1: GameRequest_InProgressEntry): GameRequestEntry {
         const contributions = entryV1.contributions.map(n => {
             const contribution: GameRequestContribution = {
                 name: n.name,
@@ -359,7 +359,7 @@ export class GameRequestEntry {
         return entry;
     }
 
-    public fromV1Completed(entryV1: GameRequest_CompletedEntry): GameRequestEntry {
+    public static fromV1Completed(entryV1: GameRequest_CompletedEntry): GameRequestEntry {
         const contributions = entryV1.contributions.map(n => {
             const contribution: GameRequestContribution = {
                 name: n.name,

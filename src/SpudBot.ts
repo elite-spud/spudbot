@@ -717,8 +717,8 @@ export class SpudBotTwitch extends TwitchBotBase<ChatWarriorUserDetail> {
                     this.chat(messageDetail.respondTo, `!gameRequest continue command was malformed (expected 2 arguments, but found ${args.length})`);
                     return;
                 }
-                const gameName = args[0].replaceAll("\"", "");
-                const hoursToAdd = Number.parseInt(args[1]);
+                //const gameName = args[0].replaceAll("\"", "");
+                //const hoursToAdd = Number.parseInt(args[1]);
                 // TODO await (await this._googleApi).handleGameRequestContinue(messageDetail.respondTo, gameName, new Date(), hoursToAdd);
             } else if (tokens[1] === "fund") {
                 const args = tokens.slice(2);

@@ -2,7 +2,7 @@ import { sheets_v4 } from "googleapis";
 import { ChannelPointRequests } from "../../../../ChannelPointRequests";
 import { Utils } from "../../../../Utils";
 import { basicDateFormat, basicEntryFormat, borderLeft, getBorderRowBelow } from "./GameRequestSpreadsheetStyleV1";
-import { SpreadsheetBase, SpreadsheetRow, extractBlockArray, getDatetimeFormulaForSpreadsheet, getEntryValue_Date, getEntryValue_Number, getEntryValue_String, headersToRowData, parseHeaderFooterRow } from "../../SpreadsheetBase";
+import { SheetsRowProvider, SpreadsheetRow, extractBlockArray, getDatetimeFormulaForSpreadsheet, getEntryValue_Date, getEntryValue_Number, getEntryValue_String, headersToRowData, parseHeaderFooterRow } from "../../SpreadsheetBase";
 
 export enum GameRequest_Spreadsheet_BlockOrder {
     Completed = 0,
@@ -11,18 +11,13 @@ export enum GameRequest_Spreadsheet_BlockOrder {
     Unfunded = 3,
 }
 
-export abstract class SpreadsheetBlock {
-    public abstract toRowData(): sheets_v4.Schema$RowData[];
-}
-
-export class GameRequest_Spreadsheet extends SpreadsheetBase {
+export class GameRequest_Spreadsheet implements SheetsRowProvider {
     public readonly unfundedBlock: GameRequest_UnfundedBlock;
     public readonly fundedBlock: GameRequest_FundedBlock;
     public readonly inProgressBlock: GameRequest_InProgressBlock;
     public readonly completedBlock: GameRequest_CompletedBlock;
 
     public constructor(unfundedBlock: GameRequest_UnfundedBlock, fundedBlock: GameRequest_FundedBlock, inProgressBlock: GameRequest_InProgressBlock, completedBlock: GameRequest_CompletedBlock) {
-        super();
         this.unfundedBlock = unfundedBlock;
         this.fundedBlock = fundedBlock;
         this.inProgressBlock = inProgressBlock;
@@ -308,7 +303,7 @@ export class GameRequest_CompletedEntry extends GameRequest_InProgressEntry {
     public override get isCompleted(): boolean { return true; }
 }
 
-export class GameRequest_UnfundedBlock extends SpreadsheetBlock {
+export class GameRequest_UnfundedBlock implements SheetsRowProvider {
     public headers: SpreadsheetRow[];
     public entries: GameRequest_UnfundedEntry[];
 
@@ -316,7 +311,6 @@ export class GameRequest_UnfundedBlock extends SpreadsheetBlock {
         headers: SpreadsheetRow[],
         entries: GameRequest_UnfundedEntry[],
     }) {
-        super();
         this.headers = args.headers;
         this.entries = args.entries;
     }
@@ -375,7 +369,7 @@ export class GameRequest_UnfundedBlock extends SpreadsheetBlock {
     }
 }
 
-export class GameRequest_FundedBlock extends SpreadsheetBlock {
+export class GameRequest_FundedBlock implements SheetsRowProvider {
     public headers: SpreadsheetRow[];
     public entries: GameRequest_FundedEntry[];
 
@@ -383,7 +377,6 @@ export class GameRequest_FundedBlock extends SpreadsheetBlock {
             headers: SpreadsheetRow[],
             entries: GameRequest_FundedEntry[],
         }) {
-        super();
         this.headers = args.headers;
         this.entries = args.entries;
     }
@@ -458,7 +451,7 @@ export class GameRequest_FundedBlock extends SpreadsheetBlock {
     }
 }
 
-export class GameRequest_InProgressBlock extends SpreadsheetBlock {
+export class GameRequest_InProgressBlock implements SheetsRowProvider {
     public headers: SpreadsheetRow[];
     public entries: GameRequest_InProgressEntry[];
 
@@ -466,7 +459,6 @@ export class GameRequest_InProgressBlock extends SpreadsheetBlock {
         headers: SpreadsheetRow[],
         entries: GameRequest_InProgressEntry[],
     }) {
-        super();
         this.headers = args.headers;
         this.entries = args.entries;
     }
@@ -532,7 +524,7 @@ export class GameRequest_InProgressBlock extends SpreadsheetBlock {
     }
 }
 
-export class GameRequest_CompletedBlock extends SpreadsheetBlock {
+export class GameRequest_CompletedBlock implements SheetsRowProvider {
     public headers: SpreadsheetRow[];
     public entries: GameRequest_CompletedEntry[];
 
@@ -540,7 +532,6 @@ export class GameRequest_CompletedBlock extends SpreadsheetBlock {
         headers: SpreadsheetRow[],
         entries: GameRequest_CompletedEntry[],
     }) {
-        super();
         this.headers = args.headers;
         this.entries = args.entries;
     }

@@ -1,8 +1,9 @@
 import { sheets_v4 } from "googleapis";
-import { SpreadsheetBase, headersToRowData } from "../../SpreadsheetBase";
+import { headersToRowData, SheetsRowProvider } from "../../SpreadsheetBase";
 import { GameRequestController } from "../GameRequestController";
-import { GameRequestEntry_IterationPhase } from "../GameRequestEntry";
+import { GameRequestEntry, GameRequestEntry_IterationPhase } from "../GameRequestEntry";
 import { GameRequestEntryGoogleCompleted, GameRequestEntryGoogleFunded, GameRequestEntryGoogleInProgress, GameRequestEntryGoogleSelected, GameRequestEntryGoogleUnfunded } from "./GameRequestEntryGoogle";
+import { GameRequest_Spreadsheet as GameRequest_SpreadsheetV1 } from "../legacy/GameRequestSpreadsheetV1";
 
 export enum GameRequest_Spreadsheet_BlockOrder {
     Completed = 0,
@@ -11,12 +12,28 @@ export enum GameRequest_Spreadsheet_BlockOrder {
     Unfunded = 3,
 }
 
-export class GameRequest_Spreadsheet extends SpreadsheetBase {
+export class GameRequest_Spreadsheet implements SheetsRowProvider {
     protected readonly _controller: GameRequestController;
 
     public constructor(controller: GameRequestController) {
-        super();
         this._controller = controller;
+    }
+
+    public static fromV1Spreadsheet(sheet: GameRequest_SpreadsheetV1): GameRequest_Spreadsheet {
+        const completedEntries = sheet.completedBlock.entries.map(n => GameRequestEntry.fromV1Completed(n));
+        const startedEntries = sheet.inProgressBlock.entries.map(n => GameRequestEntry.fromV1Started(n));
+        const fundedEntries = sheet.fundedBlock.entries.map(n => GameRequestEntry.fromV1Funded(n));
+        const unfundedEntries = sheet.unfundedBlock.entries.map(n => GameRequestEntry.fromV1Unfunded(n));
+        const entries = [
+            ...completedEntries,
+            ...startedEntries,
+            ...fundedEntries,
+            ...unfundedEntries,
+        ];
+
+        const controller = new GameRequestController(entries, true);
+        const spreadsheet = new GameRequest_Spreadsheet(controller);
+        return spreadsheet;
     }
 
     public toRowData(): sheets_v4.Schema$RowData[] {
@@ -47,21 +64,21 @@ export class GameRequest_Spreadsheet extends SpreadsheetBase {
         const completedFooterRows = GameRequestEntryGoogleCompleted.footers;
 
         return [
-            ...unfundedHeaderRows,
-            ...unfundedEntryRows,
-            ...unfundedFooterRows,
-            ...fundedHeaderRows,
-            ...fundedEntryRows,
-            ...fundedFooterRows,
-            ...selectedHeaderRows,
-            ...selectedEntryRows,
-            ...selectedFooterRows,
-            ...inProgressHeaderRows,
-            ...inProgressEntryRows,
-            ...inProgressFooterRows,
             ...completedHeaderRows,
             ...completedEntryRows,
             ...completedFooterRows,
+            ...inProgressHeaderRows,
+            ...inProgressEntryRows,
+            ...inProgressFooterRows,
+            ...selectedHeaderRows,
+            ...selectedEntryRows,
+            ...selectedFooterRows,
+            ...fundedHeaderRows,
+            ...fundedEntryRows,
+            ...fundedFooterRows,
+            ...unfundedHeaderRows,
+            ...unfundedEntryRows,
+            ...unfundedFooterRows,
         ];
     }
 }

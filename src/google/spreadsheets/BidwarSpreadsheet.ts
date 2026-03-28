@@ -1,6 +1,6 @@
 import { sheets_v4 } from "googleapis";
-import { borderLeft, getBorderRowBelow, headerFormatCenter, basicEntryFormat } from "./legacy/GameRequestSpreadsheetStyleV1";
-import { SpreadsheetBase, SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getEntryValue_String, getTimestampStringForSpreadsheet, headersToRowData, parseHeaderFooterRow } from "./SpreadsheetBase";
+import { borderLeft, getBorderRowBelow, headerFormatCenter, basicEntryFormat } from "./gamerequest/legacy/GameRequestSpreadsheetStyleV1";
+import { SheetsRowProvider, SpreadsheetRow, extractBlockArray, getEntryValue_String, getTimestampStringForSpreadsheet, headersToRowData, parseHeaderFooterRow } from "./SpreadsheetBase";
 import { Utils } from "../../Utils";
 
 export enum Bidwar_Spreadsheet_BlockOrder {
@@ -14,13 +14,12 @@ export interface BidwarOperationStatus {
     message?: string;
 }
 
-export class Bidwar_Spreadsheet extends SpreadsheetBase {
+export class Bidwar_Spreadsheet implements SheetsRowProvider {
     public readonly awaitingBlock: Bidwar_AwaitingBlock;
     public readonly activeBlock: Bidwar_ActiveBlock;
     public readonly bankBlock: Bidwar_BankBlock;
 
     public constructor(pendingBlock: Bidwar_AwaitingBlock, activeBlock: Bidwar_ActiveBlock, bankBlock: Bidwar_BankBlock) {
-        super();
         this.activeBlock = activeBlock;
         this.awaitingBlock = pendingBlock;
         this.bankBlock = bankBlock;
@@ -131,7 +130,7 @@ export class Bidwar_Spreadsheet extends SpreadsheetBase {
     }
 }
 
-export class Bidwar_AwaitingBlock extends SpreadsheetBlock {
+export class Bidwar_AwaitingBlock implements SheetsRowProvider {
     public headers: SpreadsheetRow[];
     public entries: Bidwar_Entry[];
 
@@ -139,7 +138,6 @@ export class Bidwar_AwaitingBlock extends SpreadsheetBlock {
             headers: SpreadsheetRow[],
             entries: Bidwar_Entry[],
         }) {
-        super();
         this.headers = args.headers;
         this.entries = args.entries;
     }
@@ -174,7 +172,7 @@ export class Bidwar_AwaitingBlock extends SpreadsheetBlock {
     }
 }
 
-export class Bidwar_ActiveBlock extends SpreadsheetBlock {
+export class Bidwar_ActiveBlock implements SheetsRowProvider {
     public headers: SpreadsheetRow[];
     public entries: Bidwar_Entry[];
     public footer: SpreadsheetRow;
@@ -184,7 +182,6 @@ export class Bidwar_ActiveBlock extends SpreadsheetBlock {
             entries: Bidwar_Entry[],
             footer: SpreadsheetRow,
         }) {
-        super();
         this.headers = args.headers;
         this.entries = args.entries;
     }
@@ -284,7 +281,7 @@ export class Bidwar_Entry {
     }
 }
 
-export class Bidwar_BankBlock extends SpreadsheetBlock {
+export class Bidwar_BankBlock implements SheetsRowProvider {
     public headers: SpreadsheetRow[];
     public entries: Bidwar_BankEntry[];
 
@@ -292,7 +289,6 @@ export class Bidwar_BankBlock extends SpreadsheetBlock {
             headers: SpreadsheetRow[],
             entries: Bidwar_BankEntry[],
         }) {
-        super();
         this.headers = args.headers;
         this.entries = args.entries;
     }

@@ -8,6 +8,7 @@ import { TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEvent
 import { Bidwar_Spreadsheet } from "./spreadsheets/BidwarSpreadsheet";
 import { GameRequest_Spreadsheet as GameRequest_SpreadsheetV1 } from "./spreadsheets/gamerequest/legacy/GameRequestSpreadsheetV1";
 import { pushSpreadsheet } from "./spreadsheets/SpreadsheetBase";
+import { GameRequest_Spreadsheet } from "./spreadsheets/gamerequest/google/GameRequestSpreadsheet";
 
 export interface GoogleAPIConfig {
     oauth: {
@@ -46,7 +47,7 @@ export class GoogleAPI {
     public static readonly incentiveSheetId = "1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY";
     public static readonly gameRequestSubSheet = 384782784;
     public static readonly bidwarSubSheet = 877321766;
-    public static readonly testSubSheet = 877321766;
+    public static readonly testSubSheet = 687898556;
     public static readonly gameRequestInputSubSheet = this.gameRequestSubSheet;
     public static readonly gameRequestOutputSubSheet = this.testSubSheet;
 
@@ -89,14 +90,17 @@ export class GoogleAPI {
         const task = async (): Promise<void> => {
             try {
                 const gameRequestSpreadsheet = await GameRequest_SpreadsheetV1.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestInputSubSheet);
-                await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestOutputSubSheet, gameRequestSpreadsheet);
-                this._twitchBot.chat(respondTo, `Game request successfully completed.`);
-                future.resolve();
+                const v2sheet = GameRequest_Spreadsheet.fromV1Spreadsheet(gameRequestSpreadsheet);
+                await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestOutputSubSheet, v2sheet);
+                //await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestOutputSubSheet, gameRequestSpreadsheet);
+                this._twitchBot.chat(respondTo, `Game request spreadsheet successfully refreshed.`);
                 return;
             } catch (err) {
-                const errorMessage = `Error handling game request refresh: ${err.message}`;
+                // TODO: log this
+                // const errorMessage = `Error handling game request refresh: ${err.message}`;
+                throw err;
+            } finally {
                 future.resolve();
-                throw new Error(errorMessage);
             }
         }
         this._taskQueue.addTask(task);
