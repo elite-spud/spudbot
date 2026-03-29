@@ -137,7 +137,8 @@ export interface NewCommandArgs {
      */
     commandId: string,
     globalTimeoutSeconds: number,
-    userTimeoutSeconds: number
+    userTimeoutSeconds: number,
+    expirationDate?: Date,
 }
 
 export enum UserChatStatus {
@@ -392,10 +393,7 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
                 if (!command.name) {
                     continue;
                 }
-                const commandNames = Array.isArray(command.aliases)
-                    ? [command.name].concat(command.aliases)
-                    : [command.name];
-                const func = this.getSimpleCommandFunc(commandNames, command.responses, command.strict ?? false, command.name, command.globalTimeoutSeconds ?? 0, command.userTimeoutSeconds ?? 30);
+                const func = this.getSimpleCommandFunc(command);
                 chatResponses.push(func);
             }
 
@@ -410,26 +408,26 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
 
     /**
      * Creates a basic response function that responds to a matching message with only simple text strings
-     * @param triggerPhrases 
-     * @param responses 
-     * @param strictMatch 
-     * @param commandKey 
-     * @param globalTimeoutSeconds 
-     * @param userTimeoutSeconds 
-     * @returns 
      */
-    public getSimpleCommandFunc(triggerPhrases: string[], responses: string[], strictMatch: boolean, commandId: string, globalTimeoutSeconds: number, userTimeoutSeconds: number): (message: IPrivMessageDetail) => Promise<void> {
+    public getSimpleCommandFunc(command: IIrcBotAuxCommandConfig): (message: IPrivMessageDetail) => Promise<void> {
         const subFunc = async (messageDetail: IPrivMessageDetail): Promise<void> => {
-            const response = responses[randomInt(responses.length)];
+            const response = command.responses[randomInt(command.responses.length)];
             this.chat(messageDetail.respondTo, response, true);
         }
+        const commandNames = Array.isArray(command.aliases)
+            ? [command.name].concat(command.aliases)
+            : [command.name];
+        const expirationDate = command.expiresAt === undefined
+            ? undefined
+            : new Date(command.expiresAt);
         return this.getCommandFunc({
             messageHandler: subFunc,
-            triggerPhrases,
-            strictMatch,
-            commandId,
-            globalTimeoutSeconds,
-            userTimeoutSeconds,
+            triggerPhrases: commandNames,
+            strictMatch: command.strict ?? false,
+            commandId: command.name,
+            globalTimeoutSeconds: command.globalTimeoutSeconds ?? 0,
+            userTimeoutSeconds: command.userTimeoutSeconds ?? 0,
+            expirationDate: expirationDate,
         });
     }
 
@@ -452,6 +450,8 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
                     return;
                 }
             }
+
+            
 
             await args.messageHandler(messageDetail);
 

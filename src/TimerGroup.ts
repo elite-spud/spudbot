@@ -5,7 +5,7 @@ export class TimerGroup {
     protected _intervalId?: NodeJS.Timeout;
 
     public constructor(
-        protected _commands: (() => Promise<boolean>)[],
+        protected _commands: (() => Promise<void>)[],
         protected readonly _intervalMinutes: number,
         protected readonly _offsetMinutes: number = 0,
         protected readonly _randomizeCommands: boolean = false) {
@@ -33,17 +33,14 @@ export class TimerGroup {
         setTimeout(() => {
             const intervalMillis = this._intervalMinutes * 60 * 1000;
 
-            const startIndex = currentIndex;
             const callNextCommand = () => {
-                const commandWasSuccessfulPromise = intervalCommands[currentIndex](); // Don't send timer messages if stream isn't live / better yet, don't start the timers *until* the stream is live
                 currentIndex = currentIndex === intervalCommands.length - 1
                     ? 0
                     : currentIndex + 1;
+                const commandPromise = intervalCommands[currentIndex](); // Don't send timer messages if stream isn't live / better yet, don't start the timers *until* the stream is live
 
-                commandWasSuccessfulPromise.then((result) => {
-                    if (!result && currentIndex !== startIndex) {
-                        callNextCommand();
-                    }
+                commandPromise.catch((_err) => {
+                    callNextCommand();
                 });
             };
 
