@@ -75,10 +75,10 @@ export abstract class MessageHandler {
 
         const expirationTime = this.expirationDate.getTime();
         if (expirationTime < Date.now()) {
-            return false;
+            return true;
         }
 
-        return true;
+        return false;
     }
 
     protected isTimedOutGlobal(timestamp: Date): boolean {
