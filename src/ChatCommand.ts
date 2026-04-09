@@ -1,53 +1,66 @@
 import { randomInt } from "crypto";
-import { IPrivMessageDetail } from "./IrcBot";
 
 export enum HandleMessageResult {
-    HandledSuccessfully,
-    DidNotMatchTrigger,
-    UserTimeoutEncountered,
-    GlobalTimeoutEncountered,
-    CommandExpired,
+    HandledSuccessfully = 0,
+    DidNotMatchTrigger = 1,
+    UserTimeoutEncountered = 2,
+    GlobalTimeoutEncountered = 3,
+    Expired = 4,
+    MiscNotHandled = 5,
 }
 
-export interface INoInputChatCommand {
-    handleMessageWithoutInput(userId: string | undefined, timestamp: Date): Promise<HandleMessageResult>;
+export interface IMessageHandlerInput {
+    userId: string;
+    username: string;
+    message: string;
+    chat(message: string, replyToTriggeringMessage?: boolean): Promise<void>;
 }
 
-export interface IRequiredInputChatCommand {
-    handleMessageWithInput(detail: IPrivMessageDetail, timestamp: Date): Promise<HandleMessageResult>;
+export interface IMessageHandler_AcceptsNoInput {
+    handleMessageWithoutInput(userId: string | undefined, timestamp: Date, ignoreTimeout: boolean): Promise<HandleMessageResult>;
+}
+
+export interface IMessageHandler_AcceptsInput<TInput extends IMessageHandlerInput = IMessageHandlerInput> {
+    handleMessageWithInput(input: TInput, timestamp: Date, ignoreTimeout: boolean): Promise<HandleMessageResult>;
+}
+
+export interface IMessageHandler_InputOptional<TInput extends IMessageHandlerInput = IMessageHandlerInput> extends IMessageHandler_AcceptsNoInput, IMessageHandler_AcceptsInput<TInput> {
 }
 
 /**
  * Represents a generic message handler that triggers from a set of specific command phrases at the start of a message
  */
-export interface CommandArgs<TMessageHandler> {
-    messageHandler: TMessageHandler;
+export interface MessageHandler_Config {
     /**
-     * Globally unique identifier for this command
+     * Globally unique identifier for this handler
      */
-    commandId: string;
-    triggerPhrases: string[];
+    handlerId: string;
+    /** undefined triggers on every message, empty array never triggers */
+    triggerPhrases: string[] | undefined;
     strictMatch: boolean;
-    globalTimeoutSeconds: number | undefined;
-    userTimeoutSeconds: number | undefined;
-    expirationDate: Date | undefined;
+    globalTimeoutSeconds?: number;
+    userTimeoutSeconds?: number;
+    expirationDate?: Date;
 }
 
-export abstract class ChatCommand<TMessageHandler> {
-    protected readonly _messageHandler: TMessageHandler;
-    public readonly commandId: string;
-    protected readonly _triggerPhrases: string[];
-    public get triggerPhrases(): string[] { return Array.from(this._triggerPhrases); }
+export abstract class MessageHandler {
+    public readonly handlerId: string;
+    protected readonly _triggerPhrases: string[] | undefined;
+    public get triggerPhrases(): string[] | undefined {
+        return this._triggerPhrases === undefined
+            ? undefined
+            : Array.from(this._triggerPhrases);
+    }
     public readonly strictMatch: boolean;
     public readonly globalTimeoutSeconds: number | undefined;
     public readonly userTimeoutSeconds: number | undefined;
-    public readonly expirationDate: Date | undefined;
-    protected readonly _timeoutEndByUser: { [key: string]: number } = {};
-    protected readonly _timeoutEndGlobal: number | undefined = undefined;
+
+    public expirationDate: Date | undefined;
+    protected _timeoutEndByUser: { [key: string]: Date } = {};
+    protected _timeoutEndGlobal: Date | undefined = undefined;
     
-    public constructor(args: CommandArgs<TMessageHandler>) {
-        this._messageHandler = args.messageHandler;
-        this.commandId = args.commandId;
+    public constructor(args: MessageHandler_Config) {
+        this.handlerId = args.handlerId;
         this._triggerPhrases = args.triggerPhrases;
         this.strictMatch = args.strictMatch;
         this.globalTimeoutSeconds = args.globalTimeoutSeconds;
@@ -69,7 +82,7 @@ export abstract class ChatCommand<TMessageHandler> {
     }
 
     protected isTimedOutGlobal(timestamp: Date): boolean {
-        if (this._timeoutEndGlobal !== undefined && this._timeoutEndGlobal > timestamp.getTime()) {
+        if (this._timeoutEndGlobal !== undefined && this._timeoutEndGlobal.getTime() > timestamp.getTime()) {
             return true;
         }
 
@@ -80,7 +93,7 @@ export abstract class ChatCommand<TMessageHandler> {
         if (userId !== undefined) {
             const timeout = this._timeoutEndByUser[userId];
             if (timeout !== undefined) {
-                if (timeout > timestamp.getTime()) {
+                if (timeout.getTime() > timestamp.getTime()) {
                     return true;
                 }
             }
@@ -89,7 +102,11 @@ export abstract class ChatCommand<TMessageHandler> {
         return false;
     }
 
-    protected doesTrigger(message: string): boolean {
+    protected aliasMatched(message: string): boolean {
+        if (this.triggerPhrases === undefined) {
+            return true;
+        }
+
         const messageTrim = message.trim();
         for (const trigger of this.triggerPhrases) {
             const triggerTrim = trigger.trim();
@@ -118,66 +135,133 @@ export abstract class ChatCommand<TMessageHandler> {
     }
 }
 
-export type MessageHandler_InputRequired = (detail: IPrivMessageDetail) => Promise<void>;
-export type MessageHandler_InputOptional = (detail?: IPrivMessageDetail) => Promise<void>;
+export interface MessageHandler_InputRequired_Config<TInput extends IMessageHandlerInput> extends MessageHandler_Config {
+    handleMessage: (input: TInput) => Promise<void>;
+}
 
-export class ChatCommand_InputRequired extends ChatCommand<MessageHandler_InputRequired> implements IRequiredInputChatCommand {    
-    public async handleMessageWithInput(detail: IPrivMessageDetail, timestamp: Date): Promise<HandleMessageResult> {
+export class MessageHandler_InputRequired<TInput extends IMessageHandlerInput = IMessageHandlerInput> extends MessageHandler implements IMessageHandler_AcceptsInput<TInput> {    
+    protected readonly _messageHandler: (input: TInput) => Promise<void>;
+
+    public constructor(config: MessageHandler_InputRequired_Config<TInput>) {
+        super(config);
+        this._messageHandler = config.handleMessage;
+    }
+    
+    public checkTriggers(input: TInput, timestamp: Date, ignoreTimeout: boolean): HandleMessageResult | undefined {
         if (this.isExpired) {
-            return HandleMessageResult.CommandExpired;
+            return HandleMessageResult.Expired;
         }
-        if (this.isTimedOutUser(timestamp, detail.username)) {
+        if (!ignoreTimeout && this.isTimedOutUser(timestamp, input.userId)) {
             return HandleMessageResult.UserTimeoutEncountered;
         }
-        if (this.isTimedOutGlobal(timestamp)) {
+        if (!ignoreTimeout && this.isTimedOutGlobal(timestamp)) {
             return HandleMessageResult.GlobalTimeoutEncountered;
         }
-        if (!this.doesTrigger(detail.message)) {
+        if (!this.aliasMatched(input.message)) {
             return HandleMessageResult.DidNotMatchTrigger;
         }
 
-        await this._messageHandler(detail);
+        return undefined;
+    }
+    
+    public async handleMessageWithInput(input: TInput, timestamp: Date, ignoreTimeout: boolean): Promise<HandleMessageResult> {
+        const triggerResult = this.checkTriggers(input, timestamp, ignoreTimeout);
+        if (triggerResult !== undefined) {
+            return triggerResult;
+        }
+
+        await this._messageHandler(input);
+        this._timeoutEndGlobal = timestamp;
+        this._timeoutEndByUser[input.userId] = timestamp;
         return HandleMessageResult.HandledSuccessfully;
     }
 }
 
-export class ChatCommand_InputOptional extends ChatCommand<MessageHandler_InputOptional> implements INoInputChatCommand, IRequiredInputChatCommand {
-    public async handleMessageWithoutInput(userId: string | undefined, timestamp: Date): Promise<HandleMessageResult> {
+export interface MessageHandler_InputOptional_Config<TInput extends IMessageHandlerInput = IMessageHandlerInput> extends MessageHandler_Config {
+    handleMessage: (input?: TInput) => Promise<void>;
+}
+
+export class MessageHandler_InputOptional<TInput extends IMessageHandlerInput = IMessageHandlerInput> extends MessageHandler implements IMessageHandler_InputOptional<TInput> {
+    protected readonly _messageHandler: (input?: TInput) => Promise<void>;
+
+    public constructor(config: MessageHandler_InputOptional_Config<TInput>) {
+        super(config);
+        this._messageHandler = config.handleMessage;
+    }
+    
+    protected async checkTriggers_WithInput(input: TInput, timestamp: Date, ignoreTimeout: boolean): Promise<HandleMessageResult | undefined> {
         if (this.isExpired) {
-            return HandleMessageResult.CommandExpired;
+            return HandleMessageResult.Expired;
         }
-        if (userId !== undefined && this.isTimedOutUser(timestamp, userId)) {
+        if (!ignoreTimeout && this.isTimedOutUser(timestamp, input.userId)) {
             return HandleMessageResult.UserTimeoutEncountered;
         }
-        if (this.isTimedOutGlobal(timestamp)) {
+        if (!ignoreTimeout && this.isTimedOutGlobal(timestamp)) {
+            return HandleMessageResult.GlobalTimeoutEncountered;
+        }
+        if (!this.aliasMatched(input.message)) {
+            return HandleMessageResult.DidNotMatchTrigger;
+        }
+
+        return undefined;
+    }
+
+    protected async checkTriggers_WithoutInput(userId: string | undefined, timestamp: Date, ignoreTimeout: boolean): Promise<HandleMessageResult | undefined> {
+        if (this.isExpired) {
+            return HandleMessageResult.Expired;
+        }
+        if (!ignoreTimeout && userId !== undefined && this.isTimedOutUser(timestamp, userId)) {
+            return HandleMessageResult.UserTimeoutEncountered;
+        }
+        if (!ignoreTimeout && this.isTimedOutGlobal(timestamp)) {
             return HandleMessageResult.GlobalTimeoutEncountered
         }
+
+        return undefined;
+    }
+    
+    public async handleMessageWithoutInput(userId: string | undefined, timestamp: Date, ignoreTimeout: boolean): Promise<HandleMessageResult> {
+        const triggerResult = await this.checkTriggers_WithoutInput(userId, timestamp, ignoreTimeout);
+        if (triggerResult !== undefined) {
+            return triggerResult;
+        }
+        
         await this._messageHandler();
+        this._timeoutEndGlobal = timestamp;
         return HandleMessageResult.HandledSuccessfully;
     }
 
-    public async handleMessageWithInput(detail: IPrivMessageDetail, timestamp: Date): Promise<HandleMessageResult> {
-        if (this.isExpired) {
-            return HandleMessageResult.CommandExpired;
-        }
-        if (this.isTimedOutUser(timestamp, detail.username)) {
-            return HandleMessageResult.UserTimeoutEncountered;
-        }
-        if (this.isTimedOutGlobal(timestamp)) {
-            return HandleMessageResult.GlobalTimeoutEncountered;
-        }
-        if (!this.doesTrigger(detail.message)) {
-            return HandleMessageResult.DidNotMatchTrigger;
+    public async handleMessageWithInput(input: TInput, timestamp: Date, ignoreTimeout: boolean): Promise<HandleMessageResult> {
+        const triggerResult = await this.checkTriggers_WithInput(input, timestamp, ignoreTimeout);
+        if (triggerResult !== undefined) {
+            return triggerResult;
         }
 
-        await this._messageHandler(detail);
+        await this._messageHandler(input);
+        this._timeoutEndGlobal = timestamp;
+        this._timeoutEndByUser[input.userId] = timestamp;
         return HandleMessageResult.HandledSuccessfully;
     }
 }
 
-export class ChatCommand_Simple extends ChatCommand_InputOptional {
-    public constructor(config: ISimpleCommandConfig) {
-        const messageHandler = getSimpleMessageHandler(config);
+export interface IMessageHandler_Simple_Config {
+    name: string;
+    aliases?: string[];
+    /** Matches names exactly (ignoring whitespace) */
+    strict?: boolean; // TODO: allow specifying strict match for each name/alias, not all.
+    /** Date string */
+    expiresAt?: string;
+    responses: string[];
+    /** Delay until this handler can be triggered again by a particular user (defaults to 30 seconds) */
+    userTimeoutSeconds?: number;
+    /** Delay until this handler can be triggered again by any user (defaults to 0 seconds) */
+    globalTimeoutSeconds?: number;
+    chatFunc: (message: string) => Promise<void>;
+}
+
+export class MessageHandler_Simple<TInput extends IMessageHandlerInput = IMessageHandlerInput> extends MessageHandler_InputOptional<TInput> {
+    public constructor(config: IMessageHandler_Simple_Config) {
+        const messageHandler = getSimpleMessageHandlerFunc(config);
         const triggerPhrases = [
             config.name,
             ...(config.aliases ?? []),
@@ -187,8 +271,8 @@ export class ChatCommand_Simple extends ChatCommand_InputOptional {
             : undefined;
 
         super({
-            messageHandler: messageHandler,
-            commandId: config.name,
+            handleMessage: messageHandler,
+            handlerId: config.name,
             triggerPhrases: triggerPhrases,
             strictMatch: config.strict ?? false,
             globalTimeoutSeconds: config.globalTimeoutSeconds,
@@ -198,22 +282,7 @@ export class ChatCommand_Simple extends ChatCommand_InputOptional {
     }
 }
 
-export interface ISimpleCommandConfig {
-    name: string;
-    aliases?: string[];
-    /** Matches names exactly (ignoring whitespace) */
-    strict?: boolean; // TODO: allow specifying strict match for each name/alias, not all.
-    /** Date string */
-    expiresAt?: string;
-    responses: string[];
-    /** Delay until this command can be triggered again by a particular user (defaults to 30 seconds) */
-    userTimeoutSeconds?: number;
-    /** Delay until this command can be triggered again by any user (defaults to 0 seconds) */
-    globalTimeoutSeconds?: number;
-    chatFunc: (message: string) => Promise<void>;
-}
-
-export function getSimpleMessageHandler(config: ISimpleCommandConfig) {
+export function getSimpleMessageHandlerFunc(config: IMessageHandler_Simple_Config): () => Promise<void> {
     const func = async (): Promise<void> => {
         const index = randomInt(config.responses.length);
         const response = config.responses[index];

@@ -16,7 +16,7 @@
         "preserveConstEnums": true,
         "strictFunctionTypes": true,
         "strict": true,
-        "useUnknownInCatchVariables": true,
+        "useUnknownInCatchVariables": false
     },
     "include": [
         "src/**/*.ts"
