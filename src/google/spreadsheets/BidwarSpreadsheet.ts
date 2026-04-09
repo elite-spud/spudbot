@@ -107,17 +107,17 @@ export class Bidwar_Spreadsheet implements SheetsRowProvider {
             throw new Error("Unable to retrieve bidwar spreadsheet: sheet is empty");
         }
     
-        const blockArray = extractBlockArray(apiSpreadsheet.data.sheets[0]);
+        const blockArray = extractBlockArray(apiSpreadsheet.data.sheets[0]!);
         let awaitingBlock: Bidwar_AwaitingBlock | undefined = undefined;
         let activeBlock: Bidwar_ActiveBlock | undefined = undefined;
         let bankBlock: Bidwar_BankBlock | undefined = undefined;
         for (let i = 0; i < 3; i++) {
             if (i === Bidwar_Spreadsheet_BlockOrder.Pending) {
-                awaitingBlock = parseBidwarAwaitingBlock(blockArray[i]);
+                awaitingBlock = parseBidwarAwaitingBlock(blockArray[i]!);
             } else if (i === Bidwar_Spreadsheet_BlockOrder.Active) {
-                activeBlock = parseBidwarActiveBlock(blockArray[i]);
+                activeBlock = parseBidwarActiveBlock(blockArray[i]!);
             } else if (i === Bidwar_Spreadsheet_BlockOrder.Bank) {
-                bankBlock = parseBidwarBankBlock(blockArray[i]);
+                bankBlock = parseBidwarBankBlock(blockArray[i]!);
             }
         }
     
@@ -184,6 +184,7 @@ export class Bidwar_ActiveBlock implements SheetsRowProvider {
         }) {
         this.headers = args.headers;
         this.entries = args.entries;
+        this.footer = args.footer;
     }
 
     public toRowData(): sheets_v4.Schema$RowData[] {
@@ -272,8 +273,8 @@ export class Bidwar_Entry {
     
         const contributions = contributionsString.split("\n").map(n => { 
             const tokens = n.trim().split(/\s*•\s*/);
-            const amount = Number.parseInt(tokens[0]);
-            const name = tokens[1];
+            const amount = Number.parseInt(tokens[0]!);
+            const name = tokens[1]!;
             const contribution: Bidwar_EntryContribution = { amount, name };
             return contribution;
         });
@@ -375,13 +376,13 @@ export class Bidwar_BankEntry {
             let timestamp: Date | undefined;
             let detail: string | undefined;
             if (tokens.length === 1) {
-                amount = Number.parseInt(tokens[0]);
+                amount = Number.parseInt(tokens[0]!);
             } else if (tokens.length === 2) {
-                timestamp = Utils.getDateFromUtcTimestring(tokens[0]);
-                amount = Number.parseInt(tokens[1]);
+                timestamp = Utils.getDateFromUtcTimestring(tokens[0]!);
+                amount = Number.parseInt(tokens[1]!);
             } else if (tokens.length >= 3) {
-                timestamp = Utils.getDateFromUtcTimestring(tokens[0]);
-                amount = Number.parseInt(tokens[1]);
+                timestamp = Utils.getDateFromUtcTimestring(tokens[0]!);
+                amount = Number.parseInt(tokens[1]!);
                 detail = tokens[2];
             } else {
                 continue;
@@ -399,17 +400,17 @@ export function parseBidwarEntry(row: sheets_v4.Schema$RowData): Bidwar_Entry {
     }
     // TODO: enforce a length at least as long as is required
 
-    const gameName = getEntryValue_String(row.values[1]);
+    const gameName = getEntryValue_String(row.values[1]!);
     if (!gameName) {
         throw new Error("game name not found");
     }
-    const note = getEntryValue_String(row.values[2]);
-    const contributionsString = row.values[0].note ?? "";
+    const note = getEntryValue_String(row.values[2]!);
+    const contributionsString = row.values[0]!.note ?? "";
     const contributions = Bidwar_Entry.parseContributions(contributionsString);
     const entry = new Bidwar_Entry({
         contributions,
         name: gameName,
-        nameNote: row.values[1].note ?? undefined,
+        nameNote: row.values[1]!.note ?? undefined,
         note,
     });
     return entry;
@@ -420,14 +421,14 @@ export function parseBidwarBankEntry(row: sheets_v4.Schema$RowData): Bidwar_Bank
         throw new Error("Expected bank entry row to have values");
     }
 
-    const username = getEntryValue_String(row.values[1]);
+    const username = getEntryValue_String(row.values[1]!);
     if (!username) {
         throw new Error("gameName not found");
     }
-    const contributionsString = row.values[0].note ?? "";
+    const contributionsString = row.values[0]!.note ?? "";
     const contributions = Bidwar_BankEntry.parseContributions(contributionsString);
     const bankEntry = new Bidwar_BankEntry({
-        userId: row.values[1].note ?? "",
+        userId: row.values[1]!.note ?? "",
         username: username,
         contributions: contributions,
     });
@@ -436,13 +437,13 @@ export function parseBidwarBankEntry(row: sheets_v4.Schema$RowData): Bidwar_Bank
 
 export function parseBidwarAwaitingBlock(rows: sheets_v4.Schema$RowData[]): Bidwar_AwaitingBlock {
     const headerRows = [
-        parseHeaderFooterRow(rows[0]),
-        parseHeaderFooterRow(rows[1]),
+        parseHeaderFooterRow(rows[0]!),
+        parseHeaderFooterRow(rows[1]!),
     ];
 
     const entries: Bidwar_Entry[] = [];
     for (let i = 2; i < rows.length; i++) {
-        const entry = parseBidwarEntry(rows[i]);
+        const entry = parseBidwarEntry(rows[i]!);
         entries.push(entry);
     }
     
@@ -455,16 +456,16 @@ export function parseBidwarAwaitingBlock(rows: sheets_v4.Schema$RowData[]): Bidw
 
 export function parseBidwarActiveBlock(rows: sheets_v4.Schema$RowData[]): Bidwar_ActiveBlock {
     const headerRows = [
-        parseHeaderFooterRow(rows[0]),
-        parseHeaderFooterRow(rows[1]),
+        parseHeaderFooterRow(rows[0]!),
+        parseHeaderFooterRow(rows[1]!),
     ];
     const entries: Bidwar_Entry[] = [];
     for (let i = 2; i < rows.length - 1; i++) {
-        const entry = parseBidwarEntry(rows[i]);
+        const entry = parseBidwarEntry(rows[i]!);
         entries.push(entry);
     }
 
-    const footerRow = parseHeaderFooterRow(rows[rows.length - 1]);
+    const footerRow = parseHeaderFooterRow(rows[rows.length - 1]!);
     
     const activeBlock = new Bidwar_ActiveBlock({
         headers: headerRows,
@@ -476,13 +477,13 @@ export function parseBidwarActiveBlock(rows: sheets_v4.Schema$RowData[]): Bidwar
 
 export function parseBidwarBankBlock(rows: sheets_v4.Schema$RowData[]): Bidwar_BankBlock {
     const headerRows = [
-        parseHeaderFooterRow(rows[0]),
-        parseHeaderFooterRow(rows[1]),
+        parseHeaderFooterRow(rows[0]!),
+        parseHeaderFooterRow(rows[1]!),
     ];
 
     const entries: Bidwar_BankEntry[] = [];
     for (let i = 2; i < rows.length; i++) {
-        const entry = parseBidwarBankEntry(rows[i]);
+        const entry = parseBidwarBankEntry(rows[i]!);
         entries.push(entry);
     }
     

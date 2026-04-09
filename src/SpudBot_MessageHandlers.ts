@@ -7,9 +7,8 @@ import { SpudBotTwitch } from "./SpudBot";
 import { Utils } from "./Utils";
 import { egadd_quotes, f_zero_gx_interview_quotes, f_zero_gx_quotes, f_zero_gx_story_quotes, lm_quotes, luigi_quotes } from "./Quotes";
 import { FundGameRequestOutcomeType, GoogleAPI } from "./google/GoogleAPI";
-import { CreateCustomChannelPointRewardArgs } from "./TwitchApiTypes";
+import { CreateCustomChannelPointRewardArgs, TwitchUserDetail } from "./TwitchApiTypes";
 import { ChannelPointRequests } from "./ChannelPointRequests";
-import { ChatWarriorUserDetail } from "./SpudBotTypes";
 
 export interface SpudBot_MessageHandlers_Config {
     bonkCountFilePath: string;
@@ -644,7 +643,7 @@ export class SpudBot_MessageHandlers {
                 return;
             }
 
-            let userDetail: ChatWarriorUserDetail | undefined;
+            let userDetail: TwitchUserDetail | undefined;
             try {
                 userDetail = await this._spudBot.getUserDetailForUserId(input.userId);
             } catch (err) {

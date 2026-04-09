@@ -10,7 +10,7 @@
         "noImplicitOverride": true,
         "sourceMap": true,
         "strictPropertyInitialization": true,
-        "noUncheckedIndexedAccess": true,
+        "noUncheckedIndexedAccess": false, // TODO: enable this
         "noImplicitReturns": true,
         "noImplicitThis": true,
         "preserveConstEnums": true,

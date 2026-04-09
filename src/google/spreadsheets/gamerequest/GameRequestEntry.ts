@@ -238,7 +238,7 @@ export class GameRequestEntry {
         if (this.iterations.length === 0) {
             throw new NoCurrentIterationError();
         }
-        const iteration = this.iterations[0];
+        const iteration = this.iterations[0]!;
         return iteration;
     }
 
@@ -246,7 +246,7 @@ export class GameRequestEntry {
         if (this.iterations.length === 0) {
             throw new NoCurrentIterationError();
         }
-        const iteration = this.iterations[this.iterations.length - 1];
+        const iteration = this.iterations[this.iterations.length - 1]!;
         return iteration;
     }
 
