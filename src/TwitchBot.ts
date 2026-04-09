@@ -79,7 +79,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
 
     protected override async trackUsersInChat(secondsToAdd: number, force: boolean = false): Promise<void> {
         const twitchApi = await this._twitchApi;
-        const isChannelLive = await twitchApi.isChannelLive(twitchApi.twitchBroadcasterChannel);
+        const isChannelLive = await twitchApi.isChannelLive(twitchApi.twitchBroadcasterLogin);
         if (!force && !isChannelLive) {
             return;
         }
@@ -574,7 +574,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
             const userIsABot = knownBots.some(n => n === userDetail.username);
             if (userIsABot && userDetail.isBanned !== true) {
                 numBannedBots++;
-                await twitchApi.ban(twitchApi.twitchBroadcasterChannel, userDetail.username);
+                await twitchApi.ban(twitchApi.twitchBroadcasterLogin, userDetail.username);
                 userDetail.isBanned = true;
             }
         }

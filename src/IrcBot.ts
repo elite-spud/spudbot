@@ -32,11 +32,25 @@ export interface IIrcBotConnectionConfig {
     },
 }
 
+export interface ISimpleCommand_Config {
+    name: string;
+    aliases?: string[];
+    /** Matches names exactly (ignoring whitespace) */
+    strict?: boolean; // TODO: allow specifying strict match for each name/alias, not all.
+    /** Date string */
+    expiresAt?: string;
+    responses: string[];
+    /** Delay until this handler can be triggered again by a particular user (defaults to 30 seconds) */
+    userTimeoutSeconds?: number;
+    /** Delay until this handler can be triggered again by any user (defaults to 0 seconds) */
+    globalTimeoutSeconds?: number;
+}
+
 export interface IIrcBotSimpleMessageHandlersConfig {
     timerMinutes?: number;
     timerMinutesOffset?: number;
     random?: boolean;
-    messageHandlersConfig: IMessageHandler_Simple_Config[];
+    commands: ISimpleCommand_Config[];
 }
 
 export interface MessageHandlersFromConfigResult {
@@ -174,7 +188,6 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail, TMessageHandler
             this._messageHandlers_inputOptional.push(command);
         }
         this._configuredTimerGroups = configCommands.timerGroups;
-        this.registerHardcodedMessageHandlers();
         
         this.backupFiles([this._userDetailsPath, this._userDetailsPathCsv]);
         const userDetailJson: string = fs.readFileSync(this._userDetailsPath, { encoding: IrcBotBase.userDetailEncoding });
@@ -331,8 +344,24 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail, TMessageHandler
         
         for (const commandGroup of commandGroups) {
             const simpleCommands: MessageHandler_Simple[] = [];
-            for (const commandConfig of commandGroup.messageHandlersConfig) {
-                const command = this.getChatCommand(commandConfig);
+            for (const commandConfig of commandGroup.commands) {
+                const expirationDate = commandConfig.expiresAt === undefined
+                    ? undefined
+                    : new Date(commandConfig.expiresAt);
+                const chatFunc = async (message: string) => {
+                    this.chat(this._config.connection.server.channel, message);
+                };
+                const simpleCommandConfig: IMessageHandler_Simple_Config = {
+                    name: commandConfig.name,
+                    aliases: commandConfig.aliases,
+                    strict: commandConfig.strict,
+                    expirationDate: expirationDate,
+                    responses: commandConfig.responses,
+                    userTimeoutSeconds: commandConfig.userTimeoutSeconds,
+                    globalTimeoutSeconds: commandConfig.globalTimeoutSeconds,
+                    chatFunc: chatFunc,
+                };
+                const command = this.getChatCommand(simpleCommandConfig);
                 if (command === undefined) {
                     continue;
                 }
@@ -372,6 +401,8 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail, TMessageHandler
                     resolve();
                 }); // TODO: connect using the SSL URL (IRC or websocket?) https://dev.twitch.tv/docs/irc#twitch-specific-irc-messages
         });
+
+        this.registerHardcodedMessageHandlers();
 
         await connectPromise;
         this._configuredTimerGroups.forEach(timer => timer.startTimer());

@@ -31,7 +31,7 @@ export class ChatCommand_SimpleTwitch extends MessageHandler_Simple {
             return true;
         }
 
-        const streamDetails = await this._twitchApi.getStreamDetails(this._twitchApi.twitchBroadcasterChannel);
+        const streamDetails = await this._twitchApi.getStreamDetails(this._twitchApi.twitchBroadcasterLogin);
         const gameInWhitelist = this._autoPostGameWhitelist.some(n => n.toLowerCase() === streamDetails.game_name.toLowerCase());
         return gameInWhitelist;
     }
@@ -41,7 +41,7 @@ export class ChatCommand_SimpleTwitch extends MessageHandler_Simple {
             return true;
         }
 
-        const streamDetails = await this._twitchApi.getStreamDetails(this._twitchApi.twitchBroadcasterChannel);
+        const streamDetails = await this._twitchApi.getStreamDetails(this._twitchApi.twitchBroadcasterLogin);
         const titleInWhitelist = this._autoPostIfTitleContainsAny.some(n => streamDetails.title.includes(n));
         return titleInWhitelist;
     }

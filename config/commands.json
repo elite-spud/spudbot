@@ -742,6 +742,7 @@
             },
             {
                 "name": "git --help",
+                "strict": true,
                 "responses": [
                     "usage: git [--help] <command> [<args>]     These are common Git commands used in various situations: add, google, pull, push, reset, status"
                 ]
@@ -766,12 +767,14 @@
             },
             {
                 "name": "git google",
+                "strict": true,
                 "responses": [
                     "Step 1 of using git: google how to use git"
                 ]
             },
             {
                 "name": "git pull",
+                "strict": true,
                 "responses": [
                     "The gravity of Earth, denoted by g, is the net acceleration imparted to objects due to the combined effect of gravitational pull (from mass distribution within Earth) and the centrifugal force (from the Earth's rotation). Near the surface, the pull of Earth's gravity is approximately 9.81 meters per second per second.",
                     "pull (ˈpu̇l) v. 1: To exert force upon so as to cause or tend to cause motion toward the force    2: To extract    3: To draw the support or attraction of    [Middle English, from Old English pullian]"
@@ -779,12 +782,14 @@
             },
             {
                 "name": "git push",
+                "strict": true,
                 "responses": [
                     "You extert as much force as you can, but nothing budges. It appears the chatbot is immovable."
                 ]
             },
             {
                 "name": "git reset",
+                "strict": true,
                 "responses": [
                     "Your progress has been reset, and your save file has been erased.",
                     "Manual override detected, Rebooting...",

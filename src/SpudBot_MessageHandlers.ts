@@ -48,9 +48,9 @@ export class SpudBot_MessageHandlers {
             this.getHandler_FZeroGXInterviewQuote(),
             this.getHandler_FZeroGXQuote(),
             this.getHandler_PowerupBidwarFunds(),
-            this.getHandler_UpdateAllUsers(),
-            this.getHandler_CreateGameRequestRewards(),
-            this.getHandler_GameRequestModular(),
+            // this.getHandler_UpdateAllUsers(),
+            // this.getHandler_CreateGameRequestRewards(),
+            // this.getHandler_GameRequestModular(),
             // this.getHandler_BidwarModular(),
         ];
         return handlers;
@@ -265,7 +265,7 @@ export class SpudBot_MessageHandlers {
         const handleFunc = async (input: IMessageHandlerInput_Twitch) => {
             try {
                 const twitchApi = await this._twitchApi;
-                const streamDetails = await twitchApi.getStreamDetails(await twitchApi.twitchBroadcasterChannel);
+                const streamDetails = await twitchApi.getStreamDetails(await twitchApi.twitchBroadcasterLogin);
                 const dateNowMillis = Date.now();
                 const dateStarted = new Date(streamDetails.started_at);
                 const dateStartedMillis = dateStarted.getTime();

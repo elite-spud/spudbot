@@ -12,7 +12,7 @@ export interface TwitchApiConfig {
 }
 
 export class TwitchApi {
-    public readonly twitchBroadcasterChannel: string
+    public readonly twitchBroadcasterLogin: string
     public readonly serviceName: string;
 
     protected readonly _authConfig: ITwitchAuthConfig;
@@ -24,7 +24,10 @@ export class TwitchApi {
     protected _currentUserTokenRefreshPromise: Promise<TwitchUserToken> | undefined = undefined;
 
     public constructor(config: TwitchApiConfig) {
-        this.twitchBroadcasterChannel = config.twitchBroadcasterChannel;
+        const broadcasterLogin = config.twitchBroadcasterChannel.startsWith("#")
+            ? config.twitchBroadcasterChannel.slice(1)
+            : config.twitchBroadcasterChannel;
+        this.twitchBroadcasterLogin = broadcasterLogin;
         this._authConfig = config.authConfig;
         this.serviceName = config.serviceName;
     }
@@ -151,7 +154,7 @@ export class TwitchApi {
     }
 
     public async getTwitchBroadcasterId(): Promise<string> {
-        return this.getUserIdForUsername(this.twitchBroadcasterChannel);
+        return this.getUserIdForUsername(this.twitchBroadcasterLogin);
     }
 
     public async getUserIdForUsername(username: string): Promise<string> {
@@ -435,7 +438,7 @@ export class TwitchApi {
     protected async sendTwitchRequest(args: TwitchRequestArgs): Promise<Response> {
         const makeRequest = async () => {
             const headers = await args.getHeaders();
-            console.log(`Making request to Twitch with the following headers:`);
+            console.log(`Making ${args.method} request to Twitch ${args.url} with the following headers:`);
             console.log(headers);
             const response = await fetch(args.url, {
                 method: args.method,
@@ -460,7 +463,7 @@ export class TwitchApi {
         }
 
         if (autoRetryResponses.includes(response.status)) {
-            const message = `Unable to auto-correct Twitch response after ${retryCount} retries. Received code ${response.status}.`;
+            const message = `Unable to auto-correct Twitch ${args.method} request to ${args.url} after ${retryCount} retries. Received code ${response.status}.`;
             console.log(message)
             console.log(response);
             throw new Error(message);
@@ -603,7 +606,7 @@ export class TwitchApi {
     }
 
     public async timeout2(targetUser: TwitchUserDetail, durationSeconds?: number): Promise<void> {
-        console.log(`Timing out ${targetUser.username} in channel ${this.twitchBroadcasterChannel}`);
+        console.log(`Timing out ${targetUser.username} in channel ${this.twitchBroadcasterLogin}`);
         const broadcasterId = await this.getTwitchBroadcasterId();
         const body = {
             data: {
@@ -647,7 +650,7 @@ export class TwitchApi {
         }
         const requestArgs: TwitchRequestArgs = {
             method: `GET`,
-            url: `https://api.twitch.tv/helix/channel_points/custom_rewards?broadcaster_id=${this.twitchBroadcasterChannel}`,
+            url: `https://api.twitch.tv/helix/channel_points/custom_rewards?broadcaster_id=${this.twitchBroadcasterLogin}`,
             getHeaders: getHeaders,
         };
         const response = await this.sendTwitchRequest(requestArgs);
@@ -670,7 +673,7 @@ export class TwitchApi {
         }
         const requestArgs: TwitchRequestArgs = {
             method: `POST`,
-            url: `https://api.twitch.tv/helix/channel_points/custom_rewards?broadcaster_id=${this.twitchBroadcasterChannel}`,
+            url: `https://api.twitch.tv/helix/channel_points/custom_rewards?broadcaster_id=${this.twitchBroadcasterLogin}`,
             getHeaders: getHeaders,
             body: JSON.stringify(body),
         };
