@@ -49,6 +49,7 @@
             {
                 "name": "!incentive",
                 "aliases": ["!incentives", "!goals", "!subgoals"],
+                "expiresAt": "2024-05-06T02:00:00",
                 "autoPostIfTitleContainsAny": ["!incentive", "!incentives"],
                 "responses": [
                     "$290 = Put on fox ears • $315 = Part my hair the wrong way • $350 = F-Zero GX Music Tier List • $400 = Cursed racing wheel controls stream (future)"
@@ -65,11 +66,11 @@
             },
             {
                 "name": "!laraidtrain",
-                "expiresAt": "2025-02-17T02:00:00",
-                "autoPostIfTitleContainsAny": ["!raidtrain", "!laraidtrain", "!ladyarcaders", "!latrain"],
-                "aliases": ["!raidtrain"],
+                "expiresAt": "2026-02-15T02:00:00",
+                "autoPostIfTitleContainsAny": ["!raidtrain", "!laraidtrain", "!ladyarcaders", "!latrain", "!RaidTrain"],
+                "aliases": ["!raidtrain", "!RaidTrain"],
                 "responses": [
-                    "The Lady Arcaders are celebrating their 3 year anniversary this year, so the collective has organized a massive raid train event to mark the occasion! https://ladyarcaders.com/raid-train/2025/ For 3 days, dozens of streamers will take their viewers on a scenic tour through the LA community as we raise money for future events. If you're interested in donating to support our organization, click here: https://ko-fi.com/ladyarcaders"
+                    "The Lady Arcaders are celebrating their 4 year anniversary this year, so the collective has organized a massive raid train event to mark the occasion! https://ladyarcaders.com/raid-train/2026/ For 3 days, nearly 40 streamers will take their viewers on a scenic tour through the LA community as we raise money for future events. If you're interested in donating to support our organization, click here: https://ko-fi.com/ladyarcaders"
                 ]
             },
             {
@@ -673,21 +674,23 @@
             },
             {
                 "name": "!laraid2",
-                "expiresAt": "2025-04-01T02:00:00",
+                "expiresAt": "2026-02-15T02:00:00",
                 "responses": [
                     "🚂🚂🚂 CHOO CHOO! IT'S THE LADY ARCADERS RAID TRAIN! 🚂🚂🚂"
                 ]
             },
             {
                 "name": "!laschedule",
-                "expiresAt": "2025-04-01T02:00:00",
+                "aliases": ["!schedule"],
+                "expiresAt": "2026-02-15T02:00:00",
                 "responses": [
-                    "View the Lady Arcaders Raid Train schedule here: https://ldy.gg/3yrs"
+                    "View the Lady Arcaders Raid Train schedule here: https://ladyarcaders.com/raid-train/2026/"
                 ]
             },
             {
                 "name": "!ladonate",
-                "expiresAt": "2025-04-01T02:00:00",
+                "aliases": ["!donate"],
+                "expiresAt": "2026-02-15T02:00:00",
                 "responses": [
                     "If you wish to contribute to funding for future in-person Lady Arcaders events, donate through our Ko-fi page @ https://ldy.gg/donate or subscribe to our Twitch channel @ladyarcaders!"
                 ]
@@ -711,6 +714,20 @@
                 "aliases": ["!noga", "!NoGA", "!NoGlitchesAllowed"],
                 "responses": [
                     "On Wednesday, April 23 at 9:05PM ET, I'll be running Luigi's Mansion No R-Pump (No OoB) for No Glitches Allowed 2025! @millie_494 will be joining me on comms to help me explain what's probably the most goofy and arbitrary category in the game."
+                ]
+            },
+            {
+                "name": "!VoxPopuli",
+                "aliases": ["!voxpop", "!voxpopuli", "!VoxPop"],
+                "responses": [
+                    "Vox Populi is an incredibly ambitious modding project for Civ V that's been in active development since 2014. A near-complete overhaul of the game's systems, its main goal is to dramatically improve the AI, but it also substantially rebalances the game around a bevy of new content, incuding the most recent addition of 3rd & 4th unique components for every civ in the game. I play on Emperor difficulty, which is at least 2-3 notches harder than vanilla Deity difficulty."
+                ]
+            },
+            {
+                "name": "!PoltergustRide",
+                "aliases": ["!poltergustride", "!ride"],
+                "responses": [
+                    "Poltergust Ride is a mod for Luigi's Mansion that was developed by @LMFinish. It allows Luigi to ride the vacuum as he does in the PAL Hidden Mansion Boolossus fight, but in every room of the mansion! Download it here: https://gamebanana.com/mods/661656"
                 ]
             }
         ]

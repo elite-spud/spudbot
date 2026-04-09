@@ -1,13 +1,26 @@
 import { randomInt } from "crypto";
 import { clearInterval } from "timers";
+import { HandleMessageResult, IMessageHandler_AcceptsNoInput } from "./ChatCommand";
+
+export class TimerCommand implements IMessageHandler_AcceptsNoInput {
+    protected readonly _command: IMessageHandler_AcceptsNoInput;
+    
+    public constructor(command: IMessageHandler_AcceptsNoInput) {
+        this._command = command;
+    }
+
+    handleMessageWithoutInput(userId: string | undefined, timestamp: Date): Promise<HandleMessageResult> {
+        return this._command.handleMessageWithoutInput(userId, timestamp, false);
+    }
+}
 
 export class TimerGroup {
     protected _intervalId?: NodeJS.Timeout;
 
     public constructor(
-        protected _commands: (() => Promise<boolean>)[],
+        protected _commands: (IMessageHandler_AcceptsNoInput)[],
         protected readonly _intervalMinutes: number,
-        protected readonly _offsetMinutes: number = 0,
+        protected readonly _startDelayMinutes: number = 0,
         protected readonly _randomizeCommands: boolean = false) {
     }
 
@@ -20,30 +33,28 @@ export class TimerGroup {
         let intervalCommands = this._commands;
         if (this._randomizeCommands) {
             const orderedCommands = this._commands;
-            const shuffledCommands = [];
+            const shuffledCommands: IMessageHandler_AcceptsNoInput[] = [];
             while (orderedCommands.length > 0) {
                 const index = randomInt(orderedCommands.length);
-                shuffledCommands.push(orderedCommands[index]);
+                shuffledCommands.push(orderedCommands[index]!);
                 orderedCommands.splice(index, 1);
             }
             intervalCommands = shuffledCommands;
         }
         
-        const offsetMillis = this._offsetMinutes * 60 * 1000;
+        const offsetMillis = this._startDelayMinutes * 60 * 1000;
         setTimeout(() => {
             const intervalMillis = this._intervalMinutes * 60 * 1000;
 
-            const startIndex = currentIndex;
             const callNextCommand = () => {
-                const commandWasSuccessfulPromise = intervalCommands[currentIndex](); // Don't send timer messages if stream isn't live / better yet, don't start the timers *until* the stream is live
                 currentIndex = currentIndex === intervalCommands.length - 1
                     ? 0
                     : currentIndex + 1;
+                const command = intervalCommands[currentIndex]!;
+                const commandPromise = command.handleMessageWithoutInput(undefined, new Date(), false); // TODO: Don't send timer messages if stream isn't live / better yet, don't start the timers *until* the stream is live
 
-                commandWasSuccessfulPromise.then((result) => {
-                    if (!result && currentIndex !== startIndex) {
-                        callNextCommand();
-                    }
+                commandPromise.catch((_err) => {
+                    callNextCommand();
                 });
             };
 

@@ -1,6 +1,6 @@
 import { IChatWarriorState } from "./ChatWarrior";
-import { GoogleAPIConfig } from "./google/GoogleAPI";
-import { ITwitchBotConfig, ITwitchBotConnectionConfig, ITwitchUserDetail, TwitchUserDetail } from "./TwitchBotTypes";
+import { GoogleApiConnectionConfig } from "./google/GoogleAPI";
+import { ITwitchBotConfig, ITwitchBotConnectionConfig, ITwitchUserDetail, TwitchUserDetail } from "./TwitchApiTypes";
 
 export interface UserCommand {
     username: string,
@@ -25,5 +25,5 @@ export interface ISpudBotConfig extends ITwitchBotConfig {
 }
 
 export interface ISpudBotConnectionConfig extends ITwitchBotConnectionConfig {
-    google: GoogleAPIConfig;
+    google: GoogleApiConnectionConfig;
 }

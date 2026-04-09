@@ -1,4 +1,4 @@
-import { IIrcBotAuxCommandConfig, IIrcBotConfig, IIrcBotConnectionConfig, IUserDetail, UserDetail } from "./IrcBot";
+import { IIrcBotConfig, IIrcBotConnectionConfig, IIrcBotSimpleMessageHandlersConfig, IUserDetail, UserDetail } from "./IrcBot";
 
 export interface ITwitchUserDetail extends IUserDetail {
     /** globally unique id for a twitch user (persists between username changes) */
@@ -69,14 +69,16 @@ export interface ITwitchBotConfig extends IIrcBotConfig {
     connection: ITwitchBotConnectionConfig;
 }
 
+export interface ITwitchAuthConfig {
+    clientId: string;
+    clientSecret: string;
+    scope: string;
+}
+
 export interface ITwitchBotConnectionConfig extends IIrcBotConnectionConfig {
     twitch: {
-        oauth: {
-            clientId: string;
-            clientSecret: string;
-            scope: string;
-        }
-    }
+        oauth: ITwitchAuthConfig;
+    };
 }
 
 export interface TwitchRequestArgs {
@@ -232,7 +234,7 @@ export interface TwitchErrorResponse {
     message: string;
 }
 
-export interface ITwitchBotAuxCommandConfig extends IIrcBotAuxCommandConfig {
+export interface ITwitchBotSimpleMessageHandlersConfig extends IIrcBotSimpleMessageHandlersConfig {
     /** Only post automatically (as part of a timer) when these categories are being streamed */
     autoPostGameWhitelist?: string[];
     /** Only post automatically (as part of a timer) if the title contains any of these strings */
@@ -594,6 +596,20 @@ export class SubTierPoints {
 
 export type TwitchPrivMessageTagKeys = "badge-info" | "badges" | "bits" | "client-nonce" | "color" | "display-name" | "emotes" | "flags" | "id" | "mod" | "msg-id" | "pinned-chat-paid-amount" | "pinned-chat-paid-currency" | "pinned-chat-paid-exponent" | "pinned-chat-paid-level" | "pinned-chat-paid-is-system-message" | "reply-parent-msg-id" | "reply-parent-user-id" | "reply-parent-user-login" | "reply-parent-display-name" | "reply-parent-msg-body" | "reply-thread-parent-msg-id" | "reply-thread-parent-user-login" | "returning-chatter" | "room-id" | "subscriber" | "tmi-sent-ts" | "turbo" | "user-id" | "user-type" | "vip" | string;
 export type TwitchBadgeTagKeys = "admin" | "bits" | "broadcaster" | "global_mod" | "moderator" | "subscriber" | "staff" | "turbo" | string;
+
+export type TwitchPrivMessageTagCollection = { [key in TwitchPrivMessageTagKeys]: string };
+
+export function userIsModerator(tags: TwitchPrivMessageTagCollection): boolean {
+    return tags["mod"] === "1";
+}
+
+export function userIsVip(tags: TwitchPrivMessageTagCollection): boolean {
+    return tags["vip"] === "1";
+}
+
+export function emoteWasGigantified(tags: TwitchPrivMessageTagCollection): boolean {
+    return tags["msg-id"] === "gigantified-emote-message";
+}
 
 export interface CreateCustomChannelPointRewardArgs {
     title: string;
