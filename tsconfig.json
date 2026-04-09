@@ -8,7 +8,15 @@
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "noImplicitOverride": true,
-        "sourceMap": true
+        "sourceMap": true,
+        "strictPropertyInitialization": true,
+        "noUncheckedIndexedAccess": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "preserveConstEnums": true,
+        "strictFunctionTypes": true,
+        "strict": true,
+        "useUnknownInCatchVariables": false
     },
     "include": [
         "src/**/*.ts"

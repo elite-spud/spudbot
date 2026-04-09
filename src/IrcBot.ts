@@ -1,16 +1,17 @@
-import { randomInt } from "crypto";
 import * as fs from "fs";
 import { Parser as CsvParser } from "json2csv";
 import * as net from "net";
+import { IMessageHandler_AcceptsNoInput, IMessageHandler_Simple_Config, IMessageHandlerInput, MessageHandler_InputOptional, MessageHandler_InputRequired, MessageHandler_InputRequired_Config, MessageHandler_Simple } from "./ChatCommand";
 import { ConsoleColors } from "./ConsoleColors";
-import { TimerGroup } from "./TimerGroup";
 import { Future } from "./Future";
+import { PendingTaskGroup } from "./PendingTask";
+import { TimerGroup } from "./TimerGroup";
 import path = require("path");
 
 export interface IIrcBotConfig {
     connection: IIrcBotConnectionConfig;
     encoding: "utf8" | "ascii";
-    auxCommandGroups: IIrcBotAuxCommandGroupConfig[];
+    auxCommandGroups: IIrcBotSimpleMessageHandlersConfig[];
     configDir: string;
     misc: IIrcBotMiscConfig;
 }
@@ -31,20 +32,24 @@ export interface IIrcBotConnectionConfig {
     },
 }
 
-export interface IIrcBotAuxCommandGroupConfig {
-    timerMinutes: number;
+export interface IIrcBotSimpleMessageHandlersConfig {
+    timerMinutes?: number;
     timerMinutesOffset?: number;
-    random: boolean;
-    commands: IIrcBotAuxCommandConfig[];
+    random?: boolean;
+    messageHandlersConfig: IMessageHandler_Simple_Config[];
 }
 
-export interface CommandsFromConfigResult {
-    chatResponses: ((messageDetail: IPrivMessageDetail) => Promise<void>)[];
+export interface MessageHandlersFromConfigResult {
+    messageHandlers: MessageHandler_Simple[],
     timerGroups: TimerGroup[];
 }
 
 export interface IUserDetailCollection<TUserDetail extends UserDetail> {
     [userId: string]: TUserDetail;
+}
+
+export interface IUserDetailCollection_Pending<TUserDetail extends UserDetail> {
+    [userId: string]: Promise<TUserDetail>;
 }
 
 export interface IUserDetail {
@@ -76,20 +81,6 @@ export class UserDetail implements IUserDetail {
                 return { username: n.username, lastSeenInChat: new Date(n.lastSeenInChat) }
             });
     }
-}
-
-export interface IIrcBotAuxCommandConfig {
-    name: string;
-    aliases?: string[];
-    /** Matches names exactly (ignoring whitespace) */
-    strict?: boolean; // TODO: allow specifying strict match for each name/alias, not all.
-    /** Date string */
-    expiresAt?: string;
-    responses: string[];
-    /** Delay until this command can be triggered again by a particular user (defaults to 30 seconds) */
-    userTimeoutSeconds?: number;
-    /** Delay until this command can be triggered again by any user (defaults to 0 seconds) */
-    globalTimeoutSeconds?: number;
 }
 
 export interface IMessageDetail {
@@ -125,50 +116,40 @@ export interface IPrivMessageDetail {
     respondTo: string;
 }
 
-/**
- * Represents a generic message handler that triggers from a set of specific command phrases at the start of a message
- */
-export interface NewCommandArgs {
-    messageHandler: (messageDetail: IPrivMessageDetail) => Promise<void>,
-    triggerPhrases: string[],
-    strictMatch: boolean,
-    /**
-     * Globally unique identifier for this command
-     */
-    commandId: string,
-    globalTimeoutSeconds: number,
-    userTimeoutSeconds: number
-}
-
 export enum UserChatStatus {
     Disconnected = 0,
     BeingAdded = 1,
     Connected = 2,
 }
 
-export abstract class IrcBotBase<TUserDetail extends UserDetail> {
-    private _startupPromise: Promise<void>;
-    public get hasStarted(): Promise<void> { return this._startupPromise; };
+export abstract class IrcBotBase<TUserDetail extends UserDetail, TMessageHandlerInput extends IMessageHandlerInput> {
+    private _startupFuture: Future<void> = new Future<void>();
+    public get hasStarted(): Promise<void> { return this._startupFuture.asPromise(); };
 
     public static readonly userDetailEncoding = "utf8";
 
     protected readonly _config: IIrcBotConfig;
 
     /** Hardcoded responses are kept separate from those read from a configuration to allow interactive editing of configured commands */
-    protected readonly _hardcodedPrivMessageResponseHandlers: ((message: IPrivMessageDetail) => Promise<void>)[] = [];
-    protected readonly _configuredPrivMessageResponseHandlers: ((message: IPrivMessageDetail) => Promise<void>)[] = [];
+    protected readonly _messageHandlers_inputOptional: MessageHandler_InputOptional<TMessageHandlerInput>[] = [];
+    protected readonly _messageHandlers_inputRequired: MessageHandler_InputRequired<TMessageHandlerInput>[] = [];
+    protected *_messageHandlers_inputAccepted() {
+        for (const handler of this._messageHandlers_inputOptional) {
+            yield handler;
+        }
+        for (const handler of this._messageHandlers_inputRequired) {
+            yield handler;
+        }
+    }
     protected readonly _configuredTimerGroups: TimerGroup[] = [];
     protected readonly _socket: net.Socket;
     protected readonly _privMessageDetailCache: { [key: string]: IPrivMessageDetail } = {};
 
-    // TODO: Implement this
-    protected readonly _userTimeoutByCommandUsername: { [key: string]: number } = {};
-    protected readonly _globalTimeoutByCommand: { [key: string]: number } = {};
-
-    protected readonly _pendingUserDetailByUsername: { [username: string]: Future<TUserDetail> } = {};
-    /** UserId is a unique identifier that identifies a single user across multiple usernames */
-    protected readonly _userDetailByUserId: IUserDetailCollection<TUserDetail>;
-    protected readonly _usersInChat: { [key: string]: UserChatStatus } = {};
+    private readonly _pendingUserDetailByUserId: IUserDetailCollection_Pending<TUserDetail> = {};
+    private readonly _userDetailByUserId: IUserDetailCollection<TUserDetail> = {};
+    protected getKnownUserIds(): string[] { return Object.keys(this._userDetailByUserId); }
+    private readonly _userIdsInChat: { [userId: string]: UserChatStatus } = {};
+    protected getUserIdsInChat(): string[] { return Object.keys(this._userIdsInChat); }
 
     protected readonly _userDetailsPath: string;
     protected readonly _userDetailsPathCsv: string;
@@ -178,6 +159,8 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
         return this._config.misc.maxChatMessageLength ?? Number.MAX_SAFE_INTEGER
     }
 
+    protected readonly _pendingTasksByUserId = new PendingTaskGroup();
+
     public constructor(config: IIrcBotConfig) {
         this._config = config;
         this._userDetailsPath = fs.realpathSync(`${this._config.configDir}/users/twitchUserDetails.json`); // TODO: load this path later or ensure the file exists earlier to prevent errors
@@ -186,11 +169,12 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
         this._socket = new net.Socket();
         this._socket.setNoDelay();
 
-        const configCommands: CommandsFromConfigResult = this.getCommandsFromConfig(config.auxCommandGroups, config.connection.server.channel);
-        this._configuredPrivMessageResponseHandlers = configCommands.chatResponses;
+        const configCommands: MessageHandlersFromConfigResult = this.getSimpleCommandsFromConfig(config.auxCommandGroups);
+        for (const command of configCommands.messageHandlers) {
+            this._messageHandlers_inputOptional.push(command);
+        }
         this._configuredTimerGroups = configCommands.timerGroups;
-
-        this._hardcodedPrivMessageResponseHandlers.push(async (detail) => await this.handleChatMessageCount(detail));
+        this.registerHardcodedMessageHandlers();
         
         this.backupFiles([this._userDetailsPath, this._userDetailsPathCsv]);
         const userDetailJson: string = fs.readFileSync(this._userDetailsPath, { encoding: IrcBotBase.userDetailEncoding });
@@ -200,6 +184,19 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
 
         const userTrackingIntervalSeconds = 30;
         setInterval(() => this.trackUsersInChat(userTrackingIntervalSeconds), 1000 * userTrackingIntervalSeconds);
+    }
+
+    protected getHardcodedMessageHandlers(): MessageHandler_InputRequired<TMessageHandlerInput>[] {
+        return [
+            this.getHandler_ChatMessageCount(),
+            this.getHandler_Yes(),
+            this.getHandler_No(),
+        ];
+    }
+
+    private registerHardcodedMessageHandlers(): void {
+        const handlers = this.getHardcodedMessageHandlers();
+        this._messageHandlers_inputRequired.push(...handlers);
     }
 
     protected async backupFiles(filepaths: string[]): Promise<void> {
@@ -217,48 +214,29 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
                 console.log(`Error backing up file ${filepath}: ${err}`);
                 continue;
             }
-
-            // TODO: clean up old backups from the previous month aside from the earliest one (if there's more than one)
-            // const dir = fs.readdirSync(parsedPath.dir);
-            // const oneDayMillis = 24 * 60 * 60 * 1000;
-            // dir.some(n => {
-            //     const oldBackupPath = path.parse(n);
-            //     const filenameParts = oldBackupPath.name.split(`_`);
-            //     if (filenameParts.length !== 2) {
-            //         return false;
-            //     }
-            //     const asDate = new Date(filenameParts[1]);
-            //     const dateDiff = currentDate - asDate;
-            //     if (asDate ) {
-            //         console.log(asDate);
-            //     }
-            // });
         }
     }
 
     protected async trackUsersInChat(secondsToAdd: number): Promise<void> {
         // TODO: track daily / per-stream stats
         const userUpdatePromises: Promise<void>[] = [];
-        const usernamesInChat = Object.keys(this._usersInChat);
-        const userDetailPromisesByUsername = this.getUserDetailsWithCache(usernamesInChat);
-        for (const usernameKey in userDetailPromisesByUsername) {
-            const userDetailPromise = userDetailPromisesByUsername[usernameKey];
-            const updateUserPromise = userDetailPromise.then((userDetail) => {
+        const userIdsInChat = this.getUserIdsInChat();
+        const userDetailIndex = this.getUserDetailsForUserIds(userIdsInChat);
+        for (const userIdKey in userDetailIndex) {
+            const userDetailPromise = userDetailIndex[userIdKey]!;
+            const userUpdatePromise = userDetailPromise.then((userDetail) => {
                 userDetail.secondsInChat += secondsToAdd;
                 userDetail.lastSeenInChat = new Date();
             }).catch((err) => {
-                console.log(`Error adding time to user detail w/ username: ${usernameKey} ${err}`);
+                console.log(`Error adding time to user detail w/ userId: ${userIdKey} ${err}`);
             });
-            userUpdatePromises.push(updateUserPromise);
+            userUpdatePromises.push(userUpdatePromise);
         }
         
         try {
             // TODO: Add a timeout of some sort (as a promise?)
             await Promise.all(userUpdatePromises);
             // TODO: put a limit on how many user detail files are backed up
-            // const dateNow = new Date();
-            // const dateSuffix = dateNow.toISOString().split(":").join("_").split(".").join("_");
-            // fs.renameSync(this._config.userDetailFilePath, `${this._config.userDetailFilePath}_${dateSuffix}`);
             const tempFilePath = `${this._userDetailsPath}_temp`;
 
             const json = JSON.stringify(this._userDetailByUserId);
@@ -277,7 +255,11 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
     protected getCsvUserDetail(userDetails: IUserDetailCollection<TUserDetail>): string {
         const userDetailMap = new Map<string, TUserDetail>();
         for (const userId in userDetails) {
-            userDetailMap.set(userId, userDetails[userId]);
+            const userDetail = userDetails[userId];
+            if (userDetail === undefined) {
+                continue;
+            }
+            userDetailMap.set(userId, userDetail);
         }
 
         const userDetailArray: TUserDetail[] = Array.from(userDetailMap.values());
@@ -289,247 +271,91 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
         return csv;
     }
 
-    protected async getUserDetailWithCache(username: string): Promise<TUserDetail> {
-        const detailDict = this.getUserDetailsWithCache([username]);
+    public async getUserDetailForUserId(userId: string): Promise<TUserDetail> {
+        const detailDict = this.getUserDetailsForUserIds([userId]);
         const numKeys = Object.keys(detailDict).length;
         if (numKeys !== 1) {
-            throw new Error(`Expected only a single userDetail for username: ${username} (found ${numKeys})`);
+            throw new Error(`Expected only a single userDetail for userId: ${userId} (found ${numKeys})`);
         }
 
-        return detailDict[username];
+        return detailDict[userId]!;
     }
 
-    protected getUserDetailsWithCache(usernames: string[]): { [username: string]: Promise<TUserDetail> } {
-        const returnVal: { [username: string]: Promise<TUserDetail> } = {};
-        const usernamesToQuery: string[] = [];
+    public getUserDetailsForUserIds(userIds: string[]): { [userId: string]: Promise<TUserDetail> } {
+        const returnVal: { [userId: string]: Promise<TUserDetail> } = {};
 
-        for (const username of usernames) {
-            const alreadyBeingQueried = !!this._pendingUserDetailByUsername[username];
-            if (alreadyBeingQueried) { // TODO: invalidate this cache after... 30 minutes or so?
-                returnVal[username] = this._pendingUserDetailByUsername[username].asPromise();
-            } else {
-                const future = new Future<TUserDetail>();
-                this._pendingUserDetailByUsername[username] = future;
-                returnVal[username] = future.asPromise();
-                usernamesToQuery.push(username);
+        for (const userId of userIds) {
+            const existingUserDetail = this._userDetailByUserId[userId];
+            if (existingUserDetail !== undefined) {
+                returnVal[userId] = Promise.resolve(existingUserDetail);
+                continue;
             }
+
+            const pendingUserDetail = this._pendingUserDetailByUserId[userId];
+            if (pendingUserDetail !== undefined) {
+                returnVal[userId] = pendingUserDetail;
+                continue;
+            }
+
+            const newUserDetailPromise = this.createFreshUserDetail(userId);
+            this._pendingUserDetailByUserId[userId] = newUserDetailPromise;
+            returnVal[userId] = newUserDetailPromise;
+            newUserDetailPromise.then((n => {
+                this._userDetailByUserId[userId] = n;
+                delete this._pendingUserDetailByUserId[userId];
+            }));
         }
-
-        if (usernamesToQuery.length === 0) {
-            return returnVal;
-        }
-
-        // We need the userId here to determine which stored userDetail belongs to the given username (the user may have changed their username)
-        this.getUserIdsForUsernames(usernamesToQuery).then((userIdsByUsername) => {
-            for (const usernameKey in userIdsByUsername) {
-                const userId = userIdsByUsername[usernameKey];
-                if (!userId) {
-                    this._pendingUserDetailByUsername[usernameKey].reject(`Unable to retrieve user detail for nonexistent userId`);
-                    continue;
-                }
-                if (!!this._userDetailByUserId[userId]) {
-                    this._pendingUserDetailByUsername[usernameKey].resolve(this._userDetailByUserId[userId]);
-                    continue;
-                }
-                const userDetail = this.createFreshUserDetail(usernameKey, userId);
-                this._userDetailByUserId[userId] = userDetail;
-                this._pendingUserDetailByUsername[usernameKey].resolve(userDetail);
-                delete this._pendingUserDetailByUsername[usernameKey];
-            }
-        }).catch((err) => {
-            for (const username of usernames) {
-                if (!!this._pendingUserDetailByUsername[username]) {
-                    this._pendingUserDetailByUsername[username].reject(`Unable to retrieve user id from API: ${err}`);
-                    delete this._pendingUserDetailByUsername[username]
-                }
-            }
-        });
 
         return returnVal;
     }
 
-    protected abstract createFreshUserDetail(username: string, userId: string): TUserDetail;
+    protected abstract createFreshUserDetail(userId: string): Promise<TUserDetail>;
     
     protected abstract createUserCollection(collection: IUserDetailCollection<TUserDetail>): IUserDetailCollection<TUserDetail>;
 
-    protected async callCommandFunctionFromConfig(command: IIrcBotAuxCommandConfig, channel: string): Promise<boolean> {
-        if (command.expiresAt !== undefined) {
-            try {
-                const expireTime = new Date(command.expiresAt).getTime();
-                if (expireTime < Date.now()) {
-                    return false;
-                }
-            } catch (err) {
-                console.log(`Failed to compare command expiration time: ${err.message}`);
-            }
+    protected getChatCommand(commandConfig: IMessageHandler_Simple_Config): MessageHandler_Simple | undefined {
+        if (!commandConfig.name || commandConfig.responses === undefined || commandConfig.responses.length === 0) {
+            return undefined
         }
-        const responseIndex = randomInt(command.responses.length);
-        const response = command.responses[responseIndex];
-        this.chat(channel, response, true);
-        return true;
+        return new MessageHandler_Simple(commandConfig);
+    }
+
+    protected getTimerGroup(commands: IMessageHandler_AcceptsNoInput[], intervalMinutes: number, startDelayMinutes?: number, randomizeCommands?: boolean): TimerGroup {
+        return new TimerGroup(commands, intervalMinutes, startDelayMinutes, randomizeCommands);
     }
 
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-    protected getCommandsFromConfig(commandGroups: IIrcBotAuxCommandGroupConfig[], channelToAddTimers: string | undefined): CommandsFromConfigResult {
-        const chatResponses: ((messageDetail: IPrivMessageDetail) => Promise<void>)[] = [];
+    protected getSimpleCommandsFromConfig(commandGroups: IIrcBotSimpleMessageHandlersConfig[]): MessageHandlersFromConfigResult {
+        const chatCommands: MessageHandler_Simple[] = [];
         const timerGroups: TimerGroup[] = [];
         
         for (const commandGroup of commandGroups) {
-            const timerCommands: {(): Promise<boolean>}[] = [];
-            for (const command of commandGroup.commands) {
-                if (channelToAddTimers !== undefined && channelToAddTimers !== null) {
-                    if (!command.responses || command.responses.length === 0) {
-                        continue;
-                    }
-                    const func = () => this.callCommandFunctionFromConfig(command, channelToAddTimers)
-                        .catch((err) => {
-                            this.onError(err);
-                            return false;
-                        });
-                    timerCommands.push(func);
-                }
-
-                if (!command.name) {
+            const simpleCommands: MessageHandler_Simple[] = [];
+            for (const commandConfig of commandGroup.messageHandlersConfig) {
+                const command = this.getChatCommand(commandConfig);
+                if (command === undefined) {
                     continue;
                 }
-                const commandNames = Array.isArray(command.aliases)
-                    ? [command.name].concat(command.aliases)
-                    : [command.name];
-                const func = this.getSimpleCommandFunc(commandNames, command.responses, command.strict ?? false, command.name, command.globalTimeoutSeconds ?? 0, command.userTimeoutSeconds ?? 30);
-                chatResponses.push(func);
+                simpleCommands.push(command);
             }
 
-            if (commandGroup.timerMinutes !== null && commandGroup.timerMinutes !== undefined) {
-                const timerGroup = new TimerGroup(timerCommands, commandGroup.timerMinutes, commandGroup.timerMinutesOffset, commandGroup.random);
+            if (commandGroup.timerMinutes !== undefined) {
+                const timerGroup = this.getTimerGroup(simpleCommands, commandGroup.timerMinutes, commandGroup.timerMinutesOffset, commandGroup.random);
                 timerGroups.push(timerGroup);
             }
+            chatCommands.push(...simpleCommands);
         }
 
-        return { chatResponses, timerGroups };
-    }
-
-    /**
-     * Creates a basic response function that responds to a matching message with only simple text strings
-     * @param triggerPhrases 
-     * @param responses 
-     * @param strictMatch 
-     * @param commandKey 
-     * @param globalTimeoutSeconds 
-     * @param userTimeoutSeconds 
-     * @returns 
-     */
-    public getSimpleCommandFunc(triggerPhrases: string[], responses: string[], strictMatch: boolean, commandId: string, globalTimeoutSeconds: number, userTimeoutSeconds: number): (message: IPrivMessageDetail) => Promise<void> {
-        const subFunc = async (messageDetail: IPrivMessageDetail): Promise<void> => {
-            const response = responses[randomInt(responses.length)];
-            this.chat(messageDetail.respondTo, response, true);
-        }
-        return this.getCommandFunc({
-            messageHandler: subFunc,
-            triggerPhrases,
-            strictMatch,
-            commandId,
-            globalTimeoutSeconds,
-            userTimeoutSeconds,
-        });
-    }
-
-    /**
-     * Creates a handling function triggered by specific keyphrases that wraps an arbitrary handle function
-     * @param args 
-     * @returns 
-     */
-    public getCommandFunc(args: NewCommandArgs): (messageDetail: IPrivMessageDetail) => Promise<void> {
-        const messageHandler = async (messageDetail: IPrivMessageDetail): Promise<void> => {
-            const hasMatch = args.triggerPhrases.some((triggerPhrase) => {
-                return this.doesTriggerMatch(messageDetail, triggerPhrase, args.strictMatch);
-            });
-            if (!hasMatch) {
-                return;
-            }
-
-            if (!this.shouldIgnoreTimeoutRestrictions(messageDetail)) {
-                if (this.isCommandTimedOut(args.commandId, messageDetail.username)) {
-                    return;
-                }
-            }
-
-            await args.messageHandler(messageDetail);
-
-            this.addCommandTimeoutDelays(args.commandId, args.globalTimeoutSeconds, { userTimeoutSeconds: args.userTimeoutSeconds, username: messageDetail.username });
-        }
-        return messageHandler;
-    }
-
-    protected abstract shouldIgnoreTimeoutRestrictions(messageDetail: IPrivMessageDetail): boolean;
-
-    protected addCommandTimeoutDelays(commandId: string, globalTimeoutSeconds: number, userTimeout?: { userTimeoutSeconds: number, username: string }): void {
-        if (userTimeout && userTimeout.userTimeoutSeconds > 0) {
-            const userCantUseCommandForMillis = userTimeout.userTimeoutSeconds * 1000;
-            const canUseCommandAgainAt = Date.now() + userCantUseCommandForMillis;
-            const userTimeoutCompositeKey = `${commandId}_${userTimeout.username}`;
-            this._userTimeoutByCommandUsername[userTimeoutCompositeKey] = canUseCommandAgainAt;
-            setTimeout(() => { delete this._userTimeoutByCommandUsername[userTimeoutCompositeKey]; }, userCantUseCommandForMillis);
-        }
-
-        if (globalTimeoutSeconds > 0) {
-            const noneCanUseCommandForMillis = globalTimeoutSeconds * 1000;
-            const canUseCommandAgainAt = Date.now() + noneCanUseCommandForMillis;
-            this._globalTimeoutByCommand[commandId] = canUseCommandAgainAt;
-            setTimeout(() => { delete this._globalTimeoutByCommand[commandId]; }, noneCanUseCommandForMillis);
-        }
-    }
-
-    protected isCommandTimedOut(commandId: string, username?: string): boolean {
-        const globalTimeoutAt = this._globalTimeoutByCommand[commandId] ?? 0;
-        if (globalTimeoutAt > Date.now()) {
-            return true;
-        }
-
-        if (username) {
-            const userTimeoutCompositeKey = `${commandId}_${username}`;
-            const userTimeoutAt = this._userTimeoutByCommandUsername[userTimeoutCompositeKey] ?? 0;
-            if (userTimeoutAt > Date.now()) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    protected doesTriggerMatch(messageDetail: IPrivMessageDetail, triggerPhrase: string, strictMatch: boolean): boolean {
-        const messageTrim = messageDetail.message.trim();
-        const triggerTrim = triggerPhrase.trim();
-        if (!messageTrim || !triggerTrim) {
-            return false;
-        }
-
-        const messageArr = messageTrim.split(" ");
-        const triggerArr = triggerTrim.split(" ");
-        if (messageArr.length < triggerArr.length) {
-            return false;
-        }
-        if (strictMatch && messageArr.length !== triggerArr.length) {
-            return false;
-        }
-        for (let i = 0; i < triggerArr.length; i++) {
-            if (messageArr[i] !== triggerArr[i]) {
-                return false;
-            }
-        }
-
-        return true
+        return { messageHandlers: chatCommands, timerGroups };
     }
 
     public async startup(): Promise<void> {
-        this._startupPromise = new Promise<void>((resolve, reject) => {
-            this._startup().then(() => {
-                resolve();
-            }).catch((err) => {
-                reject(err);
-            });
-        });
-
-        return this._startupPromise;
+        try {
+            await this._startup();
+            this._startupFuture.resolve();
+        } catch (err) {
+            this._startupFuture.reject(err);
+        }
     }
 
     public async _startup(): Promise<void> {
@@ -591,14 +417,14 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
         console.log("");
     }
 
-    protected async getUserIdForUsername(username: string): Promise<string | undefined> {
+    protected async getUserIdForUsername(username: string): Promise<string> {
         const userIdsByUsername = await this.getUserIdsForUsernames([username]);
         const numKeys = Object.keys(userIdsByUsername).length;
         if (numKeys !== 1) {
             throw new Error(`Expected only a single userDetail for username: ${username} (found ${numKeys})`)
         }
 
-        return userIdsByUsername[username];
+        return userIdsByUsername[username]!;
     }
 
     protected async getUserIdsForUsernames(usernames: string[]): Promise<{ [username: string]: string | undefined }> {
@@ -612,48 +438,82 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
     protected async handleJoinMessage(messageDetail: IJoinMessageDetail): Promise<void> {
         console.log(  `${ConsoleColors.FgRed}${messageDetail.username} joined ${messageDetail.channel}${ConsoleColors.Reset}`);
         try {
-            this._usersInChat[messageDetail.username] = UserChatStatus.Connected;
+            const userId = await this.getUserIdForUsername(messageDetail.username);
+            this._userIdsInChat[userId] = UserChatStatus.Connected;
+            
+            const userDetail = await this.getUserDetailForUserId(userId);
+            if (userDetail.username !== messageDetail.username) {
+                this.updateUsername(userDetail, messageDetail.username);
+            }
         } catch (err) {
             console.log(`error adding user to chat: ${err}`);
         }
+    }
+
+    protected updateUsername(userDetail: TUserDetail, newUsername: string): void {
+        if (userDetail.oldUsernames === undefined) {
+            userDetail.oldUsernames = [];
+        }
+        userDetail.oldUsernames.push({ username: userDetail.username, lastSeenInChat: userDetail.lastSeenInChat ?? new Date() });
+        userDetail.username = newUsername;
     }
 
     /** Part messages are sent when a user departs a chatroom */
     protected async handlePartMessage(messageDetail: IPartMessageDetail): Promise<void> {
         console.log(  `${ConsoleColors.FgRed}${messageDetail.username} departed ${messageDetail.channel}${ConsoleColors.Reset}`);
         try {
-            delete this._usersInChat[messageDetail.username];
+            const userId = await this.getUserIdForUsername(messageDetail.username);
+            delete this._userIdsInChat[userId];
         } catch (err) {
             console.log(`error removing user from chat: ${err}`);
         }
     }
 
-    protected async handleChatMessageCount(messageDetail: IPrivMessageDetail): Promise<void> {
-        try {
-            const userDetail = await this.getUserDetailWithCache(messageDetail.username);
-            if (!userDetail.numChatMessages) {
-                userDetail.numChatMessages = 0;
+    protected getHandler_ChatMessageCount(): MessageHandler_InputRequired {
+        const handleFunc = async (input: IMessageHandlerInput) => {
+            try {
+                const userDetail = await this.getUserDetailForUserId(input.userId);
+                if (!userDetail.numChatMessages) {
+                    userDetail.numChatMessages = 0;
+                }
+                
+                userDetail.numChatMessages++;
+                userDetail.lastChatted = new Date();
+            } catch (err) {
+                console.log(`Error updating chat message count for user: ${input.userId}`);
+                console.log(err);
             }
-            
-            userDetail.numChatMessages++;
-            userDetail.lastChatted = new Date();
-        } catch (err) {
-            console.log(`Error updating chat message count for user: ${messageDetail.username}`);
-            console.log(err);
-        }
+        };
+        
+        const config: MessageHandler_InputRequired_Config<IMessageHandlerInput> = {
+            handlerId: "chatMessageCount",
+            triggerPhrases: undefined,
+            strictMatch: false,
+            handleMessage: handleFunc,
+        };
+        const handler = new MessageHandler_InputRequired(config);
+        return handler;
     }
 
-    protected handlePrivMessageResponse(messageDetail: IPrivMessageDetail): void {
-        const handlers = this._configuredPrivMessageResponseHandlers.concat(this._hardcodedPrivMessageResponseHandlers);
+    protected abstract createMessageInput(detail: IPrivMessageDetail): Promise<TMessageHandlerInput>;
 
+    protected async handlePrivMessageResponse(messageDetail: IPrivMessageDetail): Promise<void> {
+        const messageInput = await this.createMessageInput(messageDetail);
+        const handlers = this._messageHandlers_inputAccepted();
+        const timestamp = new Date();
+
+        const promises = []
         for (const handler of handlers) {
-            handler(messageDetail).catch((err) => {
+            const promise = handler.handleMessageWithInput(messageInput, timestamp, false).catch((err) => {
                 console.log("Error processing privMessage response: ");
                 console.log(err);
                 console.error("Error processing privMessage response: "); // TODO: actually use this output stream
                 console.error(err);
             });
+            promises.push(promise);
         }
+
+        await Promise.all(promises);
     }
 
     protected handlePing(messageDetail: IPingMessageDetail): void {
@@ -683,7 +543,7 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
 
         const pingMessageDetail: IPingMessageDetail = {
             command: "PING",
-            hostname: pingRegexArray[1],
+            hostname: pingRegexArray[1]!,
         };
         return pingMessageDetail
     }
@@ -696,9 +556,9 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
         }
         const messageDetail: IPartMessageDetail = {
             command: "PART",
-            username: regexArray[1],
-            hostname: regexArray[2],
-            channel: regexArray[3],
+            username: regexArray[1]!,
+            hostname: regexArray[2]!,
+            channel: regexArray[3]!,
         };
         return messageDetail;
     }
@@ -711,9 +571,9 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
         }
         const messageDetail: IJoinMessageDetail = {
             command: "JOIN",
-            username: regexArray[1],
-            hostname: regexArray[2],
-            channel: regexArray[3],
+            username: regexArray[1]!,
+            hostname: regexArray[2]!,
+            channel: regexArray[3]!,
         };
         return messageDetail;
     }
@@ -729,17 +589,17 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
             return undefined;
         }
 
-        const username = regexArray[2];
-        const recipient = regexArray[4];
+        const username = regexArray[2]!;
+        const recipient = regexArray[4]!;
         const respondTo = recipient.startsWith("#") ? recipient : username;
 
         const messageDetails: IPrivMessageDetail = {
             command: "PRIVMESSAGE",
             tags: regexArray[1],
             username,
-            hostname: regexArray[3],
+            hostname: regexArray[3]!,
             recipient,
-            message: regexArray[5],
+            message: regexArray[5]!,
             respondTo,
         };
 
@@ -749,7 +609,7 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
             this._privMessageDetailCache[message] = messageDetails;
             setTimeout(() => {
                 delete this._privMessageDetailCache[message];
-            }, 2000)
+            }, 2000);
         }
 
         return messageDetails
@@ -775,5 +635,35 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail> {
         }
 
         this.sendRaw(`PRIVMSG ${recipient} :${actualMessage}\r\n`);
+    }
+
+    protected getHandler_Yes(): MessageHandler_InputRequired {
+        const handleFunc = async (input: IMessageHandlerInput) => {
+            await this._pendingTasksByUserId.complete(input.userId);
+        };
+        
+        const config: MessageHandler_InputRequired_Config<IMessageHandlerInput> = {
+            handlerId: "!yes",
+            triggerPhrases: ["!yes"],
+            strictMatch: true,
+            handleMessage: handleFunc,
+        };
+        const handler = new MessageHandler_InputRequired(config);
+        return handler;
+    }
+
+    protected getHandler_No(): MessageHandler_InputRequired {
+        const handleFunc = async (input: IMessageHandlerInput) => {
+            await this._pendingTasksByUserId.cancel(input.userId);
+        };
+        
+        const config: MessageHandler_InputRequired_Config<IMessageHandlerInput> = {
+            handlerId: "!no",
+            triggerPhrases: ["!no"],
+            strictMatch: true,
+            handleMessage: handleFunc,
+        };
+        const handler = new MessageHandler_InputRequired(config);
+        return handler;
     }
 }

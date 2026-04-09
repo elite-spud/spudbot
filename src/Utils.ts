@@ -1,4 +1,5 @@
 import { randomInt } from "crypto";
+import * as fs from "fs";
 
 export type Without<T, U> = { [P in Exclude<keyof T, keyof U>]?: never };
 export type XOR<T, U> = (T | U) extends object ? (Without<T, U> & U) | (Without<U, T> & T) : T | U;
@@ -10,7 +11,7 @@ export class Utils {
 
     public static pickOne<T>(arr: T[]): T {
         const roll = randomInt(arr.length);
-        return arr[roll];
+        return arr[roll]!;
     }
 
     public static getDateFromUtcTimestring(dateString: string): Date {
@@ -19,5 +20,15 @@ export class Utils {
         const utcAdjustedTime = localTimezoneAssumedDate.getTime() - getTimezoneOffsetMillis;
         const utcDate = new Date(utcAdjustedTime);
         return utcDate;
+    }
+
+    public static getRealDir(path: string) {
+        try {
+            return fs.realpathSync(path);
+        } catch (err) {
+            // TODO: make sure the error is because the file doesn't exist yet
+            fs.writeFileSync(path, "0");
+            return fs.realpathSync(path);
+        }
     }
 }

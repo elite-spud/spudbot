@@ -1,15 +1,15 @@
 import { Future } from "./Future";
 
-export class HeldTaskGroup {
-    protected _lastHeldTaskDict: { [key: string]: HeldTask } = {};
+export class PendingTaskGroup {
+    protected _lastHeldTaskDict: { [key: string]: PendingTask } = {};
 
-    public async addHeldTask(key: string, task: HeldTask, timeoutMillis?: number): Promise<void> {
+    public async setPendingTask(key: string, task: PendingTask, timeoutMillis?: number): Promise<void> {
         await this.cancel(key);
         this._lastHeldTaskDict[key] = task;
         if (timeoutMillis) {
             setTimeout(async () => {
                 const existingTask = this._lastHeldTaskDict[key];
-                if (existingTask.id === task.id) {
+                if (existingTask !== undefined && existingTask.id === task.id) {
                     await this.cancel(key);
                 }
             }, timeoutMillis);
@@ -34,7 +34,7 @@ export class HeldTaskGroup {
 }
 
 // TODO: have this implement PromiseLike somehow
-export class HeldTask {
+export class PendingTask {
     protected _hasBeenTriggered = false;
     protected readonly _future = new Future<boolean>();
     public readonly id: string = crypto.randomUUID();
