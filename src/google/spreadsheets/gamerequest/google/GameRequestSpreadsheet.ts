@@ -1,9 +1,10 @@
 import { sheets_v4 } from "googleapis";
-import { headersToRowData, SheetsRowProvider } from "../../SpreadsheetBase";
+import { extractBlockArray, headersToRowData, SheetsRowProvider } from "../../SpreadsheetBase";
 import { GameRequestController } from "../GameRequestController";
 import { GameRequestEntry, GameRequestEntry_IterationPhase } from "../GameRequestEntry";
 import { GameRequestEntryGoogleCompleted, GameRequestEntryGoogleFunded, GameRequestEntryGoogleInProgress, GameRequestEntryGoogleSelected, GameRequestEntryGoogleUnfunded } from "./GameRequestEntryGoogle";
 import { GameRequest_Spreadsheet as GameRequest_SpreadsheetV1 } from "../legacy/GameRequestSpreadsheetV1";
+import { parseGameRequestEntry } from "./GameRequestEntryGoogle_Parsing";
 
 export enum GameRequest_Spreadsheet_BlockOrder {
     Completed = 0,
@@ -43,24 +44,34 @@ export class GameRequest_Spreadsheet implements SheetsRowProvider {
         const inProgressEntries = this._controller.entries.filter(n => n.currentIteration.phase === GameRequestEntry_IterationPhase.InProgress);
         const completedEntries  = this._controller.entries.filter(n => n.currentIteration.phase === GameRequestEntry_IterationPhase.Completed);
 
+        const sortByPercentageFundedDesc = (a: GameRequestEntry, b: GameRequestEntry) => {
+            return a.currentIteration.percentageFunded - b.currentIteration.percentageFunded;
+        };
+        const sortByDateSelectedDesc = (a: GameRequestEntry, b: GameRequestEntry) => {
+            return a.currentIteration.dateSelected!.getTime() - b.currentIteration.dateSelected!.getTime();
+        };
+        const sortByDateCompletedAsc = (a: GameRequestEntry, b: GameRequestEntry) => {
+            return b.currentIteration.dateCompleted!.getTime() - a.currentIteration.dateCompleted!.getTime();
+        };
+
         const unfundedHeaderRows = headersToRowData(GameRequestEntryGoogleUnfunded.headers);
-        const unfundedEntryRows = unfundedEntries.map(n => new GameRequestEntryGoogleUnfunded(n).toRowData());
+        const unfundedEntryRows = unfundedEntries.sort(sortByPercentageFundedDesc).map(n => new GameRequestEntryGoogleUnfunded(n).toRowData());
         const unfundedFooterRows = GameRequestEntryGoogleUnfunded.footers;
 
         const fundedHeaderRows = headersToRowData(GameRequestEntryGoogleFunded.headers);
-        const fundedEntryRows = fundedEntries.map(n => new GameRequestEntryGoogleFunded(n).toRowData());
+        const fundedEntryRows = fundedEntries.sort(sortByPercentageFundedDesc).map(n => new GameRequestEntryGoogleFunded(n).toRowData());
         const fundedFooterRows = GameRequestEntryGoogleFunded.footers;
 
         const selectedHeaderRows = headersToRowData(GameRequestEntryGoogleSelected.headers);
-        const selectedEntryRows = selectedEntries.map(n => new GameRequestEntryGoogleSelected(n).toRowData());
+        const selectedEntryRows = selectedEntries.sort(sortByDateSelectedDesc).map(n => new GameRequestEntryGoogleSelected(n).toRowData());
         const selectedFooterRows = GameRequestEntryGoogleSelected.footers;
 
         const inProgressHeaderRows = headersToRowData(GameRequestEntryGoogleInProgress.headers);
-        const inProgressEntryRows = inProgressEntries.map(n => new GameRequestEntryGoogleInProgress(n).toRowData());
+        const inProgressEntryRows = inProgressEntries.sort(sortByDateSelectedDesc).map(n => new GameRequestEntryGoogleInProgress(n).toRowData());
         const inProgressFooterRows = GameRequestEntryGoogleInProgress.footers;
 
         const completedHeaderRows = headersToRowData(GameRequestEntryGoogleCompleted.headers);
-        const completedEntryRows = completedEntries.map(n => new GameRequestEntryGoogleCompleted(n).toRowData());
+        const completedEntryRows = completedEntries.sort(sortByDateCompletedAsc).map(n => new GameRequestEntryGoogleCompleted(n).toRowData());
         const completedFooterRows = GameRequestEntryGoogleCompleted.footers;
 
         return [
@@ -81,27 +92,33 @@ export class GameRequest_Spreadsheet implements SheetsRowProvider {
             ...unfundedFooterRows,
         ];
     }
+
+    public static async getGameRequestSpreadsheet(sheetsApi: sheets_v4.Sheets, sheetId: string, subSheetId: number, enableOverfunding: boolean): Promise<GameRequest_Spreadsheet> {
+        const apiSpreadsheet = await sheetsApi.spreadsheets.getByDataFilter({
+            spreadsheetId: sheetId,
+            requestBody: {
+                includeGridData: true,
+                dataFilters: [
+                    { gridRange: { sheetId: subSheetId } }
+                ]
+            }
+        });
+    
+        if (!apiSpreadsheet.data || !apiSpreadsheet.data.sheets || apiSpreadsheet.data.sheets.length === 0) {
+            throw new Error("Unable to retrieve game request spreadsheet: sheet is empty");
+        }
+
+        const entries: GameRequestEntry[] = [];
+        const blocks = extractBlockArray(apiSpreadsheet.data.sheets[0]);
+        for (const block of blocks) { // all blocks are presently of the same format
+            const rows = block.slice(2); // first 2 rows of each block are headers
+            for (const row of rows) {
+                const entry = parseGameRequestEntry(row);
+                entries.push(entry);
+            }
+        }
+        const gameRequestController = new GameRequestController(entries, enableOverfunding);
+        const gameRequestSpreadsheet = new GameRequest_Spreadsheet(gameRequestController);
+        return gameRequestSpreadsheet;
+    }
 }
-
-// export function buildIterations(requestorNames: string[], requestorIds: string[], datesRequested: Date[], datesFunded: (Date | undefined)[], datesStarted: (Date | undefined)[], datesCompleted: (Date | undefined)[]): GameRequestIteration[] {
-//     const lengths = [requestorNames.length, requestorIds.length, datesRequested.length, datesFunded.length, datesStarted.length, datesCompleted.length];
-//     const arraysSameLength = lengths.every(n => n === datesRequested.length);
-//     if (!arraysSameLength) {
-//         throw new Error(`Cannot build iteration unless all arrays are same length (expected ${requestorNames.length})`);
-//     }
-
-//     const iterations: GameRequestIteration[] = [];
-//     for (let i = 0; i < datesRequested.length; i++) {
-//         const iteration = {
-//             originalRequestorId: requestorIds[i],
-//             originalRequestorName: requestorNames[i],
-//             dateRequested: datesRequested[i],
-//             dateFunded: datesFunded[i],
-//             dateStarted: datesStarted[i],
-//             dateCompleted: datesCompleted[i],
-//         } as GameRequestIteration;
-//         iterations.push(iteration);
-//     }
-//     iterations.sort((a, b) => a.dateRequested.getTime() - b.dateRequested.getTime()) // ensure iterations are always sorted by 
-//     return iterations;
-// }

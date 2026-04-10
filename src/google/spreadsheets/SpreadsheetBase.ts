@@ -127,7 +127,7 @@ export function parseHeaderFooterRow(row: sheets_v4.Schema$RowData): (string | u
     return array;
 }
 
-export function extractBlockArray(sheet: sheets_v4. Schema$Sheet): sheets_v4.Schema$RowData[][] {
+export function extractBlockArray(sheet: sheets_v4.Schema$Sheet): sheets_v4.Schema$RowData[][] {
     const blockArray: sheets_v4.Schema$RowData[][] = [];
     let rows: sheets_v4.Schema$RowData[] = [];
 

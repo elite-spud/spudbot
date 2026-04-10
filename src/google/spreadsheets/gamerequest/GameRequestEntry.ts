@@ -211,7 +211,7 @@ export class GameRequestEntry {
                 iterations: GameRequestIteration[],
             }) {
         this.gameName = args.gameName;
-        this.iterations = args.iterations;
+        this.iterations = args.iterations.sort((a, b) => { return a.dateRequested.getTime() - b.dateRequested.getTime(); });
     }
 
     public get pointsContributed(): number {

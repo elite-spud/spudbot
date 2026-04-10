@@ -50,7 +50,7 @@ export class SpudBot_MessageHandlers {
             this.getHandler_PowerupBidwarFunds(),
             // this.getHandler_UpdateAllUsers(),
             // this.getHandler_CreateGameRequestRewards(),
-            // this.getHandler_GameRequestModular(),
+            this.getHandler_GameRequestModular(),
             // this.getHandler_BidwarModular(),
         ];
         return handlers;

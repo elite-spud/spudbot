@@ -1,9 +1,10 @@
 import { sheets_v4 } from "googleapis";
 import { Utils } from "../../../../Utils";
-import { getDatetimeFormulaForSpreadsheet, SpreadsheetRow, getCell_Empty } from "../../SpreadsheetBase";
-import { GameRequestEntry } from "../GameRequestEntry";
+import { getCell_Empty, getDatetimeFormulaForSpreadsheet, SpreadsheetRow } from "../../SpreadsheetBase";
 import { basicDateFormat, basicEntryFormat, borderLeft, decimalNumberFormat, getBorderRowBelow } from "../../SpreadsheetBaseStyle";
+import { GameRequestEntry } from "../GameRequestEntry";
 import { getWaitTimeMultiplierFormulaForSpreadsheet } from "../GameRequestUtils";
+import { parseGameRequestEntry } from "./GameRequestEntryGoogle_Parsing";
 
 export abstract class GameRequestEntryGoogle {
     protected readonly _entry: GameRequestEntry;
@@ -12,7 +13,34 @@ export abstract class GameRequestEntryGoogle {
         this._entry = entry;
     }
 
-    public abstract toRowData(): sheets_v4.Schema$RowData;
+    public static readonly columnHeader: SpreadsheetRow = ["Game Name", "Hours Played", "Points Contributed", "% Funded", "Wait Time Multiplier", "Effective % Funded", "Date Requested", "Date Funded", "Date Selected", "Date Started", "Date Completed", "Requested By"];
+    public static footers: sheets_v4.Schema$RowData[] = [getBorderRowBelow(12)];
+
+
+    public toRowData(): sheets_v4.Schema$RowData {
+        const rowData: sheets_v4.Schema$RowData = {
+            values: [
+                this.getCell_GameName(),
+                this.getCell_HoursPlayed(),
+                this.getCell_PointsContributed(),
+                this.getCell_PercentageFunded(),
+                this.getCell_WaitTimeMultiplier(3, 4),
+                this.getCell_percentageFundedEffective(),
+                this.getCell_DateRequested(),
+                this._entry.currentIteration.isFunded ? this.getCell_DateFunded() : getCell_Empty(),
+                this._entry.currentIteration.isSelected ? this.getCell_DateSelected() : getCell_Empty(),
+                this._entry.currentIteration.isStarted ? this.getCell_DateStarted() : getCell_Empty(),
+                this._entry.currentIteration.isCompleted ? this.getCell_DateCompleted() : getCell_Empty(),
+                this.getCell_RequestorName(),
+                this.getCell_BorderRight(),
+            ],
+        };
+        return rowData;
+    }
+
+    public static fromRowData(rowData: sheets_v4.Schema$RowData): GameRequestEntry {
+        return parseGameRequestEntry(rowData);
+    }
 
     public getCell_GameName(): sheets_v4.Schema$CellData {
         return {
@@ -94,9 +122,11 @@ export abstract class GameRequestEntryGoogle {
     }
 
     public getCell_WaitTimeMultiplier(dateFundedCellOffset: number, dateSelectedCellOffset: number): sheets_v4.Schema$CellData {
-        const waitTimeMultiplierFormula = this._entry.currentIteration.isFunded
+        const waitTimeMultiplierFormula = this._entry.currentIteration.isSelected
             ? getWaitTimeMultiplierFormulaForSpreadsheet(dateFundedCellOffset, dateSelectedCellOffset)
-            : 1;
+            : this._entry.currentIteration.isFunded
+                ? getWaitTimeMultiplierFormulaForSpreadsheet(dateFundedCellOffset)
+                : 1;
         return {
             userEnteredValue: { formulaValue: `=${waitTimeMultiplierFormula}` },
             userEnteredFormat: decimalNumberFormat,
@@ -161,143 +191,38 @@ export class GameRequestEntryGoogleUnfunded extends GameRequestEntryGoogle {
     public static headers: SpreadsheetRow[] =
         [
             ["Unfunded Requests"],
-            ["Game Name", "Hours Played", "Points Contributed", "% Funded", "Date Funded", "Date Selected", "Wait Time Multiplier", "Date Started", "Date Completed", "Date Requested", "Requested By"],
+            GameRequestEntryGoogle.columnHeader,
         ];
-    public static footers: sheets_v4.Schema$RowData[] = [getBorderRowBelow(11)];
-
-    public toRowData(): sheets_v4.Schema$RowData {
-        const rowData: sheets_v4.Schema$RowData = {
-            values: [
-                this.getCell_GameName(),
-                this.getCell_HoursPlayed(),
-                this.getCell_PointsContributedOverall(),
-                this.getCell_PercentageFundedOverall(),
-                getCell_Empty(),
-                getCell_Empty(),
-                this.getCell_WaitTimeMultiplier(-2, -1),
-                getCell_Empty(),
-                getCell_Empty(),
-                this.getCell_DateRequested(),
-                this.getCell_RequestorName(),
-                this.getCell_BorderRight(),
-            ],
-        };
-        return rowData;
-    }
 }
 
 export class GameRequestEntryGoogleFunded extends GameRequestEntryGoogle {
     public static headers: SpreadsheetRow[] =
         [
-            ["Funded Requests"],
-            ["Game Name", "Hours Played", "Points Contributed", "% Funded", "Date Funded", "Date Selected", "Wait Time Multiplier", "Date Started", "Date Completed", "Date Requested", "Requested By"],
+            ["Unfunded Requests"],
+            GameRequestEntryGoogle.columnHeader,
         ];
-    public static footers: sheets_v4.Schema$RowData[] = [getBorderRowBelow(11)];
-
-    public toRowData(): sheets_v4.Schema$RowData {
-        const rowData: sheets_v4.Schema$RowData = {
-            values: [
-                this.getCell_GameName(),
-                this.getCell_HoursPlayed(),
-                this.getCell_PointsContributedOverall(),
-                this.getCell_PercentageFundedOverall(),
-                this.getCell_DateFunded(),
-                getCell_Empty(),
-                this.getCell_WaitTimeMultiplier(-2, -1),
-                getCell_Empty(),
-                getCell_Empty(),
-                this.getCell_DateRequested(),
-                this.getCell_RequestorName(),
-                this.getCell_BorderRight(),
-            ],
-        };
-        return rowData;
-    }
 }
 
 export class GameRequestEntryGoogleSelected extends GameRequestEntryGoogle {
     public static headers: SpreadsheetRow[] =
         [
             ["Selected Requests"],
-            ["Game Name", "Hours Played", "Points Contributed", "% Funded", "Date Funded", "Date Selected", "Wait Time Multiplier", "Date Started", "Date Completed", "Date Requested", "Requested By"],
+            GameRequestEntryGoogle.columnHeader,
         ];
-    public static footers: sheets_v4.Schema$RowData[] = [getBorderRowBelow(11)];
-
-    public toRowData(): sheets_v4.Schema$RowData {
-        const rowData: sheets_v4.Schema$RowData = {
-            values: [
-                this.getCell_GameName(),
-                this.getCell_HoursPlayed(),
-                this.getCell_PointsContributedOverall(),
-                this.getCell_PercentageFundedOverall(),
-                this.getCell_DateFunded(),
-                this.getCell_DateSelected(),
-                this.getCell_WaitTimeMultiplier(-2, -1),
-                getCell_Empty(),
-                getCell_Empty(),
-                this.getCell_DateRequested(),
-                this.getCell_RequestorName(),
-                this.getCell_BorderRight(),
-            ],
-        };
-        return rowData;
-    }
 }
 
 export class GameRequestEntryGoogleInProgress extends GameRequestEntryGoogle {
     public static headers: SpreadsheetRow[] =
         [
             ["In Progress Requests"],
-            ["Game Name", "Hours Played", "Points Contributed", "% Funded", "Date Funded", "Date Selected", "Wait Time Multiplier", "Date Started", "Date Completed", "Date Requested", "Requested By"],
+            GameRequestEntryGoogle.columnHeader,
         ];
-    public static footers: sheets_v4.Schema$RowData[] = [getBorderRowBelow(11)];
-
-    public toRowData(): sheets_v4.Schema$RowData {
-        const rowData: sheets_v4.Schema$RowData = {
-            values: [
-                this.getCell_GameName(),
-                this.getCell_HoursPlayed(),
-                this.getCell_PointsContributedOverall(),
-                this.getCell_PercentageFundedOverall(),
-                this.getCell_DateFunded(),
-                this.getCell_DateSelected(),
-                this.getCell_WaitTimeMultiplier(-2, -1),
-                this.getCell_DateStarted(),
-                getCell_Empty(),
-                this.getCell_DateRequested(),
-                this.getCell_RequestorName(),
-                this.getCell_BorderRight(),
-            ],
-        };
-        return rowData;
-    }
 }
 
 export class GameRequestEntryGoogleCompleted extends GameRequestEntryGoogle {
     public static headers: SpreadsheetRow[] =
         [
             ["Completed Requests"],
-            ["Game Name", "Hours Played", "Points Contributed", "% Funded", "Date Funded", "Date Selected", "Wait Time Multiplier", "Date Started", "Date Completed", "Date Requested", "Requested By"],
+            GameRequestEntryGoogle.columnHeader,
         ];
-    public static footers: sheets_v4.Schema$RowData[] = [getBorderRowBelow(11)];
-
-    public toRowData(): sheets_v4.Schema$RowData {
-        const rowData: sheets_v4.Schema$RowData = {
-            values: [
-                this.getCell_GameName(),
-                this.getCell_HoursPlayed(),
-                this.getCell_PointsContributedOverall(),
-                this.getCell_PercentageFundedOverall(),
-                this.getCell_DateFunded(),
-                this.getCell_DateSelected(),
-                this.getCell_WaitTimeMultiplier(-2, -1),
-                this.getCell_DateStarted(),
-                this.getCell_DateCompleted(),
-                this.getCell_DateRequested(),
-                this.getCell_RequestorName(),
-                this.getCell_BorderRight(),
-            ],
-        };
-        return rowData;
-    }
 }
