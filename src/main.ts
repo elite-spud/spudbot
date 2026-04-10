@@ -1,7 +1,8 @@
 import * as fs from "fs";
-import { IIrcBotSimpleMessageHandlersConfig, IIrcBotMiscConfig } from "./IrcBot";
+import { IIrcBotMiscConfig, ISimpleCommandGroup_Config } from "./IrcBot";
 import { SpudBotTwitch } from "./SpudBot";
 import { ISpudBotConnectionConfig } from "./SpudBotTypes";
+import { ISimpleCommand_ConfigTwitch } from "./TwitchApiTypes";
 
 const configDir = fs.realpathSync(`./config`);
 const miscConfigPath = fs.realpathSync(`${configDir}/miscConfig.json`);
@@ -10,7 +11,7 @@ const commandConfigPath = fs.realpathSync(`${configDir}/commands.json`);
 
 const miscConfig = loadJsonFile<IIrcBotMiscConfig>(miscConfigPath);
 const connectionConfig = loadJsonFile<ISpudBotConnectionConfig>(connectionConfigPath);
-const commands = loadJsonFile<IIrcBotSimpleMessageHandlersConfig[]>(commandConfigPath);
+const commands = loadJsonFile<ISimpleCommandGroup_Config<ISimpleCommand_ConfigTwitch>[]>(commandConfigPath);
 
 const bot = new SpudBotTwitch(miscConfig, connectionConfig, commands, configDir);
 bot.startup();

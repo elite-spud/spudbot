@@ -1,4 +1,4 @@
-import { IIrcBotConfig, IIrcBotConnectionConfig, IIrcBotSimpleMessageHandlersConfig, IUserDetail, UserDetail } from "./IrcBot";
+import { IIrcBotConfig, IIrcBotConnectionConfig, ISimpleCommand_Config, IUserDetail, UserDetail } from "./IrcBot";
 
 export interface ITwitchUserDetail extends IUserDetail {
     /** globally unique id for a twitch user (persists between username changes) */
@@ -65,7 +65,7 @@ export class TwitchUserDetail extends UserDetail implements ITwitchUserDetail {
     }
 }
 
-export interface ITwitchBotConfig extends IIrcBotConfig {
+export interface ITwitchBotConfig extends IIrcBotConfig<ISimpleCommand_ConfigTwitch> {
     connection: ITwitchBotConnectionConfig;
 }
 
@@ -143,17 +143,20 @@ export interface TwitchSearchChannelsResponse {
 export interface TwitchGetStreamInfo {
     id: string; // Stream Id
     user_id: string;
+    user_login: string;
     user_name: string;
     game_id: string;
     game_name: string;
     type: "live" | string;
     title: string;
+    tags: string[];
     viewer_count: number;
     /** ISO format date string */
     started_at: string;
     language: string;
     thumbnail_url: string;
     tag_ids: string[];
+    is_mature: boolean;
 }
 
 export interface TwitchGetStreamsResponse {
@@ -234,7 +237,7 @@ export interface TwitchErrorResponse {
     message: string;
 }
 
-export interface ITwitchBotSimpleMessageHandlersConfig extends IIrcBotSimpleMessageHandlersConfig {
+export interface ISimpleCommand_ConfigTwitch extends ISimpleCommand_Config {
     /** Only post automatically (as part of a timer) when these categories are being streamed */
     autoPostGameWhitelist?: string[];
     /** Only post automatically (as part of a timer) if the title contains any of these strings */

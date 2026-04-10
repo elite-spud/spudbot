@@ -8,40 +8,44 @@ export interface IMessageHandlerInput_Twitch extends IMessageHandlerInput {
     messageContainsGigantifiedEmote: boolean;
 }
 
-export interface IChatCommand_SimpleTwitch_Config extends IMessageHandler_Simple_Config {
+export interface IMessageHandler_SimpleTwitch_Config extends IMessageHandler_Simple_Config {
     autoPostGameWhitelist?: string[];
     autoPostIfTitleContainsAny?: string[];
-    twitchApi: TwitchApi;
+    twitchApi: Promise<TwitchApi>;
 }
 
-export class ChatCommand_SimpleTwitch extends MessageHandler_Simple {
+export class MessageHandler_SimpleTwitch extends MessageHandler_Simple {
     protected readonly _autoPostGameWhitelist: string[] | undefined;
     protected readonly _autoPostIfTitleContainsAny: string[] | undefined;
-    protected readonly _twitchApi: TwitchApi;
+    protected readonly _twitchApi: Promise<TwitchApi>;
 
-    public constructor(config: IChatCommand_SimpleTwitch_Config) {
+    public constructor(config: IMessageHandler_SimpleTwitch_Config) {
         super(config);
         this._autoPostGameWhitelist = config.autoPostGameWhitelist;
         this._autoPostIfTitleContainsAny = config.autoPostIfTitleContainsAny;
         this._twitchApi = config.twitchApi;
     }
 
-    protected async gameMatchesGameWhitelist(): Promise<boolean> {
+    protected async gameMatchesAutopostWhitelist(): Promise<boolean> {
         if (this._autoPostGameWhitelist === undefined) {
             return true;
         }
 
-        const streamDetails = await this._twitchApi.getStreamDetails(this._twitchApi.twitchBroadcasterLogin);
-        const gameInWhitelist = this._autoPostGameWhitelist.some(n => n.toLowerCase() === streamDetails.game_name.toLowerCase());
+        const twitchApi = await this._twitchApi;
+        const broadcasterId = await twitchApi.getTwitchBroadcasterId();
+        const channelDetails = await twitchApi.getChannelDetails(broadcasterId);
+        const gameInWhitelist = this._autoPostGameWhitelist.some(n => n.toLowerCase() === channelDetails.game_name.toLowerCase());
         return gameInWhitelist;
     }
 
-    protected async titleMatchesTitleWhitelist(): Promise<boolean> {
+    protected async titleMatchesAutopostWhitelist(): Promise<boolean> {
         if (this._autoPostIfTitleContainsAny === undefined) {
             return true;
         }
 
-        const streamDetails = await this._twitchApi.getStreamDetails(this._twitchApi.twitchBroadcasterLogin);
+        const twitchApi = await this._twitchApi;
+        const broadcasterId = await twitchApi.getTwitchBroadcasterId();
+        const streamDetails = await twitchApi.getChannelDetails(broadcasterId);
         const titleInWhitelist = this._autoPostIfTitleContainsAny.some(n => streamDetails.title.includes(n));
         return titleInWhitelist;
     }
@@ -50,16 +54,6 @@ export class ChatCommand_SimpleTwitch extends MessageHandler_Simple {
         const result = await super.checkTriggers_WithInput(input, timestamp, ignoreTimeout);
         if (result !== undefined) {
             return result;
-        }
-
-        const titleMatches = await this.titleMatchesTitleWhitelist();
-        if (!titleMatches) {
-            return HandleMessageResult.MiscNotHandled;
-        }
-
-        const gameMatches = await this.gameMatchesGameWhitelist();
-        if (!gameMatches) {
-            return HandleMessageResult.MiscNotHandled;
         }
 
         return undefined;
@@ -71,13 +65,13 @@ export class ChatCommand_SimpleTwitch extends MessageHandler_Simple {
             return result;
         }
 
-        if (userId !== undefined) {
-            const titleMatches = await this.titleMatchesTitleWhitelist();
+        if (userId === undefined) {
+            const titleMatches = await this.titleMatchesAutopostWhitelist();
             if (!titleMatches) {
                 return HandleMessageResult.MiscNotHandled;
             }
     
-            const gameMatches = await this.gameMatchesGameWhitelist();
+            const gameMatches = await this.gameMatchesAutopostWhitelist();
             if (!gameMatches) {
                 return HandleMessageResult.MiscNotHandled;
             }

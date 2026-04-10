@@ -147,7 +147,7 @@ export class SpudBot_MessageHandlers {
             const timeoutSeconds = (randomInt(10) + 1) * 20 + 60;
             if (roll !== 0) {
                 const targetUser = await this._spudBot.getUserDetailForUserId(input.userId);
-                await twitchApi.timeout2(targetUser, timeoutSeconds);
+                await twitchApi.timeout(targetUser, timeoutSeconds);
                 await input.chat("💥 BANG!!");
             } else {
                 await input.chat("Click...");
@@ -200,7 +200,7 @@ export class SpudBot_MessageHandlers {
             
             const twitchApi = await this._twitchApi;
             const targetUser = await this._spudBot.getUserDetailForUserId(input.userId);
-            await twitchApi.timeout2(targetUser, timeoutSeconds);
+            await twitchApi.timeout(targetUser, timeoutSeconds);
             await input.chat(text);
         };
         
@@ -228,7 +228,7 @@ export class SpudBot_MessageHandlers {
             
             const twitchApi = await this._twitchApi;
             const targetUser = await this._spudBot.getUserDetailForUserId(input.userId);
-            await twitchApi.timeout2(targetUser, timeoutSeconds);
+            await twitchApi.timeout(targetUser, timeoutSeconds);
             await input.chat(text);
         };
         
@@ -265,7 +265,12 @@ export class SpudBot_MessageHandlers {
         const handleFunc = async (input: IMessageHandlerInput_Twitch) => {
             try {
                 const twitchApi = await this._twitchApi;
-                const streamDetails = await twitchApi.getStreamDetails(await twitchApi.twitchBroadcasterLogin);
+                const broadcasterId = await twitchApi.getTwitchBroadcasterId();
+                const streamDetails = await twitchApi.getStreamDetails(broadcasterId);
+                if (streamDetails === undefined) {
+                    await input.chat(`This stream is not currently live.`);
+                    return;
+                }
                 const dateNowMillis = Date.now();
                 const dateStarted = new Date(streamDetails.started_at);
                 const dateStartedMillis = dateStarted.getTime();

@@ -1,15 +1,15 @@
 import { WebSocket } from "ws";
 import { MessageHandler_InputRequired, MessageHandler_InputRequired_Config } from "./ChatCommand";
-import { IMessageHandlerInput_Twitch } from "./ChatCommand_Twitch";
+import { IMessageHandler_SimpleTwitch_Config, IMessageHandlerInput_Twitch, MessageHandler_SimpleTwitch } from "./ChatCommand_Twitch";
 import { ConsoleColors } from "./ConsoleColors";
 import { Future } from "./Future";
-import { IIrcBotMiscConfig, IIrcBotSimpleMessageHandlersConfig, IPrivMessageDetail, IrcBotBase } from "./IrcBot";
+import { IIrcBotMiscConfig, IPrivMessageDetail, IrcBot, ISimpleCommandGroup_Config } from "./IrcBot";
 import { knownBots } from "./KnownBots";
 import { TaskQueue } from "./TaskQueue";
 import { TwitchApi, TwitchApiConfig } from "./TwitchApi";
-import { emoteWasGigantified, ITwitchBotConfig, ITwitchBotConnectionConfig, SubTierPoints, TwitchBadgeTagKeys, TwitchChatSettings, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_Follow, TwitchEventSub_Event_Raid, TwitchEventSub_Event_SubscriptionEnd, TwitchEventSub_Event_SubscriptionGift, TwitchEventSub_Event_SubscriptionMessage, TwitchEventSub_Event_SubscriptionStart, TwitchEventSub_Notification_Payload, TwitchEventSub_Notification_Subscription, TwitchEventSub_Reconnect_Payload, TwitchEventSub_SubscriptionType, TwitchEventSub_Welcome_Payload, TwitchPrivMessageTagCollection, TwitchPrivMessageTagKeys, TwitchSubscriptionDetail, TwitchUserDetail, userIsModerator, userIsVip } from "./TwitchApiTypes";
+import { emoteWasGigantified, ISimpleCommand_ConfigTwitch, ITwitchBotConfig, ITwitchBotConnectionConfig, SubTierPoints, TwitchBadgeTagKeys, TwitchChatSettings, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_Follow, TwitchEventSub_Event_Raid, TwitchEventSub_Event_SubscriptionEnd, TwitchEventSub_Event_SubscriptionGift, TwitchEventSub_Event_SubscriptionMessage, TwitchEventSub_Event_SubscriptionStart, TwitchEventSub_Notification_Payload, TwitchEventSub_Notification_Subscription, TwitchEventSub_Reconnect_Payload, TwitchEventSub_SubscriptionType, TwitchEventSub_Welcome_Payload, TwitchPrivMessageTagCollection, TwitchPrivMessageTagKeys, TwitchSubscriptionDetail, TwitchUserDetail, userIsModerator, userIsVip } from "./TwitchApiTypes";
 
-export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = TwitchUserDetail> extends IrcBotBase<TUserDetail, IMessageHandlerInput_Twitch> {
+export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = TwitchUserDetail> extends IrcBot<TUserDetail, IMessageHandlerInput_Twitch, ISimpleCommand_ConfigTwitch> {
     public static readonly twitchMaxChatMessageLength = 500;
     protected static readonly _knownConfig: { encoding: "utf8" } = { encoding: "utf8" };
 
@@ -32,11 +32,15 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
 
     public abstract getPowerupGigantifyBitsCost(): Promise<number>;
 
-    public constructor(miscConfig: IIrcBotMiscConfig, connection: ITwitchBotConnectionConfig, auxCommandGroups: IIrcBotSimpleMessageHandlersConfig[], configDir: string) {
-        super(Object.assign(
-            TwitchBotBase._knownConfig,
-            { connection, auxCommandGroups, configDir, misc: miscConfig }
-        ));
+    public constructor(miscConfig: IIrcBotMiscConfig, connection: ITwitchBotConnectionConfig, auxCommandGroups: ISimpleCommandGroup_Config<ISimpleCommand_ConfigTwitch>[], configDir: string) {
+        const args = {
+            encoding: TwitchBotBase._knownConfig.encoding,
+            connection: connection,
+            auxCommandGroups: auxCommandGroups,
+            configDir: configDir,
+            misc: miscConfig,
+        }
+        super(args);
     }
 
     protected override getHardcodedMessageHandlers(): MessageHandler_InputRequired<IMessageHandlerInput_Twitch>[] {
@@ -77,9 +81,36 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         this._currentSubPoints = activeSubInfo.subPoints;
     }
 
+    protected override getChatCommand(commandConfig: ISimpleCommand_ConfigTwitch): MessageHandler_SimpleTwitch | undefined {
+        if (!commandConfig.name || commandConfig.responses === undefined || commandConfig.responses.length === 0) {
+            return undefined
+        }
+        const expirationDate = commandConfig.expiresAt === undefined
+            ? undefined
+            : new Date(commandConfig.expiresAt);
+            const chatFunc = async (message: string) => {
+            this.chat(this._config.connection.server.channel, message);
+        };
+        const simpleCommandConfig: IMessageHandler_SimpleTwitch_Config = {
+            name: commandConfig.name,
+            aliases: commandConfig.aliases,
+            strict: commandConfig.strict,
+            expirationDate: expirationDate,
+            responses: commandConfig.responses,
+            userTimeoutSeconds: commandConfig.userTimeoutSeconds,
+            globalTimeoutSeconds: commandConfig.globalTimeoutSeconds,
+            autoPostGameWhitelist: commandConfig.autoPostGameWhitelist,
+            autoPostIfTitleContainsAny: commandConfig.autoPostIfTitleContainsAny,
+            chatFunc: chatFunc,
+            twitchApi: this._twitchApi.asPromise(),
+        };
+        return new MessageHandler_SimpleTwitch(simpleCommandConfig);
+    }
+
     protected override async trackUsersInChat(secondsToAdd: number, force: boolean = false): Promise<void> {
         const twitchApi = await this._twitchApi;
-        const isChannelLive = await twitchApi.isChannelLive(twitchApi.twitchBroadcasterLogin);
+        const broadcasterId = await twitchApi.getTwitchBroadcasterId();
+        const isChannelLive = await twitchApi.isChannelLive(broadcasterId);
         if (!force && !isChannelLive) {
             return;
         }
@@ -307,7 +338,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
     protected async handleSubscriptionGift(_event: TwitchEventSub_Event_SubscriptionGift, _subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
     }
 
-    public async trackUserBits2(userId: string, numBits: number) {
+    public async trackUserBits(userId: string, numBits: number) {
         let userDetail: TUserDetail | undefined;
         try {
             userDetail = await this.getUserDetailForUserId(userId);
@@ -327,7 +358,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
             return;
         }
 
-        await this.trackUserBits2(event.user_id, event.bits);
+        await this.trackUserBits(event.user_id, event.bits);
     }
 
     protected setChatSettingsOverrideTimeouts(overrideMillis: number, warningMillis: number, chatRespondTo: string): void {
@@ -420,7 +451,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
 
         const chatRespondTo = `#${event.to_broadcaster_user_login}`;
         const twitchApi = await this._twitchApi;
-        const raidingChannelDetails = await twitchApi.getChannelDetails(event.from_broadcaster_user_login);
+        const raidingChannelDetails = await twitchApi.getChannelDetails(event.from_broadcaster_user_id);
         const andFriendsString = event.viewers > 3
             ? ` and friends`
             : ``;
@@ -595,7 +626,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
                         return;
                     }
                     const powerupGigantifyBitsCost = await this.getPowerupGigantifyBitsCost();
-                    await this.trackUserBits2(input.userId, powerupGigantifyBitsCost);
+                    await this.trackUserBits(input.userId, powerupGigantifyBitsCost);
                 }
             } catch (err) {
                 console.log(`Error tracking bits for user: ${input.userId}`);

@@ -2,10 +2,10 @@ import { MessageHandler_InputRequired } from "./ChatCommand";
 import { IMessageHandlerInput_Twitch } from "./ChatCommand_Twitch";
 import { Future } from "./Future";
 import { GoogleAPI, GoogleApiConfig } from "./google/GoogleAPI";
-import { IIrcBotMiscConfig, IIrcBotSimpleMessageHandlersConfig, IUserDetailCollection } from "./IrcBot";
+import { IIrcBotMiscConfig, ISimpleCommandGroup_Config, IUserDetailCollection } from "./IrcBot";
 import { SpudBot_MessageHandlers } from "./SpudBot_MessageHandlers";
 import { ISpudBotConfig, ISpudBotConnectionConfig } from "./SpudBotTypes";
-import { ITwitchUserDetail, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Notification_Subscription, TwitchEventSub_SubscriptionType, TwitchUserDetail } from "./TwitchApiTypes";
+import { ISimpleCommand_ConfigTwitch, ITwitchUserDetail, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Notification_Subscription, TwitchEventSub_SubscriptionType, TwitchUserDetail } from "./TwitchApiTypes";
 import { TwitchBotBase } from "./TwitchBot";
 import { Utils } from "./Utils";
 
@@ -15,7 +15,7 @@ export class SpudBotTwitch extends TwitchBotBase<TwitchUserDetail> {
 
     protected readonly _googleApi = new Future<GoogleAPI>();
 
-    public constructor(miscConfig: IIrcBotMiscConfig, connection: ISpudBotConnectionConfig, auxCommandGroups: IIrcBotSimpleMessageHandlersConfig[], configDir: string) {
+    public constructor(miscConfig: IIrcBotMiscConfig, connection: ISpudBotConnectionConfig, auxCommandGroups: ISimpleCommandGroup_Config<ISimpleCommand_ConfigTwitch>[], configDir: string) {
         super(miscConfig, connection, auxCommandGroups, configDir);
     }
 

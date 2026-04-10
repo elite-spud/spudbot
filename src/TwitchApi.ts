@@ -1,9 +1,9 @@
 import * as http from "http";
 import * as https from "https";
 import { getPassword, setPassword } from "keytar";
-import { Future } from "./Future";
-import { CreateCustomChannelPointRewardArgs, ITwitchAuthConfig, TwitchAppToken, TwitchBannedUser, TwitchBroadcasterSubscriptionsResponse, TwitchChatSettings, TwitchErrorResponse, TwitchEventSub_CreateSubscription, TwitchEventSub_SubscriptionType, TwitchFollowingUser, TwitchGame, TwitchGetBannedUsersResponseBody, TwitchGetChannelInfo, TwitchGetChannelInfoResponse, TwitchGetCustomChannelPointRewardInfo, TwitchGetCustomChannelPointRewardResponse, TwitchGetFollowingUsersResponseBody, TwitchGetGamesResponseBody, TwitchGetShieldModeStatusResponseBody, TwitchGetStreamInfo, TwitchGetStreamsResponse, TwitchRequestArgs, TwitchSubscriptionDetail, TwitchUpdateChannelInformationRequestBody, TwitchUpdateChatSettingsRequestBody, TwitchUserAPIInfo, TwitchUserDetail, TwitchUserInfoResponse, TwitchUserToken } from "./TwitchApiTypes";
 import { ConsoleColors } from "./ConsoleColors";
+import { Future } from "./Future";
+import { CreateCustomChannelPointRewardArgs, ITwitchAuthConfig, TwitchAppToken, TwitchBannedUser, TwitchBroadcasterSubscriptionsResponse, TwitchChatSettings, TwitchEventSub_CreateSubscription, TwitchEventSub_SubscriptionType, TwitchFollowingUser, TwitchGame, TwitchGetBannedUsersResponseBody, TwitchGetChannelInfo, TwitchGetChannelInfoResponse, TwitchGetCustomChannelPointRewardInfo, TwitchGetCustomChannelPointRewardResponse, TwitchGetFollowingUsersResponseBody, TwitchGetGamesResponseBody, TwitchGetShieldModeStatusResponseBody, TwitchGetStreamInfo, TwitchGetStreamsResponse, TwitchRequestArgs, TwitchSubscriptionDetail, TwitchUpdateChannelInformationRequestBody, TwitchUpdateChatSettingsRequestBody, TwitchUserAPIInfo, TwitchUserDetail, TwitchUserInfoResponse, TwitchUserToken } from "./TwitchApiTypes";
 
 export interface TwitchApiConfig {
     twitchBroadcasterChannel: string;
@@ -325,95 +325,71 @@ export class TwitchApi {
         }
     }
 
-    public async isChannelLive(channelName: string): Promise<boolean> {
+    public async isChannelLive(channelId: string): Promise<boolean> {
         try {
-            const channelInfoResponse = await this.getStreamDetails(channelName);
-            const channelIsLive = channelInfoResponse.type === "live";
-            return channelIsLive;
+            const channelInfoResponse = await this.getStreamDetails(channelId);
+            if (channelInfoResponse === undefined || channelInfoResponse.type === "live") {
+                return false;
+            }
+            return true;
         } catch (err) {
             return false;
         }
     }
 
-    public async getChannelDetails(channelName: string): Promise<TwitchGetChannelInfo> {
-        const channelId = await this.getUserIdForUsername(channelName);
+    public async getStreamDetails(channelId: string): Promise<TwitchGetStreamInfo | undefined> {
         const appToken = await this._twitchAppToken;
-        return new Promise<TwitchGetChannelInfo>((resolve, reject) => {
-    
-            const options = {
-                headers: {
-                    Authorization: `Bearer ${appToken.access_token}`,
-                    "client-id": `${this._authConfig.clientId}`,
-                },
-            };
-            const request = https.get(`https://api.twitch.tv/helix/channels?broadcaster_id=${channelId}`, options, (response) => {
-                    response.on("data", (data) => {
-                        const responseJson: TwitchGetChannelInfoResponse | TwitchErrorResponse = JSON.parse(data.toString("utf8"));
-                        const errorResponse = responseJson as TwitchErrorResponse;
-                        if (errorResponse.error) {
-                            reject(`Error retrieving channel info from twitch API: ${errorResponse.status} ${errorResponse.error}: ${errorResponse.message}`);
-                            return;
-                        }
-
-                        const channelInfoResponse = responseJson as TwitchGetChannelInfoResponse;
-                        if (channelInfoResponse.data.length > 1) {
-                            reject("More than one channel info received, expected only one.");
-                            return;
-                        }
-                        if (channelInfoResponse.data.length === 0) {
-                            reject("No channel info received in response, expected one.");
-                            return;
-                        }
-                        resolve(channelInfoResponse.data[0]!);
-                        return;
-                    });
-                });
-            request.on("error", (err) => {
-                console.log("Error sending auth token request to twitch:");
-                console.log(err);
-                reject(err);
-            });
+        const url = `https://api.twitch.tv/helix/streams?user_id=${channelId}`;
+        const response = await fetch(url, {
+            method: `GET`,
+            headers: {
+                Authorization: `Bearer ${appToken.access_token}`,
+                "Client-Id": `${this._authConfig.clientId}`,
+            }
         });
+
+        if (response.status !== 200) {
+            const errMessage = `Get Stream Info request failed: ${response.status} ${response.statusText}`;
+            console.log(errMessage);
+            console.log(await response.json());
+            throw new Error(errMessage);
+        } else {
+            // TODO: log this to trace output
+            // console.log(`Get Stream Info successful.`);
+        }
+
+        const responseJson: TwitchGetStreamsResponse = await response.json();
+        if (responseJson.data.length !== 1) {
+            return undefined;
+        }
+        return responseJson.data[0];
     }
 
-    public async getStreamDetails(channelName: string): Promise<TwitchGetStreamInfo> {
+    public async getChannelDetails(channelId: string): Promise<TwitchGetChannelInfo> {
         const appToken = await this._twitchAppToken;
-        return new Promise<TwitchGetStreamInfo>((resolve, reject) => {
-    
-            const options = {
-                headers: {
-                    Authorization: `Bearer ${appToken.access_token}`,
-                    "client-id": `${this._authConfig.clientId}`,
-                },
-            };
-            const request = https.get(`https://api.twitch.tv/helix/streams?user_login=${channelName}`, options, (response) => {
-                    response.on("data", (data) => {
-                        const responseJson: TwitchGetStreamsResponse | TwitchErrorResponse = JSON.parse(data.toString("utf8"));
-                        const errorResponse = responseJson as TwitchErrorResponse;
-                        if (errorResponse.error) {
-                            reject(`Error retrieving channel info from twitch API: ${errorResponse.status} ${errorResponse.error}: ${errorResponse.message}`);
-                            return;
-                        }
-
-                        const channelInfoResponse = responseJson as TwitchGetStreamsResponse;
-                        if (channelInfoResponse.data.length > 1) {
-                            reject("More than one stream info received, expected only one.");
-                            return;
-                        }
-                        if (channelInfoResponse.data.length === 0) {
-                            reject("No stream info received in response, expected one.");
-                            return;
-                        }
-                        resolve(channelInfoResponse.data[0]!);
-                        return;
-                    });
-                });
-            request.on("error", (err) => {
-                console.log("Error sending auth token request to twitch:");
-                console.log(err);
-                reject(err);
-            });
+        const url = `https://api.twitch.tv/helix/channels?broadcaster_id=${channelId}`;
+        const response = await fetch(url, {
+            method: `GET`,
+            headers: {
+                Authorization: `Bearer ${appToken.access_token}`,
+                "Client-Id": `${this._authConfig.clientId}`,
+            }
         });
+
+        if (response.status !== 200) {
+            const errMessage = `Get Stream Info request failed: ${response.status} ${response.statusText}`;
+            console.log(errMessage);
+            console.log(await response.json());
+            throw new Error(errMessage);
+        } else {
+            console.log(`Get Channel Info successful.`);
+        }
+
+        const responseJson: TwitchGetChannelInfoResponse = await response.json();
+        if (responseJson.data.length > 1) {
+            throw new Error(`Expected one channel info response. Received ${responseJson.data.length}`);
+        }
+        return responseJson.data[0];
     }
 
     /**
@@ -605,7 +581,7 @@ export class TwitchApi {
         }
     }
 
-    public async timeout2(targetUser: TwitchUserDetail, durationSeconds?: number): Promise<void> {
+    public async timeout(targetUser: TwitchUserDetail, durationSeconds?: number): Promise<void> {
         console.log(`Timing out ${targetUser.username} in channel ${this.twitchBroadcasterLogin}`);
         const broadcasterId = await this.getTwitchBroadcasterId();
         const body = {
