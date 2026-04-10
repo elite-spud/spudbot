@@ -137,17 +137,18 @@ export class GameRequestIteration {
             return 1;
         }
 
+        const scalerPerYear = 2; // multiplier will double for each year beyond the funded date
         const oneYearMilliseconds = (1000 * 60 * 60 * 24 * 365);
         if (this.phase <= GameRequestEntry_IterationPhase.Funded && this.dateFunded !== undefined) {
             const elapsedMilliseconds = Date.now() - this.dateFunded.getTime();
             const elapsedYears = elapsedMilliseconds / oneYearMilliseconds;
-            return Math.pow(2, elapsedYears);
+            return Math.pow(scalerPerYear, elapsedYears);
         }
 
         if (this.phase <= GameRequestEntry_IterationPhase.Completed && this.dateFunded !== undefined && this.dateSelected !== undefined) {
             const elapsedMilliseconds = this.dateSelected.getTime() - this.dateFunded.getTime();
             const elapsedYears = elapsedMilliseconds / oneYearMilliseconds;
-            return Math.pow(2, elapsedYears);
+            return Math.pow(scalerPerYear, elapsedYears);
         }
 
         throw new Error(`Unable to calculate wait time multiplier.`);

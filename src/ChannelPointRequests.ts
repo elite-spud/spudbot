@@ -1,7 +1,8 @@
 export class ChannelPointRequests {
+    protected static readonly stepSize = 5000;
     protected static readonly baseHours = 3;
     protected static readonly baseCost = 10000;
-    protected static readonly rateOfChangeScaler = 0.8;
+    protected static readonly rateOfChangeScaler = 0.9;
 
     private constructor() {}
 
@@ -10,7 +11,7 @@ export class ChannelPointRequests {
             return this.baseCost;
 
         const calculatedCost = this.baseCost * Math.pow(hoursToBeat / this.baseHours, this.rateOfChangeScaler);
-        const nearestThousand = Math.round(calculatedCost / 1000) * 1000;
-        return nearestThousand;
+        const nearestStep = Math.round(calculatedCost / this.stepSize) * this.stepSize;
+        return nearestStep;
     }
 }
