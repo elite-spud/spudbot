@@ -84,7 +84,7 @@ export abstract class GameRequestEntryGoogle {
     public getCell_percentageFundedEffective(): sheets_v4.Schema$CellData {
         return {
             userEnteredValue: { numberValue: this._entry.currentIteration.percentageFundedEffective },
-            note: this._entry.iterations.map(i => i.pointsRequiredToFund).join("\n"),
+            // note: this._entry.iterations.map(i => i.pointsRequiredToFund).join("\n"),
             userEnteredFormat: Object.assign({}, basicEntryFormat, <sheets_v4.Schema$CellFormat>{ numberFormat: { type: "NUMBER", pattern: "0.0%" } }),
         };
     }
@@ -100,7 +100,7 @@ export abstract class GameRequestEntryGoogle {
     public getCell_PercentageFundedEffectiveOverall(): sheets_v4.Schema$CellData {
         return {
             userEnteredValue: { numberValue: this._entry.percentageFundedEffective },
-            note: this._entry.iterations.map(i => i.pointsRequiredToFund).join("\n"),
+            // note: this._entry.iterations.map(i => i.pointsRequiredToFund).join("\n"),
             userEnteredFormat: Object.assign({}, basicEntryFormat, <sheets_v4.Schema$CellFormat>{ numberFormat: { type: "NUMBER", pattern: "0.0%" } }),
         };
     }

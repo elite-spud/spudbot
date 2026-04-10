@@ -17,12 +17,12 @@ export function parseGameRequestEntry(row: sheets_v4.Schema$RowData): GameReques
         hoursPlayedByIteration: parseFromNote_HoursPlayedByIteration(row.values[1]),
         pointsContributedByIteration: parseFromNote_PointContributionsByIteration(row.values[2]),
         pointsRequiredByIteration: parsefromNote_NumberByIteration(row.values[3]),
-        datesFundedByIteration: parseFromNote_DateByIteration(row.values[4]),
-        datesSelectedByIteration: parseFromNote_DateByIteration(row.values[5]),
-        datesStartedByIteration: parseFromNote_DateByIteration(row.values[7]),
-        datesCompletedByIteration: parseFromNote_DateByIteration(row.values[8]),
-        dateRequestedByIteration: parseFromNote_DateByIteration(row.values[9]),
-        requestedByByIteration: parseFromNote_RequestorByIteration(row.values[10]),
+        dateRequestedByIteration: parseFromNote_DateByIteration(row.values[6]),
+        datesFundedByIteration: parseFromNote_DateByIteration(row.values[7]),
+        datesSelectedByIteration: parseFromNote_DateByIteration(row.values[8]),
+        datesStartedByIteration: parseFromNote_DateByIteration(row.values[9]),
+        datesCompletedByIteration: parseFromNote_DateByIteration(row.values[10]),
+        requestedByByIteration: parseFromNote_RequestorByIteration(row.values[11]),
     });
 
     return new GameRequestEntry({
@@ -46,12 +46,12 @@ interface IterationBuildArgs {
 function buildIterations(args: IterationBuildArgs): GameRequestIteration[] {
     const numIterations = args.requestedByByIteration.length;
     const iterations: GameRequestIteration[] = [];
-    const lengthsNotIdentical = [
+    const lengthsNotIdenticalOrLessByOne = [
         args.hoursPlayedByIteration.length, args.pointsContributedByIteration.length, args.pointsRequiredByIteration.length, args.datesFundedByIteration.length,
         args.datesSelectedByIteration.length, args.datesStartedByIteration.length, args.datesCompletedByIteration.length, args.dateRequestedByIteration.length,
-    ].some(n => n !== numIterations);
-    if (lengthsNotIdentical) {
-        throw new Error(`Unable to create new Game Request Iteration: iteration arrays must all be of same length (expected ${numIterations})`);
+    ].some(n => n !== numIterations && n !== numIterations - 1);
+    if (lengthsNotIdenticalOrLessByOne) {
+        throw new Error(`Unable to create new Game Request Iteration: iteration arrays must all be of same length or one less (expected ${numIterations})`);
     }
 
     for (let i = 0; i < numIterations; i++) {
@@ -99,7 +99,7 @@ function parseValueByIterationFromNote<T>(args: IParseIterationArgs<T>): T[] {
 
 function parseValuesByIterationFromNote<T>(args: IParseIterationArgs<T>): T[][] {
     if (args.cell.note === undefined || args.cell.note === null) {
-        throw new Error("Note must be defined to parse points contributed");
+        return [];
     }
     const iterationStrings = args.cell.note.split("\n\n");
     const iterations: T[][] = [];
@@ -110,7 +110,7 @@ function parseValuesByIterationFromNote<T>(args: IParseIterationArgs<T>): T[][] 
             const tokens = valueString.split(args.iterationPattern ?? /\s*•\s*/);
             const expectedTokens = args.numValuesPerLine;
             if (tokens.length !== expectedTokens) {
-                throw new Error(`Unable to parse iteration string: Did not receive expected number of tokens from regex (found ${tokens.length}, expected ${expectedTokens}`);
+                throw new Error(`Unable to parse iteration string: Did not receive expected number of tokens from regex (found ${tokens.length}, expected ${expectedTokens})`);
             }
             const value = args.toGeneric(tokens);
             entries.push(value);
@@ -127,8 +127,8 @@ interface HoursPlayedIteration {
 export function parseFromNote_HoursPlayedByIteration(cell: sheets_v4.Schema$CellData): HoursPlayedIteration[] {
     const func = (strings: string[]): HoursPlayedIteration => {
         return {
-            hoursPlayed: Number.parseInt(strings[0]),
-            hoursEstimated: Number.parseInt(strings[1]),
+            hoursPlayed: Number.parseInt(strings[1]),
+            hoursEstimated: Number.parseInt(strings[0]),
         };
     }
     const args: IParseIterationArgs<HoursPlayedIteration> = {
@@ -150,7 +150,7 @@ export function parseFromNote_PointContributionsByIteration(cell: sheets_v4.Sche
     }
     const args: IParseIterationArgs<GameRequestContribution> = {
         cell: cell,
-        numValuesPerLine: 2,
+        numValuesPerLine: 4,
         toGeneric: func,
     };
     return parseValuesByIterationFromNote(args);

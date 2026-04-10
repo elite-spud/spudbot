@@ -54,8 +54,8 @@ export class GoogleAPI {
     public static readonly bidwarSubSheet = 877321766;
     public static readonly testSubSheet = 687898556;
     public static readonly testSubSheet2 = 97928787;
-    public static readonly gameRequestInputSubSheet = this.gameRequestSubSheet;
-    public static readonly gameRequestOutputSubSheet = this.testSubSheet;
+    public static readonly gameRequestInputSubSheet = this.testSubSheet;
+    public static readonly gameRequestOutputSubSheet = this.testSubSheet2;
 
     protected _gameRequestOverfundingEnabled: boolean = false;
     public get gameRequestOverfundingEnabled(): boolean {
@@ -94,17 +94,14 @@ export class GoogleAPI {
         const future = new Future<void>();
         const task = async (): Promise<void> => {
             try {
-                const gameRequestSpreadsheet = await GameRequest_SpreadsheetV1.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestInputSubSheet);
-                const v2sheet = GameRequest_Spreadsheet.fromV1Spreadsheet(gameRequestSpreadsheet);
-                //const gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestInputSubSheet, this.gameRequestOverfundingEnabled);
-                await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestOutputSubSheet, v2sheet);
-                //await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestOutputSubSheet, gameRequestSpreadsheet);
-                await chat(`Game request successfully completed.`);
+                const gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestInputSubSheet, this.gameRequestOverfundingEnabled);
+                await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestOutputSubSheet, gameRequestSpreadsheet);
+                await chat(`Game request refresh successfully completed.`);
                 return;
             } catch (err) {
-                const errorMessage = `Error handling game request refresh: ${err.message}`;
+                const errorMessage = `Error handling game request refresh`;
                 chat(errorMessage);
-                throw new Error(errorMessage);
+                throw new Error(`${errorMessage}: ${err.message}`);
             } finally {
                 future.resolve();
             }
