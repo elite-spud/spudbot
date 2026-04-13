@@ -13,13 +13,7 @@ export enum GameRequest_Spreadsheet_BlockOrder {
     Unfunded = 3,
 }
 
-export class GameRequest_Spreadsheet implements SheetsRowProvider {
-    protected readonly _controller: GameRequestController;
-
-    public constructor(controller: GameRequestController) {
-        this._controller = controller;
-    }
-
+export class GameRequest_Spreadsheet extends GameRequestController implements SheetsRowProvider {
     public static fromV1Spreadsheet(sheet: GameRequest_SpreadsheetV1): GameRequest_Spreadsheet {
         const completedEntries = sheet.completedBlock.entries.map(n => GameRequestEntry.fromV1Completed(n));
         const startedEntries = sheet.inProgressBlock.entries.map(n => GameRequestEntry.fromV1Started(n));
@@ -32,17 +26,16 @@ export class GameRequest_Spreadsheet implements SheetsRowProvider {
             ...unfundedEntries,
         ];
 
-        const controller = new GameRequestController(entries, true);
-        const spreadsheet = new GameRequest_Spreadsheet(controller);
+        const spreadsheet = new GameRequest_Spreadsheet(entries, true);
         return spreadsheet;
     }
 
     public toRowData(): sheets_v4.Schema$RowData[] {
-        const unfundedEntries   = this._controller.entries.filter(n => n.currentIteration.phase === GameRequestEntry_IterationPhase.Unfunded);
-        const fundedEntries     = this._controller.entries.filter(n => n.currentIteration.phase === GameRequestEntry_IterationPhase.Funded);
-        const selectedEntries   = this._controller.entries.filter(n => n.currentIteration.phase === GameRequestEntry_IterationPhase.Selected);
-        const inProgressEntries = this._controller.entries.filter(n => n.currentIteration.phase === GameRequestEntry_IterationPhase.InProgress);
-        const completedEntries  = this._controller.entries.filter(n => n.currentIteration.phase === GameRequestEntry_IterationPhase.Completed);
+        const unfundedEntries   = this.entries.filter(n => n.currentIteration.phase === GameRequestEntry_IterationPhase.Unfunded);
+        const fundedEntries     = this.entries.filter(n => n.currentIteration.phase === GameRequestEntry_IterationPhase.Funded);
+        const selectedEntries   = this.entries.filter(n => n.currentIteration.phase === GameRequestEntry_IterationPhase.Selected);
+        const inProgressEntries = this.entries.filter(n => n.currentIteration.phase === GameRequestEntry_IterationPhase.InProgress);
+        const completedEntries  = this.entries.filter(n => n.currentIteration.phase === GameRequestEntry_IterationPhase.Completed);
 
         const sortByPercentageFundedDesc = (a: GameRequestEntry, b: GameRequestEntry) => {
             return a.currentIteration.percentageFunded - b.currentIteration.percentageFunded;
@@ -117,8 +110,7 @@ export class GameRequest_Spreadsheet implements SheetsRowProvider {
                 entries.push(entry);
             }
         }
-        const gameRequestController = new GameRequestController(entries, enableOverfunding);
-        const gameRequestSpreadsheet = new GameRequest_Spreadsheet(gameRequestController);
+        const gameRequestSpreadsheet = new GameRequest_Spreadsheet(entries, enableOverfunding);
         return gameRequestSpreadsheet;
     }
 }

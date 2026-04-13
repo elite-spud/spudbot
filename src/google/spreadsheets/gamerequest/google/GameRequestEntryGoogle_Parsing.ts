@@ -1,7 +1,6 @@
 import { sheets_v4 } from "googleapis";
-import { GameRequestContribution, GameRequestEntry, GameRequestIteration } from "../GameRequestEntry";
-import { Utils } from "../../../../Utils";
 import { getEntryValue_String } from "../../SpreadsheetBase";
+import { GameRequestContribution, GameRequestEntry, GameRequestIteration } from "../GameRequestEntry";
 
 export function parseGameRequestEntry(row: sheets_v4.Schema$RowData): GameRequestEntry {
     if (!row.values) {
@@ -121,14 +120,15 @@ function parseValuesByIterationFromNote<T>(args: IParseIterationArgs<T>): T[][] 
 }
 
 interface HoursPlayedIteration {
-    hoursPlayed: number;
     hoursEstimated: number;
+    hoursPlayed: number | undefined;
 }
 export function parseFromNote_HoursPlayedByIteration(cell: sheets_v4.Schema$CellData): HoursPlayedIteration[] {
     const func = (strings: string[]): HoursPlayedIteration => {
+        const hoursPlayed = Number.parseInt(strings[1]);
         return {
-            hoursPlayed: Number.parseInt(strings[1]),
             hoursEstimated: Number.parseInt(strings[0]),
+            hoursPlayed: isNaN(hoursPlayed) ? undefined : hoursPlayed,
         };
     }
     const args: IParseIterationArgs<HoursPlayedIteration> = {
@@ -145,7 +145,7 @@ export function parseFromNote_PointContributionsByIteration(cell: sheets_v4.Sche
             name: strings[2],
             id: strings[3],
             points: Number.parseInt(strings[1]),
-            timestamp: Utils.getDateFromUtcTimestring(strings[0]),
+            timestamp: new Date(strings[0]),
         }
     }
     const args: IParseIterationArgs<GameRequestContribution> = {
@@ -189,7 +189,7 @@ export function parsefromNote_NumberByIteration(cell: sheets_v4.Schema$CellData)
 
 export function parseFromNote_DateByIteration(cell: sheets_v4.Schema$CellData): Date[] {
     const func = (strings: string[]): Date => {
-        return Utils.getDateFromUtcTimestring(strings[0]);
+        return new Date(strings[0]);
     }
     const args: IParseIterationArgs<Date> = {
         cell: cell,

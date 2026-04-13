@@ -52,7 +52,7 @@ export abstract class GameRequestEntryGoogle {
     public getCell_HoursPlayed(): sheets_v4.Schema$CellData {
         return {
             userEnteredValue: { numberValue: this._entry.hoursPlayed },
-            note: `${this._entry.iterations.map(i => `${i.estimatedGameLengthHours} • ${i.hoursPlayed}`).join("\n")}`,
+            note: `${this._entry.iterations.map(i => `${i.estimatedGameLengthHours} • ${i.hoursPlayed ?? ""}`).join("\n")}`,
             userEnteredFormat: basicEntryFormat,
         };
     }
@@ -160,7 +160,7 @@ export abstract class GameRequestEntryGoogle {
     public getCell_RequestorName(): sheets_v4.Schema$CellData {
         return {
             userEnteredValue: { stringValue: this._entry.currentIteration.requestorName, },
-            note: this._entry.iterations.map(i => `${i.requestorName} • ${i.requestorName}`).join("\n"),
+            note: this._entry.iterations.map(i => `${i.requestorName} • ${i.requestorId}`).join("\n"),
             userEnteredFormat: basicEntryFormat,
         };
     }

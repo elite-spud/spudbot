@@ -537,7 +537,7 @@ export class SpudBot_MessageHandlers {
             }
 
             if (tokens[1] === "help") {
-                const adminHelpMessage = `!gamerequest [add, fund, start, complete, refresh]`;
+                const adminHelpMessage = `!gamerequest [add, fund, select, start, complete, refresh]`;
                 input.chat(adminHelpMessage);
                 return;
             }
@@ -572,6 +572,18 @@ export class SpudBot_MessageHandlers {
                 }
             } else if (tokens[1] === "remove") {
                 // TODO: implement this
+            } else if (tokens[1] === "select") {
+                const args = tokens.slice(2);
+                if (args.length === 0) {
+                    input.chat(`!gamerequest select <gameName>`);
+                    return;
+                }
+                if (args.length !== 1) {
+                    input.chat(`!gameRequest select command was malformed (expected 1 arguments, but found ${args.length})`);
+                    return;
+                }
+                const gameName = args[0]!.replaceAll("\"", "");
+                await (await this._googleApi).handleGameRequestSelect(gameName, new Date(), input.chat);
             } else if (tokens[1] === "start") {
                 const args = tokens.slice(2);
                 if (args.length === 0) {
@@ -579,7 +591,7 @@ export class SpudBot_MessageHandlers {
                     return;
                 }
                 if (args.length !== 1) {
-                    input.chat(`!gameRequest complete command was malformed (expected 1 arguments, but found ${args.length})`);
+                    input.chat(`!gameRequest start command was malformed (expected 1 arguments, but found ${args.length})`);
                     return;
                 }
                 const gameName = args[0]!.replaceAll("\"", "");
@@ -606,11 +618,13 @@ export class SpudBot_MessageHandlers {
                 const gameName = args[0]!.replaceAll("\"", "");
                 if (args.length === 3) {
                     const username = args[1]!;
+                    const userId = await this._spudBot.getUserIdForUsername(username);
                     const pointsToApply = Number.parseInt(args[2]!);
-                    const outcome = await (await this._googleApi).handleGameRequestFund(gameName, username, pointsToApply, new Date(), input.chat);
-                    if (outcome.type === FundGameRequestOutcomeType.PendingConfirmation && outcome.complete !== undefined) {
+                    const outcome = await (await this._googleApi).handleGameRequestFund(gameName, username, userId, pointsToApply, new Date());
+                    if (outcome.type === FundGameRequestOutcomeType.PendingConfirmation_OverfundNeedsApproval && outcome.complete !== undefined) {
                         await outcome.complete(); // force this through
                     }
+                    input.chat(`Game request funds added.`);
                 }
             } else if (tokens[1] === "refresh") {
                 await (await this._googleApi).handleGameRequestRefresh(input.chat);

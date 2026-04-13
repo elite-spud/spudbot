@@ -1,4 +1,4 @@
-import { GameRequestEntry } from "./GameRequestEntry";
+import { EntryAlreadyExistsError, GameRequestEntry } from "./GameRequestEntry";
 
 export class EntryNotFoundError extends Error {
     constructor() {
@@ -34,12 +34,17 @@ export class GameRequestController {
     }
 
     public addEntry(gameName: string, gameLengthHours: number, pointsRequiredToFund: number | undefined, userId: string, username: string, points: number, timestamp: Date): void {
+        const existingEntry = this.findEntry(gameName);
+        if (existingEntry !== undefined) {
+            throw new EntryAlreadyExistsError(gameName);
+        }
         const entry = new GameRequestEntry({
             gameName: gameName,
             iterations: [],
         });
         entry.addIteration(username, userId, gameLengthHours, timestamp, pointsRequiredToFund);
         entry.currentIteration.addPoints(username, userId, points, timestamp, this._allowOverfunding);
+        this._entries.push(entry);
     }
 
     public selectEntry(gameName: string, timestamp: Date): void {

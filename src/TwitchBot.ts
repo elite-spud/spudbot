@@ -510,6 +510,10 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         }
     }
 
+    public override async getUserIdForUsername(username: string): Promise<string> {
+        return super.getUserIdForUsername(username);
+    }
+
     public override async getUserIdsForUsernames(usernames: string[]): Promise<{ [username: string]: string | undefined; }> {
         const twitchApi = await this._twitchApi;
         return twitchApi.getUserIdsForUsernames(usernames);

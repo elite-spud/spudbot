@@ -19,6 +19,14 @@ export class FundingLimitExceededError extends Error {
     }
 }
 
+export class EntryAlreadyExistsError extends Error {
+    constructor(
+        public readonly entryName: string,
+    ) {
+        super();
+    }
+}
+
 export class PhaseDoesNotAllowFundingError extends Error {
     constructor(public readonly phase: GameRequestEntry_IterationPhase) {
         super();
