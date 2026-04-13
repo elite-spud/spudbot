@@ -1,8 +1,9 @@
 import { sheets_v4 } from "googleapis";
-import { borderLeft, headerFormatCenter } from "./GameRequestSpreadsheetStyle";
 import { Utils } from "../../Utils";
+import { basicEntryFormat, borderLeft, headerFormatCenter } from "./SpreadsheetBaseStyle";
 
-export type SpreadsheetRow = (string | number | undefined)[];
+export type SpreadsheetValue = (string | number | undefined);
+export type SpreadsheetRow = SpreadsheetValue[];
 export function headersToRowData(rows: SpreadsheetRow[]): sheets_v4.Schema$RowData[] {
     const rowDataArray = rows.map(row => {
         const rowData: sheets_v4.Schema$RowData = {
@@ -19,9 +20,9 @@ export function headersToRowData(rows: SpreadsheetRow[]): sheets_v4.Schema$RowDa
     return rowDataArray;
 }
 
-export async function pushSpreadsheet(sheetsApi: sheets_v4.Sheets, sheetId: string, subSheetId: number, spreadsheet: SpreadsheetBase): Promise<void> {    
+export async function pushSpreadsheet(sheetsApi: sheets_v4.Sheets, sheetId: string, subSheetId: number, rowProvider: SheetsRowProvider): Promise<void> {    
     await clearSheet(sheetsApi, sheetId, subSheetId);
-    await updateSheet(sheetsApi, sheetId, subSheetId, spreadsheet.toRowData());
+    await updateSheet(sheetsApi, sheetId, subSheetId, rowProvider.toRowData());
 }
 
 async function clearSheet(sheetsApi: sheets_v4.Sheets, sheetId: string, subSheetId: number): Promise<void> {
@@ -57,12 +58,8 @@ async function updateSheet(sheetsApi: sheets_v4.Sheets, sheetId: string, subShee
     });
 }
 
-export abstract class SpreadsheetBase {
-    public abstract toRowData(): sheets_v4.Schema$RowData[];
-}
-
-export abstract class SpreadsheetBlock {
-    public abstract toRowData(): sheets_v4.Schema$RowData[];
+export interface SheetsRowProvider {
+    toRowData(): sheets_v4.Schema$RowData[];
 }
 
 export function getEntryValue_String(cell: sheets_v4.Schema$CellData): string | undefined {
@@ -130,7 +127,7 @@ export function parseHeaderFooterRow(row: sheets_v4.Schema$RowData): (string | u
     return array;
 }
 
-export function extractBlockArray(sheet: sheets_v4. Schema$Sheet): sheets_v4.Schema$RowData[][] {
+export function extractBlockArray(sheet: sheets_v4.Schema$Sheet): sheets_v4.Schema$RowData[][] {
     const blockArray: sheets_v4.Schema$RowData[][] = [];
     let rows: sheets_v4.Schema$RowData[] = [];
 
@@ -182,4 +179,12 @@ export function getTimestampStringForSpreadsheet(date: Date, includeTime: boolea
         .replace(/T/, " ") // delete the T
         .substring(0, includeTime ? 16 : 10);
     return timeStr;
+}
+
+export function getCell_Empty(note?: string): sheets_v4.Schema$CellData {
+    return {
+        userEnteredValue: undefined,
+        note: note,
+        userEnteredFormat: basicEntryFormat,
+    };
 }

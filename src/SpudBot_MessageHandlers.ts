@@ -7,9 +7,8 @@ import { SpudBotTwitch } from "./SpudBot";
 import { Utils } from "./Utils";
 import { egadd_quotes, f_zero_gx_interview_quotes, f_zero_gx_quotes, f_zero_gx_story_quotes, lm_quotes, luigi_quotes } from "./Quotes";
 import { FundGameRequestOutcomeType, GoogleAPI } from "./google/GoogleAPI";
-import { CreateCustomChannelPointRewardArgs } from "./TwitchApiTypes";
+import { CreateCustomChannelPointRewardArgs, TwitchUserDetail } from "./TwitchApiTypes";
 import { ChannelPointRequests } from "./ChannelPointRequests";
-import { ChatWarriorUserDetail } from "./SpudBotTypes";
 
 export interface SpudBot_MessageHandlers_Config {
     bonkCountFilePath: string;
@@ -49,8 +48,8 @@ export class SpudBot_MessageHandlers {
             this.getHandler_FZeroGXInterviewQuote(),
             this.getHandler_FZeroGXQuote(),
             this.getHandler_PowerupBidwarFunds(),
-            this.getHandler_UpdateAllUsers(),
-            this.getHandler_CreateGameRequestRewards(),
+            // this.getHandler_UpdateAllUsers(),
+            // this.getHandler_CreateGameRequestRewards(),
             this.getHandler_GameRequestModular(),
             // this.getHandler_BidwarModular(),
         ];
@@ -148,7 +147,7 @@ export class SpudBot_MessageHandlers {
             const timeoutSeconds = (randomInt(10) + 1) * 20 + 60;
             if (roll !== 0) {
                 const targetUser = await this._spudBot.getUserDetailForUserId(input.userId);
-                await twitchApi.timeout2(targetUser, timeoutSeconds);
+                await twitchApi.timeout(targetUser, timeoutSeconds);
                 await input.chat("💥 BANG!!");
             } else {
                 await input.chat("Click...");
@@ -201,7 +200,7 @@ export class SpudBot_MessageHandlers {
             
             const twitchApi = await this._twitchApi;
             const targetUser = await this._spudBot.getUserDetailForUserId(input.userId);
-            await twitchApi.timeout2(targetUser, timeoutSeconds);
+            await twitchApi.timeout(targetUser, timeoutSeconds);
             await input.chat(text);
         };
         
@@ -229,7 +228,7 @@ export class SpudBot_MessageHandlers {
             
             const twitchApi = await this._twitchApi;
             const targetUser = await this._spudBot.getUserDetailForUserId(input.userId);
-            await twitchApi.timeout2(targetUser, timeoutSeconds);
+            await twitchApi.timeout(targetUser, timeoutSeconds);
             await input.chat(text);
         };
         
@@ -266,7 +265,12 @@ export class SpudBot_MessageHandlers {
         const handleFunc = async (input: IMessageHandlerInput_Twitch) => {
             try {
                 const twitchApi = await this._twitchApi;
-                const streamDetails = await twitchApi.getStreamDetails(await twitchApi.twitchBroadcasterChannel);
+                const broadcasterId = await twitchApi.getTwitchBroadcasterId();
+                const streamDetails = await twitchApi.getStreamDetails(broadcasterId);
+                if (streamDetails === undefined) {
+                    await input.chat(`This stream is not currently live.`);
+                    return;
+                }
                 const dateNowMillis = Date.now();
                 const dateStarted = new Date(streamDetails.started_at);
                 const dateStartedMillis = dateStarted.getTime();
@@ -531,13 +535,11 @@ export class SpudBot_MessageHandlers {
                 input.chat(`only the broadcaster can use this command`);
                 return;
             }
-
             if (tokens[1] === "help") {
-                const adminHelpMessage = `!gamerequest [add, fund, start, complete, refresh]`;
+                const adminHelpMessage = `!gamerequest [add, reopen, fund, select, start, complete, refresh]`;
                 input.chat(adminHelpMessage);
                 return;
-            }
-            else if (tokens[1] === "add") {
+            } else if (tokens[1] === "add") {
                 const args = tokens.slice(2);
                 if (args.length === 0) {
                     input.chat(`!gamerequest add <gameName> <gameLengthHours> [pointsToActivate] <username> <points>`);
@@ -566,8 +568,49 @@ export class SpudBot_MessageHandlers {
                 } else {
                     input.chat(`!gameRequest add command was malformed (expected at least 4 arguments, but found ${args.length})`);
                 }
+                } else if (tokens[1] === "reopen") {
+                const args = tokens.slice(2);
+                if (args.length === 0) {
+                    input.chat(`!gamerequest reopen <gameName> <gameLengthHours> [pointsToActivate] <username> <points>`);
+                    return;
+                }
+                const gameName = args[0]!.replaceAll("\"", "");
+                if (args.length === 4) {
+                    const gameLengthHours = Number.parseInt(args[1]!);
+                    const username = args[2]!;
+                    const userId = await (await this._twitchApi).getUserIdForUsername(username);
+                    if (!userId) {
+                        return;
+                    }
+                    const pointsToApply = Number.parseInt(args[3]!);
+                    await (await this._googleApi).handleGameRequestReopen(gameName, gameLengthHours, undefined, userId, username, pointsToApply, new Date(), input.chat);
+                } else if (args.length === 5) {
+                    const gameLengthHours = Number.parseInt(args[1]!);
+                    const pointsToActivate = Number.parseInt(args[2]!);
+                    const username = args[3]!;
+                    const userId = await (await this._twitchApi).getUserIdForUsername(username);
+                    if (!userId) {
+                        return;
+                    }
+                    const pointsToApply = Number.parseInt(args[4]!);
+                    await (await this._googleApi).handleGameRequestReopen(gameName, gameLengthHours, pointsToActivate, userId, username, pointsToApply, new Date(), input.chat);
+                } else {
+                    input.chat(`!gameRequest reopen command was malformed (expected at least 4 arguments, but found ${args.length})`);
+                }
             } else if (tokens[1] === "remove") {
                 // TODO: implement this
+            } else if (tokens[1] === "select") {
+                const args = tokens.slice(2);
+                if (args.length === 0) {
+                    input.chat(`!gamerequest select <gameName>`);
+                    return;
+                }
+                if (args.length !== 1) {
+                    input.chat(`!gameRequest select command was malformed (expected 1 arguments, but found ${args.length})`);
+                    return;
+                }
+                const gameName = args[0]!.replaceAll("\"", "");
+                await (await this._googleApi).handleGameRequestSelect(gameName, new Date(), input.chat);
             } else if (tokens[1] === "start") {
                 const args = tokens.slice(2);
                 if (args.length === 0) {
@@ -575,7 +618,7 @@ export class SpudBot_MessageHandlers {
                     return;
                 }
                 if (args.length !== 1) {
-                    input.chat(`!gameRequest complete command was malformed (expected 1 arguments, but found ${args.length})`);
+                    input.chat(`!gameRequest start command was malformed (expected 1 arguments, but found ${args.length})`);
                     return;
                 }
                 const gameName = args[0]!.replaceAll("\"", "");
@@ -602,11 +645,18 @@ export class SpudBot_MessageHandlers {
                 const gameName = args[0]!.replaceAll("\"", "");
                 if (args.length === 3) {
                     const username = args[1]!;
+                    const userId = await this._spudBot.getUserIdForUsername(username);
                     const pointsToApply = Number.parseInt(args[2]!);
-                    const outcome = await (await this._googleApi).handleGameRequestFund(gameName, username, pointsToApply, new Date(), input.chat);
-                    if (outcome.type === FundGameRequestOutcomeType.PendingConfirmation && outcome.complete !== undefined) {
+                    const outcome = await (await this._googleApi).handleGameRequestFund(gameName, username, userId, pointsToApply, new Date());
+                    if (outcome.type === FundGameRequestOutcomeType.Unfulfilled_OverfundDisabled) {
+                        input.chat(`Unable to apply funds to game request ${gameName}: would overfund by ${outcome.overfundedByAmount}, but overfunding is disabled`);
+                        return;
+                    }
+                    if (outcome.type === FundGameRequestOutcomeType.PendingConfirmation_OverfundNeedsApproval && outcome.complete !== undefined) {
+                        console.log(`Forcing Overfund...`);
                         await outcome.complete(); // force this through
                     }
+                    input.chat(`Game request funds added.`);
                 }
             } else if (tokens[1] === "refresh") {
                 await (await this._googleApi).handleGameRequestRefresh(input.chat);
@@ -644,7 +694,7 @@ export class SpudBot_MessageHandlers {
                 return;
             }
 
-            let userDetail: ChatWarriorUserDetail | undefined;
+            let userDetail: TwitchUserDetail | undefined;
             try {
                 userDetail = await this._spudBot.getUserDetailForUserId(input.userId);
             } catch (err) {

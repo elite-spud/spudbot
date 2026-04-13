@@ -75,10 +75,10 @@ export abstract class MessageHandler {
 
         const expirationTime = this.expirationDate.getTime();
         if (expirationTime < Date.now()) {
-            return false;
+            return true;
         }
 
-        return true;
+        return false;
     }
 
     protected isTimedOutGlobal(timestamp: Date): boolean {
@@ -107,28 +107,14 @@ export abstract class MessageHandler {
             return true;
         }
 
-        const messageTrim = message.trim();
-        for (const trigger of this.triggerPhrases) {
-            const triggerTrim = trigger.trim();
-            if (!messageTrim || !triggerTrim) {
-                continue;
-            }
+        for (const triggerPhrase of this.triggerPhrases) {
+            const matchFound = this.strictMatch
+                ? message === triggerPhrase
+                : message.includes(triggerPhrase);
 
-            const messageArr = messageTrim.split(" ");
-            const triggerArr = triggerTrim.split(" ");
-            if (messageArr.length < triggerArr.length) {
-                continue
+            if (matchFound) {
+                return true;
             }
-            if (this.strictMatch && messageArr.length !== triggerArr.length) {
-                continue;
-            }
-            for (let i = 0; i < triggerArr.length; i++) {
-                if (messageArr[i] !== triggerArr[i]) {
-                    continue;
-                }
-            }
-
-            return true;
         }
 
         return false;
@@ -250,7 +236,7 @@ export interface IMessageHandler_Simple_Config {
     /** Matches names exactly (ignoring whitespace) */
     strict?: boolean; // TODO: allow specifying strict match for each name/alias, not all.
     /** Date string */
-    expiresAt?: string;
+    expirationDate?: Date;
     responses: string[];
     /** Delay until this handler can be triggered again by a particular user (defaults to 30 seconds) */
     userTimeoutSeconds?: number;
@@ -266,8 +252,8 @@ export class MessageHandler_Simple<TInput extends IMessageHandlerInput = IMessag
             config.name,
             ...(config.aliases ?? []),
         ];
-        const expirationDate = config.expiresAt
-            ? new Date(config.expiresAt)
+        const expirationDate = config.expirationDate
+            ? config.expirationDate
             : undefined;
 
         super({

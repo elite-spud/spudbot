@@ -1,23 +1,9 @@
-import { IChatWarriorState } from "./ChatWarrior";
 import { GoogleApiConnectionConfig } from "./google/GoogleAPI";
-import { ITwitchBotConfig, ITwitchBotConnectionConfig, ITwitchUserDetail, TwitchUserDetail } from "./TwitchApiTypes";
+import { ITwitchBotConfig, ITwitchBotConnectionConfig } from "./TwitchApiTypes";
 
 export interface UserCommand {
     username: string,
     command: (data: string) => void,
-}
-
-export interface IChatWarriorUserDetail extends ITwitchUserDetail {
-    chatWarriorState?: IChatWarriorState;
-}
-
-export class ChatWarriorUserDetail extends TwitchUserDetail implements IChatWarriorUserDetail {
-    public chatWarriorState?: IChatWarriorState;
-    
-    public constructor(detail: IChatWarriorUserDetail) {
-        super(detail);
-        this.chatWarriorState = detail.chatWarriorState;
-    }
 }
 
 export interface ISpudBotConfig extends ITwitchBotConfig {

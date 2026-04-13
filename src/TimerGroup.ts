@@ -53,6 +53,11 @@ export class TimerGroup {
                 const command = intervalCommands[currentIndex]!;
                 const commandPromise = command.handleMessageWithoutInput(undefined, new Date(), false); // TODO: Don't send timer messages if stream isn't live / better yet, don't start the timers *until* the stream is live
 
+                commandPromise.then((result) => {
+                    if (result > HandleMessageResult.HandledSuccessfully) {
+                        callNextCommand();
+                    }
+                })
                 commandPromise.catch((_err) => {
                     callNextCommand();
                 });

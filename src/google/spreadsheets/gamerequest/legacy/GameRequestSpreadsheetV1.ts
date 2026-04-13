@@ -1,8 +1,7 @@
 import { sheets_v4 } from "googleapis";
-import { ChannelPointRequests } from "../../ChannelPointRequests";
-import { Utils } from "../../Utils";
-import { basicDateFormat, basicEntryFormat, borderLeft, getBorderRowBelow } from "./GameRequestSpreadsheetStyle";
-import { SpreadsheetBase, SpreadsheetBlock, SpreadsheetRow, extractBlockArray, getDatetimeFormulaForSpreadsheet, getEntryValue_Date, getEntryValue_Number, getEntryValue_String, headersToRowData, parseHeaderFooterRow } from "./SpreadsheetBase";
+import { ChannelPointRequests } from "../../../../ChannelPointRequests";
+import { SheetsRowProvider, SpreadsheetRow, extractBlockArray, getDatetimeFormulaForSpreadsheet, getEntryValue_Date, getEntryValue_Number, getEntryValue_String, headersToRowData, parseHeaderFooterRow } from "../../SpreadsheetBase";
+import { basicDateFormat, basicEntryFormat, borderLeft, getBorderRowBelow } from "./GameRequestSpreadsheetStyleV1";
 
 export enum GameRequest_Spreadsheet_BlockOrder {
     Completed = 0,
@@ -11,14 +10,13 @@ export enum GameRequest_Spreadsheet_BlockOrder {
     Unfunded = 3,
 }
 
-export class GameRequest_Spreadsheet extends SpreadsheetBase {
+export class GameRequest_Spreadsheet implements SheetsRowProvider {
     public readonly unfundedBlock: GameRequest_UnfundedBlock;
     public readonly fundedBlock: GameRequest_FundedBlock;
     public readonly inProgressBlock: GameRequest_InProgressBlock;
     public readonly completedBlock: GameRequest_CompletedBlock;
 
     public constructor(unfundedBlock: GameRequest_UnfundedBlock, fundedBlock: GameRequest_FundedBlock, inProgressBlock: GameRequest_InProgressBlock, completedBlock: GameRequest_CompletedBlock) {
-        super();
         this.unfundedBlock = unfundedBlock;
         this.fundedBlock = fundedBlock;
         this.inProgressBlock = inProgressBlock;
@@ -304,7 +302,7 @@ export class GameRequest_CompletedEntry extends GameRequest_InProgressEntry {
     public override get isCompleted(): boolean { return true; }
 }
 
-export class GameRequest_UnfundedBlock extends SpreadsheetBlock {
+export class GameRequest_UnfundedBlock implements SheetsRowProvider {
     public headers: SpreadsheetRow[];
     public entries: GameRequest_UnfundedEntry[];
 
@@ -312,7 +310,6 @@ export class GameRequest_UnfundedBlock extends SpreadsheetBlock {
         headers: SpreadsheetRow[],
         entries: GameRequest_UnfundedEntry[],
     }) {
-        super();
         this.headers = args.headers;
         this.entries = args.entries;
     }
@@ -371,7 +368,7 @@ export class GameRequest_UnfundedBlock extends SpreadsheetBlock {
     }
 }
 
-export class GameRequest_FundedBlock extends SpreadsheetBlock {
+export class GameRequest_FundedBlock implements SheetsRowProvider {
     public headers: SpreadsheetRow[];
     public entries: GameRequest_FundedEntry[];
 
@@ -379,7 +376,6 @@ export class GameRequest_FundedBlock extends SpreadsheetBlock {
             headers: SpreadsheetRow[],
             entries: GameRequest_FundedEntry[],
         }) {
-        super();
         this.headers = args.headers;
         this.entries = args.entries;
     }
@@ -454,7 +450,7 @@ export class GameRequest_FundedBlock extends SpreadsheetBlock {
     }
 }
 
-export class GameRequest_InProgressBlock extends SpreadsheetBlock {
+export class GameRequest_InProgressBlock implements SheetsRowProvider {
     public headers: SpreadsheetRow[];
     public entries: GameRequest_InProgressEntry[];
 
@@ -462,7 +458,6 @@ export class GameRequest_InProgressBlock extends SpreadsheetBlock {
         headers: SpreadsheetRow[],
         entries: GameRequest_InProgressEntry[],
     }) {
-        super();
         this.headers = args.headers;
         this.entries = args.entries;
     }
@@ -528,7 +523,7 @@ export class GameRequest_InProgressBlock extends SpreadsheetBlock {
     }
 }
 
-export class GameRequest_CompletedBlock extends SpreadsheetBlock {
+export class GameRequest_CompletedBlock implements SheetsRowProvider {
     public headers: SpreadsheetRow[];
     public entries: GameRequest_CompletedEntry[];
 
@@ -536,7 +531,6 @@ export class GameRequest_CompletedBlock extends SpreadsheetBlock {
         headers: SpreadsheetRow[],
         entries: GameRequest_CompletedEntry[],
     }) {
-        super();
         this.headers = args.headers;
         this.entries = args.entries;
     }
@@ -621,7 +615,7 @@ export function parseGameRequestUnfundedEntry(row: sheets_v4.Schema$RowData): Ga
     const originalRequestorName = getEntryValue_String(row.values[5]) ?? "";
     const originalRequestorId = row.values[5].note ?? "";
     const dateRequested = row.values[6].note
-        ? Utils.getDateFromUtcTimestring(row.values[6].note)
+        ? new Date(row.values[6].note)
         : getEntryValue_Date(row.values[6]);
 
     if (!gameName || !gameLengthHours || !dateRequested) {
@@ -657,10 +651,10 @@ export function parseGameRequestFundedEntry(row: sheets_v4.Schema$RowData): Game
     const originalRequestorName = getEntryValue_String(row.values[7]) ?? "";
     const originalRequestorId = row.values[7].note ?? "";
     const dateRequested = row.values[8].note
-        ? Utils.getDateFromUtcTimestring(row.values[8].note)
+        ? new Date(row.values[8].note)
         : getEntryValue_Date(row.values[8]);
     const dateFunded = row.values[9].note
-        ? Utils.getDateFromUtcTimestring(row.values[9].note)
+        ? new Date(row.values[9].note)
         : getEntryValue_Date(row.values[9]);
 
     if (!gameName || !gameLengthHours || !dateRequested || !dateFunded) {
@@ -691,10 +685,10 @@ export function parseGameRequestInProgressEntry(row: sheets_v4.Schema$RowData): 
     const contributionsString = row.values[2].note ?? "";
     const contributions = parseContributions(contributionsString);
     const dateStarted = row.values[4].note
-        ? Utils.getDateFromUtcTimestring(row.values[4].note)
+        ? new Date(row.values[4].note)
         : getEntryValue_Date(row.values[4]);
     const dateFunded = row.values[5].note
-        ? Utils.getDateFromUtcTimestring(row.values[5].note)
+        ? new Date(row.values[5].note)
         : getEntryValue_Date(row.values[5]);
     const pointsRequiredToFund = row.values[6].note
         ? Number.parseInt(row.values[6].note)
@@ -702,7 +696,7 @@ export function parseGameRequestInProgressEntry(row: sheets_v4.Schema$RowData): 
     const originalRequestorName = getEntryValue_String(row.values[7]) ?? "";
     const originalRequestorId = row.values[7].note ?? "";
     const dateRequested = row.values[8].note
-        ? Utils.getDateFromUtcTimestring(row.values[8].note)
+        ? new Date(row.values[8].note)
         : getEntryValue_Date(row.values[8]);    
 
     if (!gameName || !gameLengthHours || !dateRequested || !dateFunded || !dateStarted) {
@@ -737,13 +731,13 @@ export function parseGameRequestCompletedEntry(row: sheets_v4.Schema$RowData): G
     const contributionsString = row.values[2].note ?? "";
     const contributions = parseContributions(contributionsString);
     const dateCompleted = row.values[3].note
-        ? Utils.getDateFromUtcTimestring(row.values[3].note)
+        ? new Date(row.values[3].note)
         : getEntryValue_Date(row.values[3]);
     const dateStarted = row.values[4].note
-        ? Utils.getDateFromUtcTimestring(row.values[4].note)
+        ? new Date(row.values[4].note)
         : getEntryValue_Date(row.values[4]);
     const dateFunded = row.values[5].note
-        ? Utils.getDateFromUtcTimestring(row.values[5].note)
+        ? new Date(row.values[5].note)
         : getEntryValue_Date(row.values[5]);
     const pointsRequiredToFund = row.values[6].note
         ? Number.parseInt(row.values[6].note)
@@ -751,7 +745,7 @@ export function parseGameRequestCompletedEntry(row: sheets_v4.Schema$RowData): G
     const originalRequestorName = getEntryValue_String(row.values[7]) ?? "";
     const originalRequestorId = row.values[7].note ?? "";
     const dateRequested = row.values[8].note
-        ? Utils.getDateFromUtcTimestring(row.values[8].note)
+        ? new Date(row.values[8].note)
         : getEntryValue_Date(row.values[8]);    
 
     if (!gameName || !estimatedGameLengthHours || !dateRequested || !dateFunded || !dateStarted || !dateCompleted || !hoursPlayed) {

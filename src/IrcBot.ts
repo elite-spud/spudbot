@@ -1,17 +1,18 @@
 import * as fs from "fs";
 import { Parser as CsvParser } from "json2csv";
 import * as net from "net";
-import { IMessageHandler_AcceptsNoInput, IMessageHandler_Simple_Config, IMessageHandlerInput, MessageHandler_InputOptional, MessageHandler_InputRequired, MessageHandler_InputRequired_Config, MessageHandler_Simple } from "./ChatCommand";
+import { IMessageHandler_AcceptsNoInput, IMessageHandlerInput, MessageHandler_InputOptional, MessageHandler_InputRequired, MessageHandler_InputRequired_Config, MessageHandler_Simple } from "./ChatCommand";
 import { ConsoleColors } from "./ConsoleColors";
 import { Future } from "./Future";
 import { PendingTaskGroup } from "./PendingTask";
 import { TimerGroup } from "./TimerGroup";
 import path = require("path");
 
-export interface IIrcBotConfig {
+export interface IIrcBotConfig<TSimpleCommand_Config extends ISimpleCommand_Config>
+    {
     connection: IIrcBotConnectionConfig;
     encoding: "utf8" | "ascii";
-    auxCommandGroups: IIrcBotSimpleMessageHandlersConfig[];
+    auxCommandGroups: ISimpleCommandGroup_Config<TSimpleCommand_Config>[];
     configDir: string;
     misc: IIrcBotMiscConfig;
 }
@@ -32,11 +33,25 @@ export interface IIrcBotConnectionConfig {
     },
 }
 
-export interface IIrcBotSimpleMessageHandlersConfig {
+export interface ISimpleCommand_Config {
+    name: string;
+    aliases?: string[];
+    /** Matches names exactly (ignoring whitespace) */
+    strict?: boolean; // TODO: allow specifying strict match for each name/alias, not all.
+    /** Date string */
+    expiresAt?: string;
+    responses: string[];
+    /** Delay until this handler can be triggered again by a particular user (defaults to 30 seconds) */
+    userTimeoutSeconds?: number;
+    /** Delay until this handler can be triggered again by any user (defaults to 0 seconds) */
+    globalTimeoutSeconds?: number;
+}
+
+export interface ISimpleCommandGroup_Config<TSimpleCommand_Config extends ISimpleCommand_Config> {
     timerMinutes?: number;
     timerMinutesOffset?: number;
     random?: boolean;
-    messageHandlersConfig: IMessageHandler_Simple_Config[];
+    commands: TSimpleCommand_Config[];
 }
 
 export interface MessageHandlersFromConfigResult {
@@ -122,13 +137,17 @@ export enum UserChatStatus {
     Connected = 2,
 }
 
-export abstract class IrcBotBase<TUserDetail extends UserDetail, TMessageHandlerInput extends IMessageHandlerInput> {
+export abstract class IrcBot<
+        TUserDetail extends UserDetail,
+        TMessageHandlerInput extends IMessageHandlerInput,
+        TSimpleCommand_Config extends ISimpleCommand_Config>
+    {
     private _startupFuture: Future<void> = new Future<void>();
     public get hasStarted(): Promise<void> { return this._startupFuture.asPromise(); };
 
     public static readonly userDetailEncoding = "utf8";
 
-    protected readonly _config: IIrcBotConfig;
+    protected readonly _config: IIrcBotConfig<TSimpleCommand_Config>;
 
     /** Hardcoded responses are kept separate from those read from a configuration to allow interactive editing of configured commands */
     protected readonly _messageHandlers_inputOptional: MessageHandler_InputOptional<TMessageHandlerInput>[] = [];
@@ -146,7 +165,7 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail, TMessageHandler
     protected readonly _privMessageDetailCache: { [key: string]: IPrivMessageDetail } = {};
 
     private readonly _pendingUserDetailByUserId: IUserDetailCollection_Pending<TUserDetail> = {};
-    private readonly _userDetailByUserId: IUserDetailCollection<TUserDetail> = {};
+    private _userDetailByUserId: IUserDetailCollection<TUserDetail> = {};
     protected getKnownUserIds(): string[] { return Object.keys(this._userDetailByUserId); }
     private readonly _userIdsInChat: { [userId: string]: UserChatStatus } = {};
     protected getUserIdsInChat(): string[] { return Object.keys(this._userIdsInChat); }
@@ -161,29 +180,13 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail, TMessageHandler
 
     protected readonly _pendingTasksByUserId = new PendingTaskGroup();
 
-    public constructor(config: IIrcBotConfig) {
+    public constructor(config: IIrcBotConfig<TSimpleCommand_Config>) {
         this._config = config;
         this._userDetailsPath = fs.realpathSync(`${this._config.configDir}/users/twitchUserDetails.json`); // TODO: load this path later or ensure the file exists earlier to prevent errors
         this._userDetailsPathCsv = fs.realpathSync(`${this._config.configDir}/users/twitchUserDetails.csv`);
 
         this._socket = new net.Socket();
         this._socket.setNoDelay();
-
-        const configCommands: MessageHandlersFromConfigResult = this.getSimpleCommandsFromConfig(config.auxCommandGroups);
-        for (const command of configCommands.messageHandlers) {
-            this._messageHandlers_inputOptional.push(command);
-        }
-        this._configuredTimerGroups = configCommands.timerGroups;
-        this.registerHardcodedMessageHandlers();
-        
-        this.backupFiles([this._userDetailsPath, this._userDetailsPathCsv]);
-        const userDetailJson: string = fs.readFileSync(this._userDetailsPath, { encoding: IrcBotBase.userDetailEncoding });
-        const jsonUserCollection = JSON.parse(userDetailJson);
-        this._userDetailByUserId = this.createUserCollection(jsonUserCollection); // necessary to instantiate non-primitive fields like Dates
-        console.log(`Successfully loaded userDetail from file: ${this._userDetailsPath}`);
-
-        const userTrackingIntervalSeconds = 30;
-        setInterval(() => this.trackUsersInChat(userTrackingIntervalSeconds), 1000 * userTrackingIntervalSeconds);
     }
 
     protected getHardcodedMessageHandlers(): MessageHandler_InputRequired<TMessageHandlerInput>[] {
@@ -313,25 +316,20 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail, TMessageHandler
     
     protected abstract createUserCollection(collection: IUserDetailCollection<TUserDetail>): IUserDetailCollection<TUserDetail>;
 
-    protected getChatCommand(commandConfig: IMessageHandler_Simple_Config): MessageHandler_Simple | undefined {
-        if (!commandConfig.name || commandConfig.responses === undefined || commandConfig.responses.length === 0) {
-            return undefined
-        }
-        return new MessageHandler_Simple(commandConfig);
-    }
+    protected abstract getChatCommand(commandConfig: TSimpleCommand_Config): MessageHandler_Simple | undefined;
 
     protected getTimerGroup(commands: IMessageHandler_AcceptsNoInput[], intervalMinutes: number, startDelayMinutes?: number, randomizeCommands?: boolean): TimerGroup {
         return new TimerGroup(commands, intervalMinutes, startDelayMinutes, randomizeCommands);
     }
 
-    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-    protected getSimpleCommandsFromConfig(commandGroups: IIrcBotSimpleMessageHandlersConfig[]): MessageHandlersFromConfigResult {
+    protected getSimpleCommandsFromConfig(commandGroups: ISimpleCommandGroup_Config<TSimpleCommand_Config>[]): MessageHandlersFromConfigResult {
         const chatCommands: MessageHandler_Simple[] = [];
         const timerGroups: TimerGroup[] = [];
         
         for (const commandGroup of commandGroups) {
             const simpleCommands: MessageHandler_Simple[] = [];
-            for (const commandConfig of commandGroup.messageHandlersConfig) {
+            for (const commandConfig of commandGroup.commands) {
+                
                 const command = this.getChatCommand(commandConfig);
                 if (command === undefined) {
                     continue;
@@ -359,6 +357,23 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail, TMessageHandler
     }
 
     public async _startup(): Promise<void> {
+        const configCommands: MessageHandlersFromConfigResult = this.getSimpleCommandsFromConfig(this._config.auxCommandGroups);
+        for (const command of configCommands.messageHandlers) {
+            this._messageHandlers_inputOptional.push(command);
+        }
+        this._configuredTimerGroups.push(...configCommands.timerGroups);
+        
+        this.backupFiles([this._userDetailsPath, this._userDetailsPathCsv]);
+        const userDetailJson: string = fs.readFileSync(this._userDetailsPath, { encoding: IrcBot.userDetailEncoding });
+        const jsonUserCollection = JSON.parse(userDetailJson);
+        this._userDetailByUserId = this.createUserCollection(jsonUserCollection); // necessary to instantiate non-primitive fields like Dates
+        console.log(`Successfully loaded userDetail from file: ${this._userDetailsPath}`);
+
+        const userTrackingIntervalSeconds = 30;
+        setInterval(() => {
+            this.trackUsersInChat(userTrackingIntervalSeconds)
+        }, 1000 * userTrackingIntervalSeconds);
+
         this._socket.on("error", (err) => this.onError(err));
         this._socket.on("data", (data) => this.onData(data));
 
@@ -372,6 +387,8 @@ export abstract class IrcBotBase<TUserDetail extends UserDetail, TMessageHandler
                     resolve();
                 }); // TODO: connect using the SSL URL (IRC or websocket?) https://dev.twitch.tv/docs/irc#twitch-specific-irc-messages
         });
+
+        this.registerHardcodedMessageHandlers();
 
         await connectPromise;
         this._configuredTimerGroups.forEach(timer => timer.startTimer());
