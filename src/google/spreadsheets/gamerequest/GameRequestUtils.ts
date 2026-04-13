@@ -16,7 +16,7 @@ export function getWaitTimeMultiplierFormulaForSpreadsheet(dateFundedCellOffset:
         : `NOW()`;
     const dateDifferenceFormula = `${dateStartedReferenceFormula}-(${dateFundedReferenceFormula})`;
     const elapsedYearsFormula = `int(${dateDifferenceFormula}) / 365`;
-    const waitTimeMultiplierFormula = `POW(2, ${elapsedYearsFormula})`;
+    const waitTimeMultiplierFormula = `POW(2, ${elapsedYearsFormula})`; // This formula must match what's calculated in GameRequestEntry
     return waitTimeMultiplierFormula;
 }
 

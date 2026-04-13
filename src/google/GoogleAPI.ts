@@ -55,10 +55,8 @@ export class GoogleAPI {
     public static readonly incentiveSheetId = "1dNi-OkDok6SH8VrN1s23l-9BIuekwBgfdXsu-SqIIMY";
     public static readonly gameRequestSubSheet = 384782784;
     public static readonly bidwarSubSheet = 877321766;
-    public static readonly testSubSheet = 687898556;
-    public static readonly testSubSheet2 = 97928787;
-    public static readonly gameRequestInputSubSheet = this.testSubSheet;
-    public static readonly gameRequestOutputSubSheet = this.testSubSheet2;
+    public static readonly gameRequestInputSubSheet = this.gameRequestSubSheet;
+    public static readonly gameRequestOutputSubSheet = this.gameRequestSubSheet;
 
     protected _gameRequestOverfundingEnabled: boolean = false;
     public get gameRequestOverfundingEnabled(): boolean {
@@ -272,13 +270,6 @@ export class GoogleAPI {
                 throw err;
             }
 
-            const existingEntry = gameRequestSpreadsheet.findEntry(gameName);
-            if (existingEntry) {
-                const chatMessage = `Game request ${gameName} already present in spreadsheet.`;
-                chat(chatMessage);
-                future.resolve();
-                return;
-            }
             try {
                 gameRequestSpreadsheet.addEntry(gameName, gameLengthHours, pointsToActivate, userId, username, points, timestamp);
             } catch (err) {
@@ -411,6 +402,44 @@ export class GoogleAPI {
                 throw err;
             } finally {
                 future.resolve();
+            }
+        }
+        this._taskQueue.addTask(task);
+        this._taskQueue.startQueue();
+
+        return future;
+    }
+
+    public async handleGameRequestReopen(gameName: string, gameLengthHours: number, pointsToActivate: number | undefined, userId: string, username: string, points: number, timestamp: Date, chat: (message: string) => Promise<void>): Promise<void> {
+        const future = new Future<void>();
+        const task = async (): Promise<void> => {
+            let gameRequestSpreadsheet: GameRequest_Spreadsheet;
+            try {
+                gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestInputSubSheet, this.gameRequestOverfundingEnabled);
+            } catch (err) {
+                chat(`Failed to read game request spreadsheet. No data altered.`);
+                future.resolve();
+                throw err;
+            }
+
+            try {
+                gameRequestSpreadsheet.startNewIteration(gameName, gameLengthHours, pointsToActivate, userId, username, points, timestamp);
+            } catch (err) {
+                const chatMessage = `Error reopening game request ${gameName}`;
+                chat(chatMessage);
+                future.resolve();
+                throw err;
+            }
+
+            try {
+                await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestOutputSubSheet, gameRequestSpreadsheet);
+                chat(`Game request ${gameName} successfully reopened.`);
+                future.resolve();
+            } catch (err) {
+                const chatMessage = `Error updating game request spreadsheet`;
+                chat(chatMessage);
+                future.resolve();
+                throw err
             }
         }
         this._taskQueue.addTask(task);

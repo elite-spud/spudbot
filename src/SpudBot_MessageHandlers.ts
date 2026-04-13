@@ -535,13 +535,11 @@ export class SpudBot_MessageHandlers {
                 input.chat(`only the broadcaster can use this command`);
                 return;
             }
-
             if (tokens[1] === "help") {
-                const adminHelpMessage = `!gamerequest [add, fund, select, start, complete, refresh]`;
+                const adminHelpMessage = `!gamerequest [add, reopen, fund, select, start, complete, refresh]`;
                 input.chat(adminHelpMessage);
                 return;
-            }
-            else if (tokens[1] === "add") {
+            } else if (tokens[1] === "add") {
                 const args = tokens.slice(2);
                 if (args.length === 0) {
                     input.chat(`!gamerequest add <gameName> <gameLengthHours> [pointsToActivate] <username> <points>`);
@@ -569,6 +567,35 @@ export class SpudBot_MessageHandlers {
                     await (await this._googleApi).handleGameRequestAdd(gameName, gameLengthHours, pointsToActivate, userId, username, pointsToApply, new Date(), input.chat);
                 } else {
                     input.chat(`!gameRequest add command was malformed (expected at least 4 arguments, but found ${args.length})`);
+                }
+                } else if (tokens[1] === "reopen") {
+                const args = tokens.slice(2);
+                if (args.length === 0) {
+                    input.chat(`!gamerequest reopen <gameName> <gameLengthHours> [pointsToActivate] <username> <points>`);
+                    return;
+                }
+                const gameName = args[0]!.replaceAll("\"", "");
+                if (args.length === 4) {
+                    const gameLengthHours = Number.parseInt(args[1]!);
+                    const username = args[2]!;
+                    const userId = await (await this._twitchApi).getUserIdForUsername(username);
+                    if (!userId) {
+                        return;
+                    }
+                    const pointsToApply = Number.parseInt(args[3]!);
+                    await (await this._googleApi).handleGameRequestReopen(gameName, gameLengthHours, undefined, userId, username, pointsToApply, new Date(), input.chat);
+                } else if (args.length === 5) {
+                    const gameLengthHours = Number.parseInt(args[1]!);
+                    const pointsToActivate = Number.parseInt(args[2]!);
+                    const username = args[3]!;
+                    const userId = await (await this._twitchApi).getUserIdForUsername(username);
+                    if (!userId) {
+                        return;
+                    }
+                    const pointsToApply = Number.parseInt(args[4]!);
+                    await (await this._googleApi).handleGameRequestReopen(gameName, gameLengthHours, pointsToActivate, userId, username, pointsToApply, new Date(), input.chat);
+                } else {
+                    input.chat(`!gameRequest reopen command was malformed (expected at least 4 arguments, but found ${args.length})`);
                 }
             } else if (tokens[1] === "remove") {
                 // TODO: implement this

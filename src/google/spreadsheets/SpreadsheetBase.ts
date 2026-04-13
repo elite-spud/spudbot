@@ -181,9 +181,10 @@ export function getTimestampStringForSpreadsheet(date: Date, includeTime: boolea
     return timeStr;
 }
 
-export function getCell_Empty(): sheets_v4.Schema$CellData {
+export function getCell_Empty(note?: string): sheets_v4.Schema$CellData {
     return {
         userEnteredValue: undefined,
+        note: note,
         userEnteredFormat: basicEntryFormat,
     };
 }

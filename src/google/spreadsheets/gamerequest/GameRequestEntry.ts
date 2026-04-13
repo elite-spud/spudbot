@@ -177,7 +177,7 @@ export class GameRequestIteration {
         if (this.phase <= GameRequestEntry_IterationPhase.Funded && this.dateFunded !== undefined) {
             const elapsedMilliseconds = Date.now() - this.dateFunded.getTime();
             const elapsedYears = elapsedMilliseconds / oneYearMilliseconds;
-            return Math.pow(scalerPerYear, elapsedYears);
+            return Math.pow(scalerPerYear, elapsedYears); // This formula must match what's used in GameRequestUtils
         }
 
         if (this.phase <= GameRequestEntry_IterationPhase.Completed && this.dateFunded !== undefined && this.dateSelected !== undefined) {

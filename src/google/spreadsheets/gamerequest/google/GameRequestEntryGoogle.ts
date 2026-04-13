@@ -27,10 +27,10 @@ export abstract class GameRequestEntryGoogle {
                 this.getCell_WaitTimeMultiplier(3, 4),
                 this.getCell_percentageFundedEffective(),
                 this.getCell_DateRequested(),
-                this._entry.currentIteration.isFunded ? this.getCell_DateFunded() : getCell_Empty(),
-                this._entry.currentIteration.isSelected ? this.getCell_DateSelected() : getCell_Empty(),
-                this._entry.currentIteration.isStarted ? this.getCell_DateStarted() : getCell_Empty(),
-                this._entry.currentIteration.isCompleted ? this.getCell_DateCompleted() : getCell_Empty(),
+                this.getCell_DateFunded(),
+                this.getCell_DateSelected(),
+                this.getCell_DateStarted(),
+                this.getCell_DateCompleted(),
                 this.getCell_RequestorName(),
                 this.getCell_BorderRight(),
             ],
@@ -52,7 +52,7 @@ export abstract class GameRequestEntryGoogle {
     public getCell_HoursPlayed(): sheets_v4.Schema$CellData {
         return {
             userEnteredValue: { numberValue: this._entry.hoursPlayed },
-            note: `${this._entry.iterations.map(i => `${i.estimatedGameLengthHours} • ${i.hoursPlayed ?? ""}`).join("\n")}`,
+            note: `${this._entry.iterations.map(i => `${i.estimatedGameLengthHours} • ${i.hoursPlayed ?? ""}`).join("\n\n")}`,
             userEnteredFormat: basicEntryFormat,
         };
     }
@@ -76,7 +76,7 @@ export abstract class GameRequestEntryGoogle {
     public getCell_PercentageFunded(): sheets_v4.Schema$CellData {
         return {
             userEnteredValue: { numberValue: this._entry.currentIteration.percentageFunded },
-            note: this._entry.iterations.map(i => i.pointsRequiredToFund).join("\n"),
+            note: this._entry.iterations.map(i => i.pointsRequiredToFund).join("\n\n"),
             userEnteredFormat: Object.assign({}, basicEntryFormat, <sheets_v4.Schema$CellFormat>{ numberFormat: { type: "NUMBER", pattern: "0.0%" } }),
         };
     }
@@ -84,7 +84,7 @@ export abstract class GameRequestEntryGoogle {
     public getCell_percentageFundedEffective(): sheets_v4.Schema$CellData {
         return {
             userEnteredValue: { numberValue: this._entry.currentIteration.percentageFundedEffective },
-            // note: this._entry.iterations.map(i => i.pointsRequiredToFund).join("\n"),
+            // note: this._entry.iterations.map(i => i.pointsRequiredToFund).join("\n\n"),
             userEnteredFormat: Object.assign({}, basicEntryFormat, <sheets_v4.Schema$CellFormat>{ numberFormat: { type: "NUMBER", pattern: "0.0%" } }),
         };
     }
@@ -92,7 +92,7 @@ export abstract class GameRequestEntryGoogle {
     public getCell_PercentageFundedOverall(): sheets_v4.Schema$CellData {
         return {
             userEnteredValue: { numberValue: this._entry.percentageFunded },
-            note: this._entry.iterations.map(i => i.pointsRequiredToFund).join("\n"),
+            note: this._entry.iterations.map(i => i.pointsRequiredToFund).join("\n\n"),
             userEnteredFormat: Object.assign({}, basicEntryFormat, <sheets_v4.Schema$CellFormat>{ numberFormat: { type: "NUMBER", pattern: "0.0%" } }),
         };
     }
@@ -106,17 +106,28 @@ export abstract class GameRequestEntryGoogle {
     }
 
     public getCell_DateFunded(): sheets_v4.Schema$CellData {
+        const note = this._entry.iterations.map(i => i.dateFunded?.toISOString()).join("\n\n");
+        if (!this._entry.currentIteration.isFunded) {
+            return getCell_Empty(note);
+        }
+
         return {
             userEnteredValue: { formulaValue: `=${getDatetimeFormulaForSpreadsheet(this._entry.currentIteration.dateFunded!)}` },
-            note: this._entry.iterations.map(i => i.dateFunded?.toISOString()).join("\n"),
+            note: note,
             userEnteredFormat: basicDateFormat,
         };
+
     }
     
     public getCell_DateSelected(): sheets_v4.Schema$CellData {
+        const note = this._entry.iterations.map(i => i.dateSelected?.toISOString()).join("\n\n");
+        if (!this._entry.currentIteration.isSelected) {
+            return getCell_Empty(note);
+        }
+
         return {
             userEnteredValue: { formulaValue: `=${getDatetimeFormulaForSpreadsheet(this._entry.currentIteration.dateSelected!)}` },
-            note: this._entry.iterations.map(i => i.dateSelected?.toISOString()).join("\n"),
+            note: note,
             userEnteredFormat: basicDateFormat,
         };
     }
@@ -134,17 +145,27 @@ export abstract class GameRequestEntryGoogle {
     }
 
     public getCell_DateStarted(): sheets_v4.Schema$CellData {
+        const note = this._entry.iterations.map(i => i.dateStarted?.toISOString()).join("\n\n");
+        if (!this._entry.currentIteration.isStarted) {
+            return getCell_Empty(note);
+        }
+
         return {
             userEnteredValue: { formulaValue: `=${getDatetimeFormulaForSpreadsheet(this._entry.currentIteration.dateStarted!)}` },
-            note: this._entry.iterations.map(i => i.dateStarted?.toISOString()).join("\n"),
+            note: note,
             userEnteredFormat: basicDateFormat,
         };
     }
 
     public getCell_DateCompleted(): sheets_v4.Schema$CellData {
+        const note = this._entry.iterations.map(i => i.dateCompleted?.toISOString()).join("\n\n");
+        if (!this._entry.currentIteration.isCompleted) {
+            return getCell_Empty(note);
+        }
+        
         return {
             userEnteredValue: { formulaValue: `=${getDatetimeFormulaForSpreadsheet(this._entry.currentIteration.dateCompleted!)}` },
-            note: this._entry.iterations.map(i => i.dateCompleted?.toISOString()).join("\n"),
+            note: note,
             userEnteredFormat: basicDateFormat,
         };
     }
@@ -152,7 +173,7 @@ export abstract class GameRequestEntryGoogle {
     public getCell_DateRequested(): sheets_v4.Schema$CellData {
         return {
             userEnteredValue: { formulaValue: `=${getDatetimeFormulaForSpreadsheet(this._entry.currentIteration.dateRequested)}` },
-            note: this._entry.iterations.map(i => `${i.dateRequested.toISOString()}`).join("\n"),
+            note: this._entry.iterations.map(i => `${i.dateRequested.toISOString()}`).join("\n\n"),
             userEnteredFormat: basicDateFormat,
         };
     }
@@ -160,7 +181,7 @@ export abstract class GameRequestEntryGoogle {
     public getCell_RequestorName(): sheets_v4.Schema$CellData {
         return {
             userEnteredValue: { stringValue: this._entry.currentIteration.requestorName, },
-            note: this._entry.iterations.map(i => `${i.requestorName} • ${i.requestorId}`).join("\n"),
+            note: this._entry.iterations.map(i => `${i.requestorName} • ${i.requestorId}`).join("\n\n"),
             userEnteredFormat: basicEntryFormat,
         };
     }

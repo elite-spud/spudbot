@@ -38,12 +38,12 @@ export class GameRequest_Spreadsheet extends GameRequestController implements Sh
         const completedEntries  = this.entries.filter(n => n.currentIteration.phase === GameRequestEntry_IterationPhase.Completed);
 
         const sortByPercentageFundedDesc = (a: GameRequestEntry, b: GameRequestEntry) => {
-            return a.currentIteration.percentageFunded - b.currentIteration.percentageFunded;
+            return b.currentIteration.percentageFunded - a.currentIteration.percentageFunded;
         };
-        const sortByDateSelectedDesc = (a: GameRequestEntry, b: GameRequestEntry) => {
+        const sortByDateSelectedAsc = (a: GameRequestEntry, b: GameRequestEntry) => {
             return a.currentIteration.dateSelected!.getTime() - b.currentIteration.dateSelected!.getTime();
         };
-        const sortByDateCompletedAsc = (a: GameRequestEntry, b: GameRequestEntry) => {
+        const sortByDateCompletedDesc = (a: GameRequestEntry, b: GameRequestEntry) => {
             return b.currentIteration.dateCompleted!.getTime() - a.currentIteration.dateCompleted!.getTime();
         };
 
@@ -56,15 +56,15 @@ export class GameRequest_Spreadsheet extends GameRequestController implements Sh
         const fundedFooterRows = GameRequestEntryGoogleFunded.footers;
 
         const selectedHeaderRows = headersToRowData(GameRequestEntryGoogleSelected.headers);
-        const selectedEntryRows = selectedEntries.sort(sortByDateSelectedDesc).map(n => new GameRequestEntryGoogleSelected(n).toRowData());
+        const selectedEntryRows = selectedEntries.sort(sortByDateSelectedAsc).map(n => new GameRequestEntryGoogleSelected(n).toRowData());
         const selectedFooterRows = GameRequestEntryGoogleSelected.footers;
 
         const inProgressHeaderRows = headersToRowData(GameRequestEntryGoogleInProgress.headers);
-        const inProgressEntryRows = inProgressEntries.sort(sortByDateSelectedDesc).map(n => new GameRequestEntryGoogleInProgress(n).toRowData());
+        const inProgressEntryRows = inProgressEntries.sort(sortByDateSelectedAsc).map(n => new GameRequestEntryGoogleInProgress(n).toRowData());
         const inProgressFooterRows = GameRequestEntryGoogleInProgress.footers;
 
         const completedHeaderRows = headersToRowData(GameRequestEntryGoogleCompleted.headers);
-        const completedEntryRows = completedEntries.sort(sortByDateCompletedAsc).map(n => new GameRequestEntryGoogleCompleted(n).toRowData());
+        const completedEntryRows = completedEntries.sort(sortByDateCompletedDesc).map(n => new GameRequestEntryGoogleCompleted(n).toRowData());
         const completedFooterRows = GameRequestEntryGoogleCompleted.footers;
 
         return [
