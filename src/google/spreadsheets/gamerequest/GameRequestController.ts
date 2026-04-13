@@ -44,6 +44,7 @@ export class GameRequestController {
         });
         entry.addIteration(username, userId, gameLengthHours, timestamp, pointsRequiredToFund);
         entry.currentIteration.addPoints(username, userId, points, timestamp, this._allowOverfunding);
+        this._entries.push(entry);
     }
 
     public selectEntry(gameName: string, timestamp: Date): void {
