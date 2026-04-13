@@ -621,7 +621,12 @@ export class SpudBot_MessageHandlers {
                     const userId = await this._spudBot.getUserIdForUsername(username);
                     const pointsToApply = Number.parseInt(args[2]!);
                     const outcome = await (await this._googleApi).handleGameRequestFund(gameName, username, userId, pointsToApply, new Date());
+                    if (outcome.type === FundGameRequestOutcomeType.Unfulfilled_OverfundDisabled) {
+                        input.chat(`Unable to apply funds to game request ${gameName}: would overfund by ${outcome.overfundedByAmount}, but overfunding is disabled`);
+                        return;
+                    }
                     if (outcome.type === FundGameRequestOutcomeType.PendingConfirmation_OverfundNeedsApproval && outcome.complete !== undefined) {
+                        console.log(`Forcing Overfund...`);
                         await outcome.complete(); // force this through
                     }
                     input.chat(`Game request funds added.`);

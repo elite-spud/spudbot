@@ -34,6 +34,7 @@ export interface GoogleApiConnectionConfig {
 export interface GoogleApiConfig {
     connection: GoogleApiConnectionConfig,
     twitchApi: TwitchApi,
+    overfundingEnabled?: boolean,
 }
 
 export interface FundGameRequestOutcome {
@@ -71,6 +72,9 @@ export class GoogleAPI {
 
     public constructor(config: GoogleApiConfig) { // TODO: make a singleton?
         this._config = config;
+        if (config.overfundingEnabled !== undefined) {
+            this.setOverfundEnabled(config.overfundingEnabled);
+        }
     }
 
     public async startup(): Promise<void> {
@@ -228,8 +232,10 @@ export class GoogleAPI {
             const notCurrentlyOverfunded = existingEntry.pointsContributed <= existingEntry.pointsRequiredToFund;
             const wouldBeOverfunded = existingEntry.pointsContributed + points > existingEntry.pointsRequiredToFund;
             if (notCurrentlyOverfunded && wouldBeOverfunded) {
+                console.log("Overfunding detected!");
                 const overfundedByAmount = existingEntry.pointsContributed + points - existingEntry.pointsRequiredToFund;
                 if (!this.gameRequestOverfundingEnabled) {
+                    console.log("Overfunding disabled!");
                     future.resolve({
                         type: FundGameRequestOutcomeType.Unfulfilled_OverfundDisabled,
                         overfundedByAmount: overfundedByAmount,
@@ -262,9 +268,8 @@ export class GoogleAPI {
                 gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestInputSubSheet, this.gameRequestOverfundingEnabled);
             } catch (err) {
                 chat(`Failed to read game request spreadsheet. No data altered.`);
-                console.log(err);
                 future.resolve();
-                return;
+                throw err;
             }
 
             const existingEntry = gameRequestSpreadsheet.findEntry(gameName);
@@ -308,9 +313,8 @@ export class GoogleAPI {
                 gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestInputSubSheet, this.gameRequestOverfundingEnabled);
             } catch (err) {
                 chat(`Failed to read game request spreadsheet. No data altered.`);
-                console.log(err);
                 future.resolve();
-                return;
+                throw err;
             }
 
             try {
@@ -319,12 +323,12 @@ export class GoogleAPI {
                 const chatMessage = `Error selecting game request`;
                 chat(chatMessage);
                 future.resolve();
-                throw err
+                throw err;
             }
 
             try {
                 await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestOutputSubSheet, gameRequestSpreadsheet);
-                chat(`Game request ${gameName} successfully started.`);
+                chat(`Game request ${gameName} successfully selected.`);
             } catch (err) {
                 const chatMessage = `Error selecting game request ${gameName}. No data altered.`;
                 chat(chatMessage);
@@ -347,9 +351,8 @@ export class GoogleAPI {
                 gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestInputSubSheet, this.gameRequestOverfundingEnabled);
             } catch (err) {
                 chat(`Failed to read game request spreadsheet. No data altered.`);
-                console.log(err);
                 future.resolve();
-                return;
+                throw err;
             }
 
             try {
@@ -383,12 +386,11 @@ export class GoogleAPI {
         const task = async (): Promise<void> => {
             let gameRequestSpreadsheet: GameRequest_Spreadsheet;
             try {
-                gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestSubSheet, this.gameRequestOverfundingEnabled);
+                gameRequestSpreadsheet = await GameRequest_Spreadsheet.getGameRequestSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestInputSubSheet, this.gameRequestOverfundingEnabled);
             } catch (err) {
                 chat(`Failed to read game request spreadsheet. No data altered.`);
-                console.log(err);
                 future.resolve();
-                return;
+                throw err;
             }
 
             try {
@@ -402,7 +404,7 @@ export class GoogleAPI {
 
             try {
                 await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestOutputSubSheet, gameRequestSpreadsheet);
-                chat(`Game request ${gameName} successfully started.`);
+                chat(`Game request ${gameName} successfully completed.`);
             } catch (err) {
                 const chatMessage = `Error completing game request ${gameName}. No data altered.`;
                 chat(chatMessage);

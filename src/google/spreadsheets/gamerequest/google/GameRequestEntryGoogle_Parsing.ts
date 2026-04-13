@@ -12,22 +12,27 @@ export function parseGameRequestEntry(row: sheets_v4.Schema$RowData): GameReques
         throw new Error("Unable to parse game request entry: Game name must be defined");
     }
 
-    const iterations = buildIterations({
-        hoursPlayedByIteration: parseFromNote_HoursPlayedByIteration(row.values[1]),
-        pointsContributedByIteration: parseFromNote_PointContributionsByIteration(row.values[2]),
-        pointsRequiredByIteration: parsefromNote_NumberByIteration(row.values[3]),
-        dateRequestedByIteration: parseFromNote_DateByIteration(row.values[6]),
-        datesFundedByIteration: parseFromNote_DateByIteration(row.values[7]),
-        datesSelectedByIteration: parseFromNote_DateByIteration(row.values[8]),
-        datesStartedByIteration: parseFromNote_DateByIteration(row.values[9]),
-        datesCompletedByIteration: parseFromNote_DateByIteration(row.values[10]),
-        requestedByByIteration: parseFromNote_RequestorByIteration(row.values[11]),
-    });
+    try {
+        const iterations = buildIterations({
+            hoursPlayedByIteration: parseFromNote_HoursPlayedByIteration(row.values[1]),
+            pointsContributedByIteration: parseFromNote_PointContributionsByIteration(row.values[2]),
+            pointsRequiredByIteration: parsefromNote_NumberByIteration(row.values[3]),
+            dateRequestedByIteration: parseFromNote_DateByIteration(row.values[6]),
+            datesFundedByIteration: parseFromNote_DateByIteration(row.values[7]),
+            datesSelectedByIteration: parseFromNote_DateByIteration(row.values[8]),
+            datesStartedByIteration: parseFromNote_DateByIteration(row.values[9]),
+            datesCompletedByIteration: parseFromNote_DateByIteration(row.values[10]),
+            requestedByByIteration: parseFromNote_RequestorByIteration(row.values[11]),
+        });
 
-    return new GameRequestEntry({
+        return new GameRequestEntry({
         gameName: gameName,
         iterations: iterations,
     });
+    } catch (err) {
+        console.log(row.values);
+        throw err;
+    }
 }
 
 interface IterationBuildArgs {
@@ -109,6 +114,8 @@ function parseValuesByIterationFromNote<T>(args: IParseIterationArgs<T>): T[][] 
             const tokens = valueString.split(args.iterationPattern ?? /\s*•\s*/);
             const expectedTokens = args.numValuesPerLine;
             if (tokens.length !== expectedTokens) {
+                console.log(valueString);
+                console.log(tokens);
                 throw new Error(`Unable to parse iteration string: Did not receive expected number of tokens from regex (found ${tokens.length}, expected ${expectedTokens})`);
             }
             const value = args.toGeneric(tokens);

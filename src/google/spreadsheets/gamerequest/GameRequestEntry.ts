@@ -19,6 +19,15 @@ export class FundingLimitExceededError extends Error {
     }
 }
 
+export class EntryAlreadySelectedError extends Error {
+}
+
+export class EntryAlreadyStartedError extends Error {
+}
+
+export class EntryAlreadyCompletedError extends Error {
+}
+
 export class EntryAlreadyExistsError extends Error {
     constructor(
         public readonly entryName: string,
@@ -28,6 +37,24 @@ export class EntryAlreadyExistsError extends Error {
 }
 
 export class PhaseDoesNotAllowFundingError extends Error {
+    constructor(public readonly phase: GameRequestEntry_IterationPhase) {
+        super();
+    }
+}
+
+export class PhaseDoesNotAllowSelectionError extends Error {
+    constructor(public readonly phase: GameRequestEntry_IterationPhase) {
+        super();
+    }
+}
+
+export class PhaseDoesNotAllowStartingError extends Error {
+    constructor(public readonly phase: GameRequestEntry_IterationPhase) {
+        super();
+    }
+}
+
+export class PhaseDoesNotAllowCompletionError extends Error {
     constructor(public readonly phase: GameRequestEntry_IterationPhase) {
         super();
     }
@@ -189,7 +216,7 @@ export class GameRequestIteration {
 
         const contribution = { name: username, id: userId, points: points, timestamp: timestamp };
         this.contributions.push(contribution);
-        if (this.isFunded) {
+        if (this.percentageFunded >= 1.0) {
             this._dateFunded = timestamp;
         }
 
@@ -197,14 +224,32 @@ export class GameRequestIteration {
     }
 
     public selectIteration(timestamp: Date) {
+        if (this.isSelected) {
+            throw new EntryAlreadySelectedError();
+        }
+        if (!this.isFunded) {
+            throw new PhaseDoesNotAllowSelectionError(this.phase);
+        }
         this._dateSelected = timestamp;
     }
 
     public startIteration(timestamp: Date) {
+        if (this.isStarted) {
+            throw new EntryAlreadyStartedError();
+        }
+        if (!this.isSelected) {
+            throw new PhaseDoesNotAllowStartingError(this.phase);
+        }
         this._dateStarted = timestamp;
     }
 
     public completeIteration(timestamp: Date, hoursPlayed: number) {
+        if (this.isCompleted) {
+            throw new EntryAlreadyCompletedError();
+        }
+        if (!this.isStarted) {
+            throw new PhaseDoesNotAllowCompletionError(this.phase);
+        }
         this._dateCompleted = timestamp;
         this._hoursPlayed = hoursPlayed
     }
