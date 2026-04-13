@@ -24,7 +24,9 @@ export abstract class GameRequestEntryGoogle {
                 this.getCell_HoursPlayed(),
                 this.getCell_PointsContributed(),
                 this.getCell_PercentageFunded(),
-                this.getCell_WaitTimeMultiplier(3, 4),
+                this._entry.currentIteration.isFunded
+                    ? this.getCell_WaitTimeMultiplier(3, 4)
+                    : this.getCell_PointsRequiredToFund(),
                 this.getCell_percentageFundedEffective(),
                 this.getCell_DateRequested(),
                 this.getCell_DateFunded(),
@@ -53,6 +55,14 @@ export abstract class GameRequestEntryGoogle {
         return {
             userEnteredValue: { numberValue: this._entry.hoursPlayed },
             note: `${this._entry.iterations.map(i => `${i.estimatedGameLengthHours} • ${i.hoursPlayed ?? ""}`).join("\n\n")}`,
+            userEnteredFormat: basicEntryFormat,
+        };
+    }
+
+    public getCell_PointsRequiredToFund(): sheets_v4.Schema$CellData {
+        return {
+            userEnteredValue: { numberValue: this._entry.currentIteration.pointsRequiredToFund },
+            note: this._entry.iterations.map(i => i.pointsRequiredToFund).join("\n\n"),
             userEnteredFormat: basicEntryFormat,
         };
     }
@@ -209,17 +219,19 @@ export abstract class GameRequestEntryGoogle {
 }
 
 export class GameRequestEntryGoogleUnfunded extends GameRequestEntryGoogle {
+    public static override readonly columnHeader: SpreadsheetRow = ["Game Name", "Hours Played", "Points Contributed", "% Funded", "Points Required", "Effective % Funded", "Date Requested", "Date Funded", "Date Selected", "Date Started", "Date Completed", "Requested By"];
+
     public static headers: SpreadsheetRow[] =
         [
             ["Unfunded Requests"],
-            GameRequestEntryGoogle.columnHeader,
+            GameRequestEntryGoogleUnfunded.columnHeader,
         ];
 }
 
 export class GameRequestEntryGoogleFunded extends GameRequestEntryGoogle {
     public static headers: SpreadsheetRow[] =
         [
-            ["Unfunded Requests"],
+            ["Funded Requests"],
             GameRequestEntryGoogle.columnHeader,
         ];
 }
