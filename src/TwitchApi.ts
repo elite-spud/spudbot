@@ -896,6 +896,7 @@ export class TwitchApi {
             return {
                 Authorization: `Bearer ${token?.access_token ?? ""}`,
                 "Client-Id": `${this._authConfig.clientId}`,
+                "Content-Type": `application/json`,
             }
         }
         const requestArgs: TwitchRequestArgs = {

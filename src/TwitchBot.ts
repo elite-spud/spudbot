@@ -406,7 +406,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         // const overrideMinutes = originalChatSettings.follower_mode_duration * 2;
         // const warningMinutes = originalChatSettings.follower_mode_duration - 3;
 
-        const overrideMinutes = 10;
+        const overrideMinutes = 15;
         const warningMinutes = 5;
 
         const overrideMillis = 1000 * 60 * overrideMinutes;
