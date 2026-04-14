@@ -5,13 +5,15 @@ import { GoogleAPI, GoogleApiConfig } from "./google/GoogleAPI";
 import { IIrcBotMiscConfig, ISimpleCommandGroup_Config, IUserDetailCollection } from "./IrcBot";
 import { SpudBot_MessageHandlers } from "./SpudBot_MessageHandlers";
 import { ISpudBotConfig, ISpudBotConnectionConfig } from "./SpudBotTypes";
-import { ISimpleCommand_ConfigTwitch, ITwitchUserDetail, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Notification_Subscription, TwitchEventSub_SubscriptionType, TwitchUserDetail } from "./TwitchApiTypes";
+import { TaskQueue } from "./TaskQueue";
+import { ISimpleCommand_ConfigTwitch, ITwitchUserDetail, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_Raid, TwitchEventSub_Notification_Subscription, TwitchEventSub_SubscriptionType, TwitchUserDetail } from "./TwitchApiTypes";
 import { TwitchBotBase } from "./TwitchBot";
 import { Utils } from "./Utils";
 
 export class SpudBotTwitch extends TwitchBotBase<TwitchUserDetail> {
     public declare readonly _config: ISpudBotConfig;
     public _firstChatterName: string | undefined = undefined; // TODO: make this a class instead of a public property
+    protected _raidResponseTaskQueue = new TaskQueue();
 
     protected readonly _googleApi = new Future<GoogleAPI>();
 
@@ -173,5 +175,26 @@ export class SpudBotTwitch extends TwitchBotBase<TwitchUserDetail> {
         if (event.reward.title === "Submit a new !GameRequest") {
             await (await this._googleApi).handleGameRequestAddRedeem(event, chatFunc);
         }
+    }
+
+    protected override async handleRaid(event: TwitchEventSub_Event_Raid, _subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
+        const future = new Future<void>();
+        this._raidResponseTaskQueue.addTask(() => this.temporarilyDisableChatRestrictions(future, event.to_broadcaster_user_login, event.to_broadcaster_user_name));
+        this._raidResponseTaskQueue.startQueue();
+
+        await future;
+
+        const chatRespondTo = `#${event.to_broadcaster_user_login}`;
+        const twitchApi = await this._twitchApi;
+        const raidingChannelDetails = await twitchApi.getChannelDetails(event.from_broadcaster_user_id);
+        const andFriendsString = event.viewers > 3
+            ? ` and friends`
+            : ``;
+        const thankYouString = event.viewers > 3
+            ? `Thank you so much for sharing your community with me eeveeHeart `
+            : ``;
+        this.chat(chatRespondTo, `Welcome @${event.from_broadcaster_user_name}${andFriendsString}! ${thankYouString}I hope your ${raidingChannelDetails.game_name} stream was enjoyable!`);
+
+        return;
     }
 }
