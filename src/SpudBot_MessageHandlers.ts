@@ -52,8 +52,8 @@ export class SpudBot_MessageHandlers {
             this.getHandler_FZeroGXInterviewQuote(),
             this.getHandler_FZeroGXQuote(),
             this.getHandler_PowerupBidwarFunds(),
-            // this.getHandler_UpdateAllUsers(),
-            // this.getHandler_CreateGameRequestRewards(),
+            this.getHandler_UpdateAllUsers(),
+            this.getHandler_CreateGameRequestRewards(),
             this.getHandler_GameRequestModular(),
             // this.getHandler_BidwarModular(),
         ];
@@ -451,8 +451,8 @@ export class SpudBot_MessageHandlers {
         };
         
         const config: MessageHandler_InputRequired_Config<IMessageHandlerInput_Twitch> = {
-            handlerId: "!powerupBidwar",
-            triggerPhrases: undefined,
+            handlerId: "!updateAllUsers",
+            triggerPhrases: ["!updateAllUsers"],
             strictMatch: false,
             handleMessage: handleFunc,
         };
