@@ -43,8 +43,10 @@ export class SpudBotTwitch extends TwitchBotBase<TwitchUserDetail> {
         const baseHandlers = super.getHardcodedMessageHandlers();
 
         const bonkCountFilePath = Utils.getRealDir(`${this._config.configDir}/bonkCount.txt`);
+        const forRealCountFilePath = Utils.getRealDir(`${this._config.configDir}/forReal.txt`);
         const spudBotHandlers = new SpudBot_MessageHandlers({
             bonkCountFilePath: bonkCountFilePath,
+            forRealCountFilePath: forRealCountFilePath,
             spudBot: this,
             twitchApi: this._twitchApi.asPromise(),
             googleApi: this._googleApi.asPromise(),

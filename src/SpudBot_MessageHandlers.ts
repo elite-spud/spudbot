@@ -12,6 +12,7 @@ import { ChannelPointRequests } from "./ChannelPointRequests";
 
 export interface SpudBot_MessageHandlers_Config {
     bonkCountFilePath: string;
+    forRealCountFilePath: string;
     spudBot: SpudBotTwitch;
     twitchApi: Promise<TwitchApi>;
     googleApi: Promise<GoogleAPI>;
@@ -19,12 +20,14 @@ export interface SpudBot_MessageHandlers_Config {
 
 export class SpudBot_MessageHandlers {
     protected readonly _bonkCountFilePath: string;
+    protected readonly _forRealCountFilePath: string;
     protected readonly _twitchApi: Promise<TwitchApi>;
     protected readonly _spudBot: SpudBotTwitch;
     protected readonly _googleApi: Promise<GoogleAPI>;
 
     public constructor(config: SpudBot_MessageHandlers_Config) {
         this._bonkCountFilePath = config.bonkCountFilePath;
+        this._forRealCountFilePath = config.forRealCountFilePath;
         this._twitchApi = config.twitchApi;
         this._spudBot = config.spudBot;
         this._googleApi = config.googleApi;
@@ -35,6 +38,7 @@ export class SpudBot_MessageHandlers {
             this.getHandler_Echo(),
             this.getHandler_First(),
             this.getHandler_Bonk(),
+            this.getHandler_ForReal(),
             this.getHandler_Slot(),
             this.getHandler_Flip(),
             this.getHandler_Timeout(),
@@ -97,42 +101,54 @@ export class SpudBot_MessageHandlers {
     }
 
     /**
-     * Reads the bonk count value from a file
+     * Reads a count value from a file
      * @returns 
      */
-    protected readBonkCount(): number {
-        const fileBuffer = fs.readFileSync(this._bonkCountFilePath);
+    protected readCountFromFile(filepath: string): number {
+        // if (!fs.existsSync(filepath)) {
+        //     this.writeCountToFile(filepath, 0);
+        // }
+        const fileBuffer = fs.readFileSync(filepath);
         const fileStr = fileBuffer.toString("utf8");
         return Number.parseInt(fileStr) || 0;
     }
 
-    protected async getBonkCount(): Promise<number> {
-        return this.readBonkCount();
-    }
-
     /**
-     * Writes the bonk count value to a file
+     * Writes a count value to a file
      */
-    protected writeBonkCount(value: number): void {
-        fs.writeFileSync(this._bonkCountFilePath, `${value}`);
-    }
-
-    protected async setBonkCount(value: number): Promise<void> {
-        this.writeBonkCount(value);
-        return;
+    protected writeCountToFile(filepath: string, value: number): void {
+        fs.writeFileSync(filepath, `${value}`);
     }
 
     protected getHandler_Bonk(): MessageHandler_InputRequired<IMessageHandlerInput_Twitch> {
         const handleFunc = async (input: IMessageHandlerInput_Twitch) => {
-            const bonkCount = await this.getBonkCount() + 1;
-            await this.setBonkCount(bonkCount);
-            const response = `${bonkCount} recorded bonks`;
+            const count = this.readCountFromFile(this._bonkCountFilePath) + 1;
+            this.writeCountToFile(this._bonkCountFilePath, count);
+            const response = `${count} recorded bonks`;
             await input.chat(response);
         };
         
         const config: MessageHandler_InputRequired_Config<IMessageHandlerInput_Twitch> = {
             handlerId: "!bonk",
             triggerPhrases: ["!bonk"],
+            strictMatch: true,
+            handleMessage: handleFunc,
+        };
+        const handler = new MessageHandler_InputRequired(config);
+        return handler;
+    }
+
+    protected getHandler_ForReal(): MessageHandler_InputRequired<IMessageHandlerInput_Twitch> {
+        const handleFunc = async (input: IMessageHandlerInput_Twitch) => {
+            const count = this.readCountFromFile(this._forRealCountFilePath) + 1;
+            this.writeCountToFile(this._forRealCountFilePath, count);
+            const response = `"FOR REAL" has been uttered ${count} times`;
+            await input.chat(response);
+        };
+        
+        const config: MessageHandler_InputRequired_Config<IMessageHandlerInput_Twitch> = {
+            handlerId: "!forreal",
+            triggerPhrases: ["!forreal", "!ForReal", "!forReal", "!forREAL"],
             strictMatch: true,
             handleMessage: handleFunc,
         };
