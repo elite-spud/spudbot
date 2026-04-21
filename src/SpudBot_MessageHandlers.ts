@@ -78,22 +78,32 @@ export class SpudBot_MessageHandlers {
 
     protected getHandler_First(): MessageHandler_InputRequired<IMessageHandlerInput_Twitch> {
         const handleFunc = async (input: IMessageHandlerInput_Twitch) => {
-            let response: string;
-            const someoneWasAlreadyFirst = !!this._spudBot._firstChatterName;
-            if (this._spudBot._firstChatterName === input.username) {
-                response = `Congrats, ${this._spudBot._firstChatterName}, you${someoneWasAlreadyFirst ? "'re" : " were"} first today!`;
-            } else if (!this._spudBot._firstChatterName) {
-                response = `No one is first yet...`;
-            } else {
-                response = `${this._spudBot._firstChatterName} was first today.`
+            const someoneWasAlreadyFirst = this._spudBot._firstChatterName !== undefined;
+            if (!someoneWasAlreadyFirst) {
+                const broadcasterId = await this._spudBot.getTwitchBroadcasterId();
+                const streamIsLive = await (await this._twitchApi).isChannelLive(broadcasterId);
+                if (streamIsLive) {
+                    this._spudBot._firstChatterName = input.username;
+                }
             }
-            await input.chat(response);
+
+            if (input.message.startsWith("!first")) {
+                let response: string;
+                if (!this._spudBot._firstChatterName) {
+                    response = `No one is first yet...`;
+                } else if (this._spudBot._firstChatterName === input.username) {
+                    response = `Congrats, ${this._spudBot._firstChatterName}, you${someoneWasAlreadyFirst ? " were" : "'re"} first today!`;
+                } else {
+                    response = `${this._spudBot._firstChatterName} was first today.`
+                }
+                await input.chat(response);
+            }
         };
         
         const config: MessageHandler_InputRequired_Config<IMessageHandlerInput_Twitch> = {
             handlerId: "!first",
-            triggerPhrases: ["!first"],
-            strictMatch: true,
+            triggerPhrases: undefined,
+            strictMatch: false,
             handleMessage: handleFunc,
         };
         const handler = new MessageHandler_InputRequired(config);
