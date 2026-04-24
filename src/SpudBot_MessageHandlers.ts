@@ -53,6 +53,7 @@ export class SpudBot_MessageHandlers {
             this.getHandler_FZeroGXQuote(),
             this.getHandler_PowerupBidwarFunds(),
             this.getHandler_UpdateAllUsers(),
+            this.getHandler_UpdatePresentUsers(),
             this.getHandler_CreateGameRequestRewards(),
             this.getHandler_GameRequestModular(),
             // this.getHandler_BidwarModular(),
@@ -78,26 +79,34 @@ export class SpudBot_MessageHandlers {
 
     protected getHandler_First(): MessageHandler_InputRequired<IMessageHandlerInput_Twitch> {
         const handleFunc = async (input: IMessageHandlerInput_Twitch) => {
-            const someoneWasAlreadyFirst = this._spudBot._firstChatterName !== undefined;
-            if (!someoneWasAlreadyFirst) {
-                const broadcasterId = await this._spudBot.getTwitchBroadcasterId();
-                const streamIsLive = await (await this._twitchApi).isChannelLive(broadcasterId);
-                if (streamIsLive) {
-                    this._spudBot._firstChatterName = input.username;
-                }
+            const someoneWasAlreadyFirst = this._spudBot._firstChatterId !== undefined;
+            const userDetail = await this._spudBot.getUserDetailForUserId(input.userId);
+            await this._spudBot.tryAssignFirst(userDetail, input.timestamp);
+
+            if (!input.message.startsWith("!first")) {
+                return;
             }
 
-            if (input.message.startsWith("!first")) {
-                let response: string;
-                if (!this._spudBot._firstChatterName) {
-                    response = `No one is first yet...`;
-                } else if (this._spudBot._firstChatterName === input.username) {
-                    response = `Congrats, ${this._spudBot._firstChatterName}, you${someoneWasAlreadyFirst ? " were" : "'re"} first today!`;
+            const broadcasterId = await this._spudBot.getTwitchBroadcasterId();
+            const streamIsLive = await (await this._twitchApi).isChannelLive(broadcasterId);
+            let response: string;
+            if (!streamIsLive) {
+                response = `Cannot determine who is first when channel is not yet live.`;
+            } else if (!this._spudBot._firstChatterId) {
+                if (input.userIsBroadcaster) {
+                    response = `No one is first yet, but the broadcaster cannot be first.`;
                 } else {
-                    response = `${this._spudBot._firstChatterName} was first today.`
+                    response = `No one is first yet...`;
                 }
-                await input.chat(response);
+            } else {
+                const firstUserDetail = await this._spudBot.getUserDetailForUserId(this._spudBot._firstChatterId);
+                if (this._spudBot._firstChatterId === input.userId) {
+                    response = `Congrats, ${input.username}, you${someoneWasAlreadyFirst ? " were" : "'re"} first today! You've been first ${firstUserDetail.numTimesFirst} time(s).`;
+                } else {
+                    response = `${firstUserDetail.username} was first today. They've been first ${firstUserDetail.numTimesFirst} time(s).`;
+                }
             }
+            await input.chat(response);
         };
         
         const config: MessageHandler_InputRequired_Config<IMessageHandlerInput_Twitch> = {
@@ -463,6 +472,25 @@ export class SpudBot_MessageHandlers {
         const config: MessageHandler_InputRequired_Config<IMessageHandlerInput_Twitch> = {
             handlerId: "!updateAllUsers",
             triggerPhrases: ["!updateAllUsers"],
+            strictMatch: false,
+            handleMessage: handleFunc,
+        };
+        const handler = new MessageHandler_InputRequired(config);
+        return handler;
+    }
+
+    protected getHandler_UpdatePresentUsers(): MessageHandler_InputRequired<IMessageHandlerInput_Twitch> {
+        const handleFunc = async (input: IMessageHandlerInput_Twitch) => {
+            if (!input.userIsBroadcaster) {
+                return;
+            }
+            await this._spudBot.trackUsersInChat(0, true);
+            await input.chat(`Successfully updated users currently in chat`);
+        };
+        
+        const config: MessageHandler_InputRequired_Config<IMessageHandlerInput_Twitch> = {
+            handlerId: "!updatePresentUsers",
+            triggerPhrases: ["!updatePresentUsers"],
             strictMatch: false,
             handleMessage: handleFunc,
         };

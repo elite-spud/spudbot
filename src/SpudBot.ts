@@ -12,7 +12,8 @@ import { Utils } from "./Utils";
 
 export class SpudBotTwitch extends TwitchBotBase<TwitchUserDetail> {
     public declare readonly _config: ISpudBotConfig;
-    public _firstChatterName: string | undefined = undefined; // TODO: make this a class instead of a public property
+    public _firstChatterId: string | undefined = undefined; // TODO: make this a class instead of a public property
+    public _firstChatterTimestamp: Date | undefined = undefined;
     protected _raidResponseTaskQueue = new TaskQueue();
 
     protected readonly _googleApi = new Future<GoogleAPI>();
@@ -156,14 +157,40 @@ export class SpudBotTwitch extends TwitchBotBase<TwitchUserDetail> {
         }];
     }
 
+    public async tryAssignFirst(userDetail: TwitchUserDetail, timestamp: Date): Promise<void> {
+        const someoneWasAlreadyFirst = this._firstChatterId !== undefined && this._firstChatterTimestamp !== undefined;
+        const timestampIsEarlier = this._firstChatterTimestamp === undefined // This check sorts out race conditions where messages can arrive out of order
+            ? true
+            : timestamp.getTime() < this._firstChatterTimestamp!.getTime();
+        if (someoneWasAlreadyFirst && !timestampIsEarlier) {
+            console.log(`User ${this._firstChatterId} was already first & the given timestamp occurs later than the logged first timestamp`); // TODO: log trace
+            return;
+        }
+
+        const broadcasterId = await this.getTwitchBroadcasterId();
+        if (userDetail.id === broadcasterId) {
+            console.log(`User is broadcaster & cannot be first`);
+            return;
+        }
+
+        const streamIsLive = await (await this._twitchApi).isChannelLive(broadcasterId);
+        if (!streamIsLive) {
+            console.log(`Unable to assign first while stream is not live`);
+            return;
+        }
+
+        console.log(`${userDetail.username} is first.`);
+        this._firstChatterId = userDetail.id;
+        this._firstChatterTimestamp = timestamp;
+        userDetail.numTimesFirst++;
+    }
+
     protected override async handleChannelPointRewardRedeem(event: TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, _subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
-        // TODO: Make this a config file
-        const broadcasterName = this._config.connection.server.channel.substring(1);
+        const userDetail = await this.getUserDetailForUserId(event.id);
+        await this.tryAssignFirst(userDetail, new Date(event.redeemed_at));
+
         const chatFunc = async (message: string): Promise<void> => {
             this.chat(`#${event.broadcaster_user_login}`, message);
-        }
-        if (!this._firstChatterName && event.user_login !== broadcasterName) {
-            this._firstChatterName = event.user_name;
         }
 
         if (event.reward.title === "Hi, I'm Lurking!") {

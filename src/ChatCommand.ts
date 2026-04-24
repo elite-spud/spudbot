@@ -13,6 +13,7 @@ export interface IMessageHandlerInput {
     userId: string;
     username: string;
     message: string;
+    timestamp: Date;
     chat(message: string, replyToTriggeringMessage?: boolean): Promise<void>;
 }
 

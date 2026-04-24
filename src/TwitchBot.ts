@@ -105,7 +105,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         return new MessageHandler_SimpleTwitch(simpleCommandConfig);
     }
 
-    protected override async trackUsersInChat(secondsToAdd: number, force: boolean = false): Promise<void> {
+    public override async trackUsersInChat(secondsToAdd: number, force: boolean = false): Promise<void> {
         const twitchApi = await this._twitchApi;
         const broadcasterId = await twitchApi.getTwitchBroadcasterId();
         const isChannelLive = await twitchApi.isChannelLive(broadcasterId);
@@ -116,7 +116,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
         super.trackUsersInChat(secondsToAdd);
     }
 
-    protected override async createMessageInput(detail: IPrivMessageDetail): Promise<IMessageHandlerInput_Twitch> {
+    protected override async createMessageInput(detail: IPrivMessageDetail, timestamp: Date): Promise<IMessageHandlerInput_Twitch> {
         const userId = await this.getUserIdForUsername(detail.username);
         if (userId === undefined) {
             throw new Error(`Cannot create MessageHandlerInput with null userId`);
@@ -136,6 +136,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
             userIsModerator: userIsModerator(twitchMessageTags),
             userIsVIP: userIsVip(twitchMessageTags),
             messageContainsGigantifiedEmote: messageContainsGigantifiedEmote,
+            timestamp: timestamp,
             chat: chatFunc,
         };
         return inputTwitch;

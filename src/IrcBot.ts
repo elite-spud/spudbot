@@ -512,10 +512,10 @@ export abstract class IrcBot<
         return handler;
     }
 
-    protected abstract createMessageInput(detail: IPrivMessageDetail): Promise<TMessageHandlerInput>;
+    protected abstract createMessageInput(detail: IPrivMessageDetail, timestamp: Date): Promise<TMessageHandlerInput>;
 
     protected async handlePrivMessageResponse(messageDetail: IPrivMessageDetail): Promise<void> {
-        const messageInput = await this.createMessageInput(messageDetail);
+        const messageInput = await this.createMessageInput(messageDetail, new Date());
         const handlers = this._messageHandlers_inputAccepted();
         const timestamp = new Date();
 

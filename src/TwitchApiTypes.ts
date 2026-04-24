@@ -20,6 +20,7 @@ export interface ITwitchUserDetail extends IUserDetail {
     // numSubsGifted?: number;
     // numSubPointsGifted?: number; // TODO: implement this by listening via EventSub for the channel chat message events that follow a gift sub (https://discuss.dev.twitch.com/t/eventsub-gifted-subs-multiple-months-not-working/54424/2)
     numBitsCheered?: number;
+    numTimesFirst?: number;
 }
 
 export class TwitchUserDetail extends UserDetail implements ITwitchUserDetail {
@@ -41,6 +42,7 @@ export class TwitchUserDetail extends UserDetail implements ITwitchUserDetail {
     // public numSubsGifted?: number;
     // public numSubPointsGifted?: number;
     public numBitsCheered?: number;
+    public numTimesFirst: number;
     
     public constructor(detail: ITwitchUserDetail) {
         super(detail);
@@ -62,6 +64,7 @@ export class TwitchUserDetail extends UserDetail implements ITwitchUserDetail {
         // this.numSubsGifted = detail.numSubsGifted;
         // this.numSubPointsGifted = detail.numSubPointsGifted;
         this.numBitsCheered = detail.numBitsCheered;
+        this.numTimesFirst = detail.numTimesFirst ?? 0;
     }
 }
 
