@@ -28,7 +28,7 @@ export class TwitchUserDetail extends UserDetail implements ITwitchUserDetail {
     public isBanned?: boolean;
     public isDeleted?: boolean;
     public isFollower?: boolean;
-    public followDates?: Date[];
+    public followDates: Date[];
     public broadcasterType?: "affiliate" | "partner" | "" | string;
     public monthsSubscribed?: number;
     public currentSubcriptionStreak?: number;
@@ -50,7 +50,21 @@ export class TwitchUserDetail extends UserDetail implements ITwitchUserDetail {
         this.isBanned = detail.isBanned;
         this.isDeleted = detail.isDeleted;
         this.isFollower = detail.isFollower;
-        this.followDates = detail.followDates === undefined ? undefined : detail.followDates.map(n => new Date(n));
+
+        const followDates = detail.followDates === undefined ? [] : detail.followDates.map(n => new Date(n)).sort((a, b) => a.getTime() - b.getTime()); // ordered ascending
+        const millisecondsInADay = 1000 * 60 * 60 * 24;
+        const followDatesDeduped: Date[] = followDates.length === 0
+            ? []
+            : followDates.slice(0, 1);
+        for (let i = 1; i < followDates.length; i++) {
+            const comparisonTime = followDatesDeduped[followDatesDeduped.length - 1].getTime();
+            const millisecondsBetweenDates = Math.abs(comparisonTime - followDates[i].getTime());
+            if (millisecondsBetweenDates > millisecondsInADay) {
+                followDatesDeduped.push(followDates[i]);
+            }
+        }
+        this.followDates = followDatesDeduped;
+        
         this.broadcasterType = detail.broadcasterType;
         this.monthsSubscribed = detail.monthsSubscribed;
         this.currentSubcriptionStreak = detail.currentSubcriptionStreak;

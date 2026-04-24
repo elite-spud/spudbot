@@ -519,10 +519,11 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
             }
 
             userDetail.isFollower = true;
-            if (userDetail.followDates === undefined) {
-                userDetail.followDates = [];
+            const followDate = new Date(followingUser.followed_at);
+            const followDateAlreadyIncluded = userDetail.followDates.some(n => followDate.getTime() === n.getTime());
+            if (!followDateAlreadyIncluded) {
+                userDetail.followDates.push(followDate);
             }
-            userDetail.followDates.push(new Date(followingUser.followed_at));
         }
 
         // Flag all non-followers
