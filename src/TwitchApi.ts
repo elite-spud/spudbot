@@ -328,10 +328,11 @@ export class TwitchApi {
     public async isChannelLive(channelId: string): Promise<boolean> {
         try {
             const channelInfoResponse = await this.getStreamDetails(channelId);
-            if (channelInfoResponse === undefined || channelInfoResponse.type === "live") {
+            if (channelInfoResponse === undefined) {
                 return false;
             }
-            return true;
+            const channelIsLive = channelInfoResponse.type === "live";
+            return channelIsLive;
         } catch (err) {
             return false;
         }
