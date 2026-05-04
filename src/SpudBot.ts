@@ -186,7 +186,7 @@ export class SpudBotTwitch extends TwitchBotBase<TwitchUserDetail> {
     }
 
     protected override async handleChannelPointRewardRedeem(event: TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, _subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
-        const userDetail = await this.getUserDetailForUserId(event.id);
+        const userDetail = await this.getUserDetailForUserId(event.user_id);
         await this.tryAssignFirst(userDetail, new Date(event.redeemed_at));
 
         const chatFunc = async (message: string): Promise<void> => {
