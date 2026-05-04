@@ -306,6 +306,8 @@ export abstract class IrcBot<
             newUserDetailPromise.then((n => {
                 this._userDetailByUserId[userId] = n;
                 delete this._pendingUserDetailByUserId[userId];
+            })).catch((reason => {
+                console.log(reason);
             }));
         }
 
