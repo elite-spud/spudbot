@@ -76,10 +76,10 @@
             {
                 "name": "!gdqhotfix",
                 "aliases": ["!hotfix", "!Hotfix", "!GDQHotfix"],
-                "expiresAt": "2026-04-19T02:00:00",
+                "expiresAt": "2026-05-16T02:00:00",
                 "autoPostIfTitleContainsAny": ["!hotfix", "!Hotfix", "!gdqhotfix"],
                 "responses": [
-                    "This Saturday, April 18 at 2:00 PM ET, I'll be appearing on GDQ Hotfix playing the Poltergust Ride Mod for Luigi's Mansion as part of the Fatales' Follies \"silly speedrun\" showcase! @MIT_Battery will be joining me on comms! Full schedule here: https://gdq.gg/schedule/hotfix"
+                    "On Friday, May 15th, I'll be appearing on GDQ Hotfix playing Luigi's Mansion 100%! @MIT_Battery and @millie_494 will be joining me on comms!"
                 ]
             },
             {
