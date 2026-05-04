@@ -14,14 +14,55 @@ export class TimerCommand implements IMessageHandler_AcceptsNoInput {
     }
 }
 
-export class TimerGroup {
-    protected _intervalId?: NodeJS.Timeout;
+export interface TimerGroupArgs {
+    commands: (IMessageHandler_AcceptsNoInput)[];
+    intervalMinutes: number;
+    startDelayMinutes?: number;
+    randomizeCommands?: boolean;
+}
 
-    public constructor(
-        protected _commands: (IMessageHandler_AcceptsNoInput)[],
-        protected readonly _intervalMinutes: number,
-        protected readonly _startDelayMinutes: number = 0,
-        protected readonly _randomizeCommands: boolean = false) {
+export class TimerGroup {
+    protected readonly _commands: IMessageHandler_AcceptsNoInput[];
+    protected readonly _intervalMinutes: number;
+    protected readonly _startDelayMinutes: number;
+    
+    protected _intervalId?: NodeJS.Timeout;
+    protected _nextCommandIndex: number = 0;
+
+    public constructor(args: TimerGroupArgs) {
+        this._commands = Array.from(args.commands);
+        if (!!args.randomizeCommands) {
+            const orderedCommands = Array.from(this._commands);
+            const shuffledCommands: IMessageHandler_AcceptsNoInput[] = [];
+            while (orderedCommands.length > 0) {
+                const index = randomInt(orderedCommands.length);
+                shuffledCommands.push(orderedCommands[index]!);
+                orderedCommands.splice(index, 1);
+            }
+            this._commands = shuffledCommands;
+        }
+
+        this._intervalMinutes = args.intervalMinutes;
+        this._startDelayMinutes = args.startDelayMinutes ?? 0;
+    }
+
+    protected async callNextCommand(): Promise<HandleMessageResult> {
+        const startIndex = this._nextCommandIndex;
+        do {
+            const command = this._commands[this._nextCommandIndex];
+            const commandPromise = command.handleMessageWithoutInput(undefined, new Date(), false);
+
+            this._nextCommandIndex = this._nextCommandIndex === this._commands.length - 1
+                ? 0
+                : this._nextCommandIndex + 1;
+            
+            const result = await commandPromise;
+            if (result === HandleMessageResult.HandledSuccessfully) {
+                return result;
+            }
+        } while (this._nextCommandIndex !== startIndex)
+        
+        return HandleMessageResult.MiscNotHandled;
     }
 
     public startTimer(): void {
@@ -29,42 +70,20 @@ export class TimerGroup {
             return;
         }
         
-        let currentIndex = 0;
-        let intervalCommands = this._commands;
-        if (this._randomizeCommands) {
-            const orderedCommands = this._commands;
-            const shuffledCommands: IMessageHandler_AcceptsNoInput[] = [];
-            while (orderedCommands.length > 0) {
-                const index = randomInt(orderedCommands.length);
-                shuffledCommands.push(orderedCommands[index]!);
-                orderedCommands.splice(index, 1);
-            }
-            intervalCommands = shuffledCommands;
-        }
-        
         const offsetMillis = this._startDelayMinutes * 60 * 1000;
         setTimeout(() => {
             const intervalMillis = this._intervalMinutes * 60 * 1000;
 
-            const callNextCommand = () => {
-                currentIndex = currentIndex === intervalCommands.length - 1
-                    ? 0
-                    : currentIndex + 1;
-                const command = intervalCommands[currentIndex]!;
-                const commandPromise = command.handleMessageWithoutInput(undefined, new Date(), false); // TODO: Don't send timer messages if stream isn't live / better yet, don't start the timers *until* the stream is live
+            const func = async () => {
+                try {
+                    await this.callNextCommand();
+                } catch (err) {
+                    console.log(`Unable to call next command in TimerGroup`);
+                    console.log(err);
+                }
+            }
 
-                commandPromise.then((result) => {
-                    if (result > HandleMessageResult.HandledSuccessfully) {
-                        callNextCommand();
-                    }
-                })
-                commandPromise.catch((_err) => {
-                    callNextCommand();
-                });
-            };
-
-            callNextCommand();
-            this._intervalId = setInterval(callNextCommand, intervalMillis);
+            this._intervalId = setInterval(func, intervalMillis);
         }, offsetMillis);
     }
 
