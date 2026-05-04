@@ -321,7 +321,12 @@ export abstract class IrcBot<
     protected abstract getChatCommand(commandConfig: TSimpleCommand_Config): MessageHandler_Simple | undefined;
 
     protected getTimerGroup(commands: IMessageHandler_AcceptsNoInput[], intervalMinutes: number, startDelayMinutes?: number, randomizeCommands?: boolean): TimerGroup {
-        return new TimerGroup(commands, intervalMinutes, startDelayMinutes, randomizeCommands);
+        return new TimerGroup({
+            commands,
+            intervalMinutes,
+            startDelayMinutes,
+            randomizeCommands,
+        });
     }
 
     protected getSimpleCommandsFromConfig(commandGroups: ISimpleCommandGroup_Config<TSimpleCommand_Config>[]): MessageHandlersFromConfigResult {
