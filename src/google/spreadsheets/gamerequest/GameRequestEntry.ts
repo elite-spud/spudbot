@@ -145,6 +145,10 @@ export class GameRequestIteration {
         return this.pointsRequiredToFundOverride ?? ChannelPointRequests.getGameRequestPrice(this.estimatedGameLengthHours);
     }
 
+    public get pointsRemainingToFund(): number {
+        return this.pointsRequiredToFund - this.pointsContributed;
+    }
+
     public get pointsContributed(): number {
         return this.contributions.reduce<number>((prev, current, _index) => {
             return prev + current.points;
@@ -201,11 +205,20 @@ export class GameRequestIteration {
         return this.effectivePoints / this.pointsRequiredToFund;
     }
 
-    public addPoints(username: string, userId: string, points: number, timestamp: Date, allowOverfunding: boolean) {
+    public canAddPoints(allowOverfunding: boolean): boolean {
         const fundingCutoffPhase = allowOverfunding
             ? GameRequestEntry_IterationPhase.Selected
             : GameRequestEntry_IterationPhase.Funded;
         if (this.phase >= fundingCutoffPhase) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public addPoints(username: string, userId: string, points: number, timestamp: Date, allowOverfunding: boolean) {
+        const canAddPoints = this.canAddPoints(allowOverfunding);
+        if (!canAddPoints) {
             throw new PhaseDoesNotAllowFundingError(this.phase);
         }
 

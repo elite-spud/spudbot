@@ -47,7 +47,8 @@ export interface FundGameRequestOutcome {
 export enum FundGameRequestOutcomeType {
     Fulfilled,
     Unfulfilled_NewRequest,
-    Unfulfilled_OverfundDisabled,
+    Unfulfilled_PhaseDoesNotAcceptFunding,
+    Unfulfilled_PhaseDoesNotAcceptFundingWithoutOverfundEnabled,
     PendingConfirmation_OverfundNeedsApproval,
 }
 
@@ -173,7 +174,13 @@ export class GoogleAPI {
             return;
         }
 
-        if (outcome.type === FundGameRequestOutcomeType.Unfulfilled_OverfundDisabled) {
+        if (outcome.type === FundGameRequestOutcomeType.Unfulfilled_PhaseDoesNotAcceptFunding) {
+            await this._config.twitchApi.updateChannelPointRedemption(event.id, event.reward.id, event.broadcaster_user_id, false);
+            chat(`@${event.user_name}, ${event.user_input} is currently not in a fundable state (probably because it's already been played or selected for a future playthrough!). Your points have been returned.`);
+            return;
+        }
+
+        if (outcome.type === FundGameRequestOutcomeType.Unfulfilled_PhaseDoesNotAcceptFundingWithoutOverfundEnabled) {
             await this._config.twitchApi.updateChannelPointRedemption(event.id, event.reward.id, event.broadcaster_user_id, false);
             chat(`@${event.user_name}, you've submitted enough channel points to overfund the requested game, ${event.user_input} ${outcome.overfundedByAmount !== undefined ? `, by ${outcome.overfundedByAmount} points` : ``}, but overfunding is currently disabled. Your points have been returned.`);
             return;
@@ -227,30 +234,42 @@ export class GoogleAPI {
                 await pushSpreadsheet(await this._googleSheets, GoogleAPI.incentiveSheetId, GoogleAPI.gameRequestOutputSubSheet, gameRequestSpreadsheet);
             }
 
-            const notCurrentlyOverfunded = existingEntry.pointsContributed <= existingEntry.pointsRequiredToFund;
-            const wouldBeOverfunded = existingEntry.pointsContributed + points > existingEntry.pointsRequiredToFund;
-            if (notCurrentlyOverfunded && wouldBeOverfunded) {
-                console.log("Overfunding detected!");
-                const overfundedByAmount = existingEntry.pointsContributed + points - existingEntry.pointsRequiredToFund;
-                if (!this.gameRequestOverfundingEnabled) {
-                    console.log("Overfunding disabled!");
-                    future.resolve({
-                        type: FundGameRequestOutcomeType.Unfulfilled_OverfundDisabled,
-                        overfundedByAmount: overfundedByAmount,
-                    });
-                    return;
-                }
-
+            const canAddPoints = existingEntry.currentIteration.canAddPoints(this.gameRequestOverfundingEnabled);
+            if (!canAddPoints) {
                 future.resolve({
-                    type: FundGameRequestOutcomeType.PendingConfirmation_OverfundNeedsApproval,
-                    overfundedByAmount: overfundedByAmount,
-                    complete: completeFunding,
+                    type: this.gameRequestOverfundingEnabled
+                        ? FundGameRequestOutcomeType.Unfulfilled_PhaseDoesNotAcceptFunding
+                        : FundGameRequestOutcomeType.Unfulfilled_PhaseDoesNotAcceptFundingWithoutOverfundEnabled,
                 });
                 return;
             }
 
-            await completeFunding();
-            future.resolve({ type: FundGameRequestOutcomeType.Fulfilled });
+            const notCurrentlyOverfunded = existingEntry.currentIteration.pointsRemainingToFund >= 0;
+            const wouldBeOverfunded = existingEntry.currentIteration.pointsRemainingToFund < points;
+            const firstTimeOverfundingDetected = notCurrentlyOverfunded && wouldBeOverfunded;
+
+            if (!firstTimeOverfundingDetected) {
+                await completeFunding();
+                future.resolve({ type: FundGameRequestOutcomeType.Fulfilled });
+            }
+
+            console.log("First-time Overfunding detected!");
+            const overfundedByAmount = points - existingEntry.currentIteration.pointsRemainingToFund;
+            if (!this.gameRequestOverfundingEnabled) {
+                console.log("Overfunding disabled!");
+                future.resolve({
+                    type: FundGameRequestOutcomeType.Unfulfilled_PhaseDoesNotAcceptFundingWithoutOverfundEnabled,
+                    overfundedByAmount: overfundedByAmount,
+                });
+                return;
+            }
+
+            future.resolve({
+                type: FundGameRequestOutcomeType.PendingConfirmation_OverfundNeedsApproval,
+                overfundedByAmount: overfundedByAmount,
+                complete: completeFunding,
+            });
+            return;
         }
         this._taskQueue.addTask(task);
         this._taskQueue.startQueue();
