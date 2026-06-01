@@ -46,10 +46,11 @@ export interface FundGameRequestOutcome {
 
 export enum FundGameRequestOutcomeType {
     Fulfilled,
+    PendingConfirmation_OverfundNeedsApproval,
+    UnfulFilled,
     Unfulfilled_NewRequest,
     Unfulfilled_PhaseDoesNotAcceptFunding,
     Unfulfilled_PhaseDoesNotAcceptFundingWithoutOverfundEnabled,
-    PendingConfirmation_OverfundNeedsApproval,
 }
 
 export class GoogleAPI {

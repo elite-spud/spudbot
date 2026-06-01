@@ -702,7 +702,7 @@ export class SpudBot_MessageHandlers {
                     const userId = await this._spudBot.getUserIdForUsername(username);
                     const pointsToApply = Number.parseInt(args[2]!);
                     const outcome = await (await this._googleApi).handleGameRequestFund(gameName, username, userId, pointsToApply, new Date());
-                    if (outcome.type === FundGameRequestOutcomeType.Unfulfilled_OverfundDisabled) {
+                    if (outcome.type === FundGameRequestOutcomeType.Unfulfilled_PhaseDoesNotAcceptFundingWithoutOverfundEnabled) {
                         input.chat(`Unable to apply funds to game request ${gameName}: would overfund by ${outcome.overfundedByAmount}, but overfunding is disabled`);
                         return;
                     }
@@ -710,7 +710,11 @@ export class SpudBot_MessageHandlers {
                         console.log(`Forcing Overfund...`);
                         await outcome.complete(); // force this through
                     }
-                    input.chat(`Game request funds added.`);
+                    if (outcome.type >= FundGameRequestOutcomeType.UnfulFilled) {
+                        input.chat(`Game request funds not added.`);
+                    } else {
+                        input.chat(`Game request funds added.`);
+                    }
                 }
             } else if (tokens[1] === "refresh") {
                 await (await this._googleApi).handleGameRequestRefresh(input.chat);
