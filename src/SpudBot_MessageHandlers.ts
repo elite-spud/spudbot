@@ -37,6 +37,7 @@ export class SpudBot_MessageHandlers {
         const handlers = [
             this.getHandler_Echo(),
             this.getHandler_First(),
+            this.getHandler_Foremost(),
             this.getHandler_Bonk(),
             this.getHandler_ForReal(),
             this.getHandler_Slot(),
@@ -83,7 +84,7 @@ export class SpudBot_MessageHandlers {
             const userDetail = await this._spudBot.getUserDetailForUserId(input.userId);
             await this._spudBot.tryAssignFirst(userDetail, input.timestamp);
 
-            if (!input.message.startsWith("!first")) {
+            if (input.message !== "!first") {
                 return;
             }
 
@@ -113,6 +114,35 @@ export class SpudBot_MessageHandlers {
             handlerId: "!first",
             triggerPhrases: undefined,
             strictMatch: false,
+            handleMessage: handleFunc,
+        };
+        const handler = new MessageHandler_InputRequired(config);
+        return handler;
+    }
+
+    protected getHandler_Foremost(): MessageHandler_InputRequired<IMessageHandlerInput_Twitch> {
+        const handleFunc = async (input: IMessageHandlerInput_Twitch) => {
+            const cachedUserDetails = this._spudBot.getAllCachedUserDetails();
+            const userDetailsByNumTimesFirstDesc = Object.values(cachedUserDetails).sort((a, b) => { return b.numTimesFirst - a.numTimesFirst });
+            
+            const maxIterations = 10;
+            let message = "";
+            for (let i = 0; i < userDetailsByNumTimesFirstDesc.length && i < maxIterations; i++) {
+                const userDetail = userDetailsByNumTimesFirstDesc[i];
+                const userString = `${i === 0 ? "" : ", "} ${userDetail.username}: ${userDetail.numTimesFirst}`;
+                if (message.length + userString.length > this._spudBot.maxChatMessageLength) {
+                    break;
+                }
+                message += userString;
+            }
+            await input.chat(message);
+        };
+        
+        const config: MessageHandler_InputRequired_Config<IMessageHandlerInput_Twitch> = {
+            handlerId: "!foremost",
+            triggerPhrases: ["!foremost", "!firstest"],
+            strictMatch: true,
+            globalTimeoutSeconds: 30,
             handleMessage: handleFunc,
         };
         const handler = new MessageHandler_InputRequired(config);

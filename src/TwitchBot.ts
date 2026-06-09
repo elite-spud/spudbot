@@ -24,7 +24,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
     protected _currentSubPoints?: number = undefined;
     protected _currentSubCount?: number = undefined;
 
-    protected override get maxChatMessageLength(): number {
+    public override get maxChatMessageLength(): number {
         return this._config.misc.maxChatMessageLength ?? TwitchBotBase.twitchMaxChatMessageLength;
     }
 

@@ -174,7 +174,7 @@ export abstract class IrcBot<
     protected readonly _userDetailsPathCsv: string;
     protected readonly _chatHistoryPath: string = ``; // fs.realpathSync(`${configDir}/users/twitchChatHistory.csv`);
 
-    protected get maxChatMessageLength(): number {
+    public get maxChatMessageLength(): number {
         return this._config.misc.maxChatMessageLength ?? Number.MAX_SAFE_INTEGER
     }
 
@@ -312,6 +312,11 @@ export abstract class IrcBot<
         }
 
         return returnVal;
+    }
+
+    public getAllCachedUserDetails(): IUserDetailCollection<TUserDetail> {
+        const cachedUserDetails = Object.assign({}, this._userDetailByUserId);
+        return cachedUserDetails;
     }
 
     protected abstract createFreshUserDetail(userId: string): Promise<TUserDetail>;
