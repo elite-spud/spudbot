@@ -6,7 +6,7 @@ import { Future } from "./Future";
 import { IIrcBotMiscConfig, IPrivMessageDetail, IrcBot, ISimpleCommandGroup_Config } from "./IrcBot";
 import { knownBots } from "./KnownBots";
 import { TwitchApi, TwitchApiConfig } from "./TwitchApi";
-import { emoteWasGigantified, ISimpleCommand_ConfigTwitch, ITwitchBotConfig, ITwitchBotConnectionConfig, SubTierPoints, TwitchBadgeTagKeys, TwitchChatSettings, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_Follow, TwitchEventSub_Event_Raid, TwitchEventSub_Event_SubscriptionEnd, TwitchEventSub_Event_SubscriptionGift, TwitchEventSub_Event_SubscriptionMessage, TwitchEventSub_Event_SubscriptionStart, TwitchEventSub_Notification_Payload, TwitchEventSub_Notification_Subscription, TwitchEventSub_Reconnect_Payload, TwitchEventSub_SubscriptionType, TwitchEventSub_Welcome_Payload, TwitchPrivMessageTagCollection, TwitchPrivMessageTagKeys, TwitchSubscriptionDetail, TwitchUserDetail, userIsModerator, userIsVip } from "./TwitchApiTypes";
+import { emoteWasGigantified, ISimpleCommand_ConfigTwitch, ITwitchBotConfig, ITwitchBotConnectionConfig, SubTierPoints, TwitchBadgeTagKeys, TwitchChatSettings, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_Follow, TwitchEventSub_Event_Offline, TwitchEventSub_Event_Online, TwitchEventSub_Event_Raid, TwitchEventSub_Event_SubscriptionEnd, TwitchEventSub_Event_SubscriptionGift, TwitchEventSub_Event_SubscriptionMessage, TwitchEventSub_Event_SubscriptionStart, TwitchEventSub_Notification_Payload, TwitchEventSub_Notification_Subscription, TwitchEventSub_Reconnect_Payload, TwitchEventSub_SubscriptionType, TwitchEventSub_Welcome_Payload, TwitchPrivMessageTagCollection, TwitchPrivMessageTagKeys, TwitchSubscriptionDetail, TwitchUserDetail, userIsModerator, userIsVip } from "./TwitchApiTypes";
 
 export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = TwitchUserDetail> extends IrcBot<TUserDetail, IMessageHandlerInput_Twitch, ISimpleCommand_ConfigTwitch> {
     public static readonly twitchMaxChatMessageLength = 500;
@@ -23,6 +23,8 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
 
     protected _currentSubPoints?: number = undefined;
     protected _currentSubCount?: number = undefined;
+
+    public streamLastConfirmedLiveAt: Date | undefined = undefined;
 
     public override get maxChatMessageLength(): number {
         return this._config.misc.maxChatMessageLength ?? TwitchBotBase.twitchMaxChatMessageLength;
@@ -106,9 +108,7 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
     }
 
     public override async trackUsersInChat(secondsToAdd: number, force: boolean = false): Promise<void> {
-        const twitchApi = await this._twitchApi;
-        const broadcasterId = await twitchApi.getTwitchBroadcasterId();
-        const isChannelLive = await twitchApi.isChannelLive(broadcasterId);
+        const isChannelLive = await this.isChannelLive();
         if (!force && !isChannelLive) {
             return;
         }
@@ -281,6 +281,10 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
                 await this.handleFollow(notificationMessage.event as TwitchEventSub_Event_Follow, notificationMessage.subscription);
             } else if (notificationMessage.subscription.type === "channel.ad_break.begin") {
                 
+            } else if (notificationMessage.subscription.type === "stream.online") {
+                await this.handleOnline(notificationMessage.event as TwitchEventSub_Event_Online, notificationMessage.subscription);
+            } else if (notificationMessage.subscription.type === "stream.offline") {
+                await this.handleOffline(notificationMessage.event as TwitchEventSub_Event_Offline, notificationMessage.subscription);
             }
         } catch (err) {
             console.log("Error processing eventSub notification: ");
@@ -458,6 +462,27 @@ export abstract class TwitchBotBase<TUserDetail extends TwitchUserDetail = Twitc
             userDetail.followDates = [];
         }
         userDetail.followDates.push(new Date(event.followed_at));
+    }
+
+    public async isChannelLive(): Promise<boolean> {
+        const oneMinutesMillis = 1 * 60 * 1000;
+        if (this.streamLastConfirmedLiveAt !== undefined) {
+            const timeSinceLastCheck = Date.now() - this.streamLastConfirmedLiveAt.getTime();
+            if (timeSinceLastCheck <= oneMinutesMillis) {
+                return true;
+            }
+        }
+
+        return (await this._twitchApi).isChannelLive(await this.getTwitchBroadcasterId());
+    }
+
+    protected async handleOnline(event: TwitchEventSub_Event_Online, _subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
+        const liveAt = new Date(event.started_at);
+        this.streamLastConfirmedLiveAt = liveAt;
+    }
+
+    protected async handleOffline(_event: TwitchEventSub_Event_Offline, _subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
+        this.streamLastConfirmedLiveAt = undefined;
     }
 
     protected async updateSubscribedUsers(subDetails: TwitchSubscriptionDetail[]): Promise<void> {

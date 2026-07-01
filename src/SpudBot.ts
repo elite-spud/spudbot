@@ -6,14 +6,14 @@ import { IIrcBotMiscConfig, ISimpleCommandGroup_Config, IUserDetailCollection } 
 import { SpudBot_MessageHandlers } from "./SpudBot_MessageHandlers";
 import { ISpudBotConfig, ISpudBotConnectionConfig } from "./SpudBotTypes";
 import { TaskQueue } from "./TaskQueue";
-import { ISimpleCommand_ConfigTwitch, ITwitchUserDetail, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_Raid, TwitchEventSub_Notification_Subscription, TwitchEventSub_SubscriptionType, TwitchUserDetail } from "./TwitchApiTypes";
+import { ISimpleCommand_ConfigTwitch, ITwitchUserDetail, TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, TwitchEventSub_Event_Cheer, TwitchEventSub_Event_Offline, TwitchEventSub_Event_Online, TwitchEventSub_Event_Raid, TwitchEventSub_Notification_Subscription, TwitchEventSub_SubscriptionType, TwitchUserDetail } from "./TwitchApiTypes";
 import { TwitchBotBase } from "./TwitchBot";
 import { Utils } from "./Utils";
 
 export class SpudBotTwitch extends TwitchBotBase<TwitchUserDetail> {
     public declare readonly _config: ISpudBotConfig;
-    public _firstChatterId: string | undefined = undefined; // TODO: make this a class instead of a public property
-    public _firstChatterTimestamp: Date | undefined = undefined;
+    public firstChatterId: string | undefined = undefined; // TODO: make this a class instead of a public property
+    public firstChatterTimestamp: Date | undefined = undefined;
     protected _raidResponseTaskQueue = new TaskQueue();
 
     protected readonly _googleApi = new Future<GoogleAPI>();
@@ -154,16 +154,28 @@ export class SpudBotTwitch extends TwitchBotBase<TwitchUserDetail> {
                 broadcaster_user_id: broadcasterId,
                 moderator_user_id: broadcasterId, // TODO: make this use the chatbot id (must first use a token authorized by the chatbot account)
             }
+        },{
+            name: `stream.online`,
+            version: `1`,
+            condition: {
+                broadcaster_user_id: broadcasterId,
+            }
+        },{
+            name: `stream.offline`,
+            version: `1`,
+            condition: {
+                broadcaster_user_id: broadcasterId,
+            }
         }];
     }
 
     public async tryAssignFirst(userDetail: TwitchUserDetail, timestamp: Date): Promise<void> {
-        const someoneWasAlreadyFirst = this._firstChatterId !== undefined && this._firstChatterTimestamp !== undefined;
-        const timestampIsEarlier = this._firstChatterTimestamp === undefined // This check sorts out race conditions where messages can arrive out of order
+        const someoneWasAlreadyFirst = this.firstChatterId !== undefined && this.firstChatterTimestamp !== undefined;
+        const timestampIsEarlier = this.firstChatterTimestamp === undefined // This check sorts out race conditions where messages can arrive out of order
             ? true
-            : timestamp.getTime() < this._firstChatterTimestamp!.getTime();
+            : timestamp.getTime() < this.firstChatterTimestamp!.getTime();
         if (someoneWasAlreadyFirst && !timestampIsEarlier) {
-            console.log(`User ${this._firstChatterId} was already first & the given timestamp occurs later than the logged first timestamp`); // TODO: log trace
+            console.log(`User ${this.firstChatterId} was already first & the given timestamp occurs later than the logged first timestamp`); // TODO: log trace
             return;
         }
 
@@ -173,15 +185,15 @@ export class SpudBotTwitch extends TwitchBotBase<TwitchUserDetail> {
             return;
         }
 
-        const streamIsLive = await (await this._twitchApi).isChannelLive(broadcasterId);
+        const streamIsLive = await this.isChannelLive();
         if (!streamIsLive) {
             console.log(`Unable to assign first while stream is not live`);
             return;
         }
 
         console.log(`${userDetail.username} is first.`);
-        this._firstChatterId = userDetail.id;
-        this._firstChatterTimestamp = timestamp;
+        this.firstChatterId = userDetail.id;
+        this.firstChatterTimestamp = timestamp;
         userDetail.numTimesFirst++;
     }
 
@@ -225,5 +237,17 @@ export class SpudBotTwitch extends TwitchBotBase<TwitchUserDetail> {
         this.chat(chatRespondTo, `Welcome @${event.from_broadcaster_user_name}${andFriendsString}! ${thankYouString}I hope your ${raidingChannelDetails.game_name} stream was enjoyable!`);
 
         return;
+    }
+
+    protected override async handleOnline(event: TwitchEventSub_Event_Online, _subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
+        await super.handleOnline(event, _subscription);
+        const chatRespondTo = `#${event.broadcaster_user_login}`;
+        this.chat(chatRespondTo, `${event.broadcaster_user_name} is now live!`);
+    }
+
+    protected override async handleOffline(event: TwitchEventSub_Event_Offline, _subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
+        await super.handleOffline(event, _subscription);
+        const chatRespondTo = `#${event.broadcaster_user_login}`;
+        this.chat(chatRespondTo, `${event.broadcaster_user_name} is now offline.`);
     }
 }

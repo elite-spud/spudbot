@@ -80,7 +80,7 @@ export class SpudBot_MessageHandlers {
 
     protected getHandler_First(): MessageHandler_InputRequired<IMessageHandlerInput_Twitch> {
         const handleFunc = async (input: IMessageHandlerInput_Twitch) => {
-            const someoneWasAlreadyFirst = this._spudBot._firstChatterId !== undefined;
+            const someoneWasAlreadyFirst = this._spudBot.firstChatterId !== undefined;
             const userDetail = await this._spudBot.getUserDetailForUserId(input.userId);
             await this._spudBot.tryAssignFirst(userDetail, input.timestamp);
 
@@ -88,20 +88,19 @@ export class SpudBot_MessageHandlers {
                 return;
             }
 
-            const broadcasterId = await this._spudBot.getTwitchBroadcasterId();
-            const streamIsLive = await (await this._twitchApi).isChannelLive(broadcasterId);
+            const streamIsLive = await this._spudBot.isChannelLive();
             let response: string;
             if (!streamIsLive) {
                 response = `Cannot determine who is first when channel is not yet live.`;
-            } else if (!this._spudBot._firstChatterId) {
+            } else if (!this._spudBot.firstChatterId) {
                 if (input.userIsBroadcaster) {
                     response = `No one is first yet, but the broadcaster cannot be first.`;
                 } else {
                     response = `No one is first yet...`;
                 }
             } else {
-                const firstUserDetail = await this._spudBot.getUserDetailForUserId(this._spudBot._firstChatterId);
-                if (this._spudBot._firstChatterId === input.userId) {
+                const firstUserDetail = await this._spudBot.getUserDetailForUserId(this._spudBot.firstChatterId);
+                if (this._spudBot.firstChatterId === input.userId) {
                     response = `Congrats, ${input.username}, you${someoneWasAlreadyFirst ? " were" : "'re"} first today! You've been first ${firstUserDetail.numTimesFirst} time(s).`;
                 } else {
                     response = `${firstUserDetail.username} was first today. They've been first ${firstUserDetail.numTimesFirst} time(s).`;
@@ -123,11 +122,10 @@ export class SpudBot_MessageHandlers {
     protected getHandler_Foremost(): MessageHandler_InputRequired<IMessageHandlerInput_Twitch> {
         const handleFunc = async (input: IMessageHandlerInput_Twitch) => {
             const cachedUserDetails = this._spudBot.getAllCachedUserDetails();
-            const userDetailsByNumTimesFirstDesc = Object.values(cachedUserDetails).sort((a, b) => { return b.numTimesFirst - a.numTimesFirst });
-            
-            const maxIterations = 10;
+            const userDetailsByNumTimesFirstDesc = Object.values(cachedUserDetails).filter(n => n.numTimesFirst > 0).sort((a, b) => { return b.numTimesFirst - a.numTimesFirst });
+
             let message = "";
-            for (let i = 0; i < userDetailsByNumTimesFirstDesc.length && i < maxIterations; i++) {
+            for (let i = 0; i < userDetailsByNumTimesFirstDesc.length; i++) {
                 const userDetail = userDetailsByNumTimesFirstDesc[i];
                 const userString = `${i === 0 ? "" : ", "} ${userDetail.username}: ${userDetail.numTimesFirst}`;
                 if (message.length + userString.length > this._spudBot.maxChatMessageLength) {
@@ -938,38 +936,5 @@ export class SpudBot_MessageHandlers {
     //         userTimeoutSeconds: 0,
     //     });
     //     await func(messageDetail);
-    // }
-
-    // protected handleStatus(messageDetails: IPrivMessageDetail): void {
-    //     if (!this.doesTriggerMatch(messageDetails, "!status", false)
-    //         && !this.doesTriggerMatch(messageDetails, "git status", false)) {
-    //         return;
-    //     }
-
-    //     if (!messageDetails.recipient || !messageDetails.username) {
-    //         return;
-    //     }
-
-    //     let roll = randomInt(100);
-    //     if (roll < 60) { // Good
-
-    //     } else if (roll < 90) { // Mild
-
-    //     } else { // Oh fuk
-    //         const timeoutSeconds = randomInt(31) + 60;
-    //         const phrases = [
-                
-    //         ]
-    //         roll = randomInt(100);
-    //         if (roll < 10) {
-    //             this.chat(messageDetails.recipient, `${messageDetails.username} fainted!`);
-    //             this.timeout(messageDetails.recipient, messageDetails.username, timeoutSeconds);
-    //         } else if (roll < 20) {
-    //             this.chat(messageDetails.recipient, `${messageDetails.username} could not grasp the true nature of Giygas' attack!`);
-    //             this.timeout(messageDetails.recipient, messageDetails.username, timeoutSeconds);
-    //         } else if (roll < 30) {
-
-    //         }
-    //     }
     // }
 }

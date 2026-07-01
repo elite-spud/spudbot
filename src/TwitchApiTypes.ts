@@ -570,6 +570,23 @@ export interface TwitchEventSub_Event_Follow extends TwitchEventSub_Notification
     followed_at: string;
 }
 
+export interface TwitchEventSub_Event_Online extends TwitchEventSub_Notification_Event {
+    id: string;
+    broadcaster_user_id: string;
+    broadcaster_user_login: string;
+    broadcaster_user_name: string;
+    type: string | "live" | "playlist" | "watch_party" | "premiere" | "rerun";
+    /** ISO format date string */
+    started_at: string;
+}
+
+export interface TwitchEventSub_Event_Offline extends TwitchEventSub_Notification_Event {
+    id: string;
+    broadcaster_user_id: string;
+    broadcaster_user_login: string;
+    broadcaster_user_name: string;
+}
+
 /** https://dev.twitch.tv/docs/api/reference/#create-eventsub-subscription */
 export interface TwitchEventSub_CreateSubscription {
     type: string;
