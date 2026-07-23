@@ -3,7 +3,7 @@ import * as https from "https";
 import { getPassword, setPassword } from "keytar";
 import { ConsoleColors } from "./ConsoleColors";
 import { Future } from "./Future";
-import { CreateCustomChannelPointRewardArgs, ITwitchAuthConfig, TwitchAppToken, TwitchBannedUser, TwitchBroadcasterSubscriptionsResponse, TwitchChatSettings, TwitchEventSub_CreateSubscription, TwitchEventSub_SubscriptionType, TwitchFollowingUser, TwitchGame, TwitchGetBannedUsersResponseBody, TwitchGetChannelInfo, TwitchGetChannelInfoResponse, TwitchGetCustomChannelPointRewardInfo, TwitchGetCustomChannelPointRewardResponse, TwitchGetFollowingUsersResponseBody, TwitchGetGamesResponseBody, TwitchGetShieldModeStatusResponseBody, TwitchGetStreamInfo, TwitchGetStreamsResponse, TwitchRequestArgs, TwitchSubscriptionDetail, TwitchUpdateChannelInformationRequestBody, TwitchUpdateChatSettingsRequestBody, TwitchUserAPIInfo, TwitchUserDetail, TwitchUserInfoResponse, TwitchUserToken } from "./TwitchApiTypes";
+import { CreateCustomChannelPointRewardArgs, ITwitchAuthConfig, TwitchAppToken, TwitchBannedUser, TwitchBroadcasterSubscriptionsResponse, TwitchChatSettings, TwitchEventSub_CreateSubscription, TwitchEventSub_SubscriptionType, TwitchFollowedChannel, TwitchFollowingUser, TwitchGame, TwitchGetBannedUsersResponseBody, TwitchGetChannelInfo, TwitchGetChannelInfoResponse, TwitchGetCustomChannelPointRewardInfo, TwitchGetCustomChannelPointRewardResponse, TwitchGetFollowedChannelsResponseBody, TwitchGetFollowingUsersResponseBody, TwitchGetGamesResponseBody, TwitchGetShieldModeStatusResponseBody, TwitchGetStreamInfo, TwitchGetStreamsResponse, TwitchRequestArgs, TwitchSubscriptionDetail, TwitchUpdateChannelInformationRequestBody, TwitchUpdateChatSettingsRequestBody, TwitchUserAPIInfo, TwitchUserDetail, TwitchUserInfoResponse, TwitchUserToken } from "./TwitchApiTypes";
 
 export interface TwitchApiConfig {
     twitchBroadcasterChannel: string;
@@ -769,6 +769,85 @@ export class TwitchApi {
 
         console.log(`Get Following Users successful (${followingUsers.length} users)`);
         return followingUsers;
+    }
+
+    /**
+     * Returns a list of channels that the broadcaster is following
+     * @param channelId A specific channel to check. If undefined, all followed channels are returned
+     * @returns 
+     */
+    public async getFollowedChannels(channelId?: string | undefined): Promise<TwitchFollowedChannel[]> {
+        const broadcasterId = await this.getTwitchBroadcasterId();
+        const followedChannels: TwitchFollowedChannel[] = [];
+        let cursor: string | undefined = undefined
+
+        const getHeaders = async () => {
+            const token = await this.getStoredUserTokenResponse();
+            return {
+                Authorization: `Bearer ${token?.access_token ?? ""}`,
+                "Client-Id": `${this._authConfig.clientId}`,
+            }
+        }
+
+        while (true) {
+            const requestArgs: TwitchRequestArgs = {
+                method: `GET`,
+                url: `https://api.twitch.tv/helix/channels/followed?user_id=${broadcasterId}&broadcaster_id=${channelId}&first=${100}${!!cursor ? `&after=${cursor}` : ``}`,
+                getHeaders: getHeaders,
+            };
+            const response = await this.sendTwitchRequest(requestArgs);
+    
+            if (response.status !== 200) {
+                console.log(`Get Followed Channels request failed: ${response.status} ${response.statusText}`);
+                const json = await response.json();
+                console.log(json);
+                throw new Error("Get Followed Channels request failed");
+            }
+    
+            const json: TwitchGetFollowedChannelsResponseBody = await response.json();
+            followedChannels.push(...json.data);
+
+            if (!json.pagination.cursor) {
+                break;
+            }
+            cursor = json.pagination.cursor;
+        }
+
+        console.log(`Get Followed Channels successful (${followedChannels.length} channels)`);
+        return followedChannels;
+    }
+
+    /**
+     * 
+     * @param channelId The channel to shoutout
+     */
+    public async shoutout(channelId: string): Promise<void> {
+        const broadcasterId = await this.getTwitchBroadcasterId();
+        console.log(`Shouting out ${channelId} in channelId ${broadcasterId}`);
+        
+        const getHeaders = async () => {
+            const token = await this.getStoredUserTokenResponse();
+            return {
+                Authorization: `Bearer ${token?.access_token ?? ""}`, // TODO: sign in with the chatbot account for this
+                "Client-Id": `${this._authConfig.clientId}`,
+            }
+        }
+        const moderatorId = broadcasterId; // TODO: sign in with the chatbot account for this
+        const requestArgs: TwitchRequestArgs = {
+            method: `POST`,
+            url: `https://api.twitch.tv/helix/chat/shoutouts?from_broadcaster_id=${broadcasterId}&to_broadcaster_id=${channelId}&moderator_id=${moderatorId}`,
+            getHeaders: getHeaders,
+        };
+        const response = await this.sendTwitchRequest(requestArgs);
+
+        if (response.status === 429) {
+            console.log(`Shoutout could not be sent due to rate limits`);
+        }
+        else if (response.status !== 204) {
+            console.log(`Shoutout failed: ${response.status} ${response.statusText}`);
+        } else {
+            console.log(`Shoutout for ${channelId} Successful.`);
+        }
     }
 
     public async createEventSubSubscription(topic: TwitchEventSub_SubscriptionType, sessionId: string): Promise<void> {

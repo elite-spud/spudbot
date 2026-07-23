@@ -1,3 +1,4 @@
+import { setTimeout } from "timers/promises";
 import { MessageHandler_InputRequired } from "./ChatCommand";
 import { IMessageHandlerInput_Twitch } from "./ChatCommand_Twitch";
 import { Future } from "./Future";
@@ -235,6 +236,13 @@ export class SpudBotTwitch extends TwitchBotBase<TwitchUserDetail> {
             ? `Thank you so much for sharing your community with me eeveeHeart `
             : ``;
         this.chat(chatRespondTo, `Welcome @${event.from_broadcaster_user_name}${andFriendsString}! ${thankYouString}I hope your ${raidingChannelDetails.game_name} stream was enjoyable!`);
+
+        const followedChannelResult = await twitchApi.getFollowedChannels(event.from_broadcaster_user_id);
+        const broadcasterFollowsRaider = followedChannelResult.length > 0;
+        if (broadcasterFollowsRaider) {
+            await setTimeout(1000 * 45);
+            await twitchApi.shoutout(event.from_broadcaster_user_id);
+        }
 
         return;
     }

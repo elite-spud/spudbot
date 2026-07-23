@@ -352,8 +352,23 @@ export interface TwitchFollowingUser {
     followed_at: string;
 }
 
+export interface TwitchFollowedChannel {
+    broadcaster_id: string;
+    broadcaster_login: string;
+    broadcaster_name: string;
+    followed_at: string;
+}
+
 export interface TwitchGetFollowingUsersResponseBody {
     data: TwitchFollowingUser[]
+    pagination: {
+        cursor: string;
+    }
+    total: number;
+}
+
+export interface TwitchGetFollowedChannelsResponseBody {
+    data: TwitchFollowedChannel[]
     pagination: {
         cursor: string;
     }
