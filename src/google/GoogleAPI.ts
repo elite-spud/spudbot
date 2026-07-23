@@ -241,6 +241,7 @@ export class GoogleAPI {
                     type: this.gameRequestOverfundingEnabled
                         ? FundGameRequestOutcomeType.Unfulfilled_PhaseDoesNotAcceptFunding
                         : FundGameRequestOutcomeType.Unfulfilled_PhaseDoesNotAcceptFundingWithoutOverfundEnabled,
+                    entry: existingEntry,
                 });
                 return;
             }
@@ -251,7 +252,10 @@ export class GoogleAPI {
 
             if (!firstTimeOverfundingDetected) {
                 await completeFunding();
-                future.resolve({ type: FundGameRequestOutcomeType.Fulfilled });
+                future.resolve({
+                    type: FundGameRequestOutcomeType.Fulfilled,
+                    entry: existingEntry,
+                });
             }
 
             console.log("First-time Overfunding detected!");
@@ -261,6 +265,7 @@ export class GoogleAPI {
                 future.resolve({
                     type: FundGameRequestOutcomeType.Unfulfilled_PhaseDoesNotAcceptFundingWithoutOverfundEnabled,
                     overfundedByAmount: overfundedByAmount,
+                    entry: existingEntry,
                 });
                 return;
             }
@@ -268,6 +273,7 @@ export class GoogleAPI {
             future.resolve({
                 type: FundGameRequestOutcomeType.PendingConfirmation_OverfundNeedsApproval,
                 overfundedByAmount: overfundedByAmount,
+                entry: existingEntry,
                 complete: completeFunding,
             });
             return;
