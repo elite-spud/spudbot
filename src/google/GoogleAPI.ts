@@ -157,8 +157,8 @@ export class GoogleAPI {
             const fundingStr = outcome.entry === undefined
             ? ``
             : outcome.entry.currentIteration.percentageFunded < 1.0
-                ? `(${outcome.entry.currentIteration.effectivePoints}/${outcome.entry.currentIteration.pointsRequiredToFund})`
-                : `(${(outcome.entry.currentIteration.percentageFunded * 100).toFixed(1)}% funded`;
+                ? ` (${outcome.entry.currentIteration.effectivePoints}/${outcome.entry.currentIteration.pointsRequiredToFund})`
+                : ` (${(outcome.entry.currentIteration.percentageFunded * 100).toFixed(1)}% funded)`;
             return `@${event.user_name}, added ${event.reward.cost} points to requesting ${event.user_input} on stream!${fundingStr}`;
         }
         
