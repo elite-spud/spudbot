@@ -170,41 +170,49 @@ export class SpudBotTwitch extends TwitchBotBase<TwitchUserDetail> {
         }];
     }
 
-    public async tryAssignFirst(userDetail: TwitchUserDetail, timestamp: Date): Promise<void> {
+    /**
+     * 
+     * @param userDetail 
+     * @param timestamp 
+     * @returns true if user was first, false otherwise
+     */
+    public async tryAssignFirst(userDetail: TwitchUserDetail, timestamp: Date, chat: (message: string) => Promise<void>): Promise<boolean> {
         const someoneWasAlreadyFirst = this.firstChatterId !== undefined && this.firstChatterTimestamp !== undefined;
         const timestampIsEarlier = this.firstChatterTimestamp === undefined // This check sorts out race conditions where messages can arrive out of order
             ? true
             : timestamp.getTime() < this.firstChatterTimestamp!.getTime();
         if (someoneWasAlreadyFirst && !timestampIsEarlier) {
             console.log(`User ${this.firstChatterId} was already first & the given timestamp occurs later than the logged first timestamp`); // TODO: log trace
-            return;
+            return false;
         }
 
         const broadcasterId = await this.getTwitchBroadcasterId();
         if (userDetail.id === broadcasterId) {
             console.log(`User is broadcaster & cannot be first`);
-            return;
+            return false;
         }
 
         const streamIsLive = await this.isChannelLive();
         if (!streamIsLive) {
             console.log(`Unable to assign first while stream is not live`);
-            return;
+            return false;
         }
 
         console.log(`${userDetail.username} is first.`);
         this.firstChatterId = userDetail.id;
         this.firstChatterTimestamp = timestamp;
         userDetail.numTimesFirst++;
+        await chat(`Congrats, @${userDetail.username}, you're first today!`);
+        return true;
     }
 
     protected override async handleChannelPointRewardRedeem(event: TwitchEventSub_Event_ChannelPointCustomRewardRedemptionAdd, _subscription: TwitchEventSub_Notification_Subscription): Promise<void> {
-        const userDetail = await this.getUserDetailForUserId(event.user_id);
-        await this.tryAssignFirst(userDetail, new Date(event.redeemed_at));
-
         const chatFunc = async (message: string): Promise<void> => {
             this.chat(`#${event.broadcaster_user_login}`, message);
         }
+        
+        const userDetail = await this.getUserDetailForUserId(event.user_id);
+        await this.tryAssignFirst(userDetail, new Date(event.redeemed_at), chatFunc);
 
         if (event.reward.title === "Hi, I'm Lurking!") {
             chatFunc(`${event.user_name}, enjoy your lurk elites72Heart`);

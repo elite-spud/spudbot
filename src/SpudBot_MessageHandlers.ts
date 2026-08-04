@@ -82,7 +82,7 @@ export class SpudBot_MessageHandlers {
         const handleFunc = async (input: IMessageHandlerInput_Twitch) => {
             const someoneWasAlreadyFirst = this._spudBot.firstChatterId !== undefined;
             const userDetail = await this._spudBot.getUserDetailForUserId(input.userId);
-            await this._spudBot.tryAssignFirst(userDetail, input.timestamp);
+            await this._spudBot.tryAssignFirst(userDetail, input.timestamp, input.chat);
 
             if (input.message !== "!first") {
                 return;
