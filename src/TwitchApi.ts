@@ -18,7 +18,7 @@ export class TwitchApi {
     protected readonly _authConfig: ITwitchAuthConfig;
     
     // Keep alphabetical for easier comparison against returned scope in refresh token
-    protected readonly _userTokenScope = `bits:read channel:manage:broadcast channel:manage:redemptions channel:read:subscriptions moderator:manage:banned_users moderator:manage:chat_settings moderator:manage:shield_mode moderator:read:followers user:read:follows`;
+    protected readonly _userTokenScope = `bits:read channel:manage:broadcast channel:manage:redemptions channel:read:subscriptions moderator:manage:banned_users moderator:manage:chat_settings moderator:manage:shield_mode moderator:manage:shoutouts moderator:read:followers user:read:follows`;
     protected readonly _userAccessTokenAccountName = "default"; // TODO: find a good replacement for this
     protected readonly _twitchAppToken = new Future<TwitchAppToken>();
     protected _currentUserTokenRefreshPromise: Promise<TwitchUserToken> | undefined = undefined;
