@@ -202,7 +202,7 @@ export class SpudBotTwitch extends TwitchBotBase<TwitchUserDetail> {
         this.firstChatterId = userDetail.id;
         this.firstChatterTimestamp = timestamp;
         userDetail.numTimesFirst++;
-        await chat(`Congrats, @${userDetail.username}, you're first today!`);
+        // await chat(`Congrats, @${userDetail.username}, you're first today!`);
         return true;
     }
 
