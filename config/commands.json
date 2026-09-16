@@ -630,6 +630,8 @@
             },
             {
                 "name": "!subs",
+                "aliases": ["!sub", "!gift", "!gifts"],
+                "strict": true,
                 "responses": [
                     "Use this link to manage/gift Twitch subscriptions through a browser (mostly to avoid mobile fees) https://www.twitch.tv/subs/elite_spud. Change the username at the end to manage subs on other channels."
                 ]
@@ -699,9 +701,17 @@
             {
                 "name": "!LASS",
                 "aliases": ["!lass"],
-                "expiresAt": "2026-09-T072:00:00",
+                "expiresAt": "2026-09-07T02:00:00",
                 "responses": [
                     "I'm running Luigi's Mansion Max% for the @ladyarcaders Super Showcase on September 5 at 9:30PM ET. @neverdoors will be joining me on comms! Check out the full schedule here: https://ladyarcaders.com/events/24/schedule/"
+                ]
+            },
+            {
+                "name": "!subtember",
+                "aliases": ["!Subtember", "!subathon"],
+                "expiresAt": "2026-10-05T02:00:00",
+                "responses": [
+                    "For Subtember this year, I've organized a special event on my channel that'll run through October 4th. During this period, chat has the opportunity to fund up to 9 bonus streams, unlock special limited-time incentives, and cast votes in an ongoing randomizer bidwar—all powered with subscription points. Check the spreadsheet for more details: https://docs.google.com/spreadsheets/d/1fgLVkU3Zs811CxWSlyEX1vI2C5Sv5tvZ3t5j1eo6lTo/edit?usp=sharing"
                 ]
             },
             {
