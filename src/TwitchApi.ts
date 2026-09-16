@@ -1,5 +1,6 @@
 import * as http from "http";
 import * as https from "https";
+import open from "open";
 import { getPassword, setPassword } from "keytar";
 import { ConsoleColors } from "./ConsoleColors";
 import { Future } from "./Future";
@@ -107,6 +108,7 @@ export class TwitchApi {
             console.log(`Unable to load user token silently. ${err}`);
         }
         
+        const tokenAcquiredFuture = new Future<void>();
         console.log(`Obtaining user access token from scratch...`);
         const redirectUrl = `http://localhost:3000`;
         const handleRequest = async (httpRequest: http.IncomingMessage, _httpResponse: http.ServerResponse) => {
@@ -117,6 +119,7 @@ export class TwitchApi {
             const incomingUrl = new URL(`${redirectUrl}${httpRequest.url}`);
             const authCode = incomingUrl.searchParams.get("code");
             if (!authCode) {
+                tokenAcquiredFuture.reject();
                 throw new Error(`Could not load user token: no auth code returned`);
             }
 
@@ -141,9 +144,11 @@ export class TwitchApi {
                 const errMessage = `Failed to exchange authorization code for access token: ${tokenResponse.status}`;
                 console.log(errMessage);
                 console.log(tokenResponseJson);
+                tokenAcquiredFuture.reject();
                 throw new Error(errMessage);
             }
             await this.storeUserTokenResponse(tokenResponseJson);
+            tokenAcquiredFuture.resolve();
         };
         const server = http.createServer(handleRequest);
         server.listen(new URL(redirectUrl).port);
@@ -151,6 +156,7 @@ export class TwitchApi {
         const redirect_uri = redirectUrl;
         const url = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirect_uri}&response_type=code&scope=${this._userTokenScope}&force_verify=true`;
         await open(url);
+        await tokenAcquiredFuture;
     }
 
     public async getTwitchBroadcasterId(): Promise<string> {
@@ -159,7 +165,11 @@ export class TwitchApi {
 
     public async getUserIdForUsername(username: string): Promise<string> {
         const map = await this.getUserIdsForUsernames([username]);
-        return map[username]!;
+        const userId = map[username];
+        if (userId === undefined) {
+            throw new Error(`Unable to retrieve user info for username: ${username}`);
+        }
+        return userId;
     }
 
     public async getUserIdsForUsernames(usernames: string[]): Promise<{ [username: string]: string | undefined }> {
@@ -844,7 +854,10 @@ export class TwitchApi {
             console.log(`Shoutout could not be sent due to rate limits`);
         }
         else if (response.status !== 204) {
+            const responseJson = (await response.json());
             console.log(`Shoutout failed: ${response.status} ${response.statusText}`);
+            console.log(responseJson);
+            throw new Error(`Shoutout failed with an unexpected error response`);
         } else {
             console.log(`Shoutout for ${channelId} Successful.`);
         }

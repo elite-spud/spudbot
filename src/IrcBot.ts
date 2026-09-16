@@ -453,7 +453,11 @@ export abstract class IrcBot<
             throw new Error(`Expected only a single userDetail for username: ${username} (found ${numKeys})`)
         }
 
-        return userIdsByUsername[username]!;
+        const userId = userIdsByUsername[username];
+        if (userId === undefined) {
+            throw new Error(`Unable to retrieve user info for username: ${username}`);
+        }
+        return userId;
     }
 
     protected async getUserIdsForUsernames(usernames: string[]): Promise<{ [username: string]: string | undefined }> {
