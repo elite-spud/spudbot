@@ -58,6 +58,7 @@ export class SpudBot_MessageHandlers {
             this.getHandler_CreateGameRequestRewards(),
             this.getHandler_GameRequestModular(),
             // this.getHandler_BidwarModular(),
+            this.getHandler_Shoutout(),
         ];
         return handlers;
     }
@@ -82,7 +83,7 @@ export class SpudBot_MessageHandlers {
         const handleFunc = async (input: IMessageHandlerInput_Twitch) => {
             const someoneWasAlreadyFirst = this._spudBot.firstChatterId !== undefined;
             const userDetail = await this._spudBot.getUserDetailForUserId(input.userId);
-            await this._spudBot.tryAssignFirst(userDetail, input.timestamp, input.chat);
+            await this._spudBot.tryAssignFirst(userDetail, input.timestamp);
 
             if (input.message !== "!first") {
                 return;
@@ -868,6 +869,45 @@ export class SpudBot_MessageHandlers {
         const config: MessageHandler_InputRequired_Config<IMessageHandlerInput_Twitch> = {
             handlerId: "!bidwar",
             triggerPhrases: ["!bidwar"],
+            strictMatch: false,
+            handleMessage: handleFunc,
+        };
+        const handler = new MessageHandler_InputRequired(config);
+        return handler;
+    }
+
+    protected getHandler_Shoutout(): MessageHandler_InputRequired<IMessageHandlerInput_Twitch> {
+        const handleFunc = async (input: IMessageHandlerInput_Twitch) => {
+            if (!input.userIsModerator && !input.userIsBroadcaster) {
+                return;
+            }
+
+            const inputWords = input.message.split(" ");
+            if (inputWords.length < 2) {
+                input.chat("No channel name provided.");
+                return;
+            }
+
+            const channelName = inputWords[1]; // first word is the command itself, so skip it
+            let channelId = "";
+            try {
+                channelId = await this._spudBot.getUserIdForUsername(channelName);
+            } catch (err) {
+                input.chat(`Shoutout failed. Invalid channel name '${channelName}'`);
+                return;
+            }
+            try {
+                await (await this._twitchApi).shoutout(channelId);
+            } catch (err) {
+                input.chat(`Shoutout request failed unexpectedly.`);
+                return;
+            }
+            return;
+        };
+        
+        const config: MessageHandler_InputRequired_Config<IMessageHandlerInput_Twitch> = {
+            handlerId: "!shoutout",
+            triggerPhrases: ["!shoutout"],
             strictMatch: false,
             handleMessage: handleFunc,
         };

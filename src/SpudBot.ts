@@ -176,7 +176,7 @@ export class SpudBotTwitch extends TwitchBotBase<TwitchUserDetail> {
      * @param timestamp 
      * @returns true if user was first, false otherwise
      */
-    public async tryAssignFirst(userDetail: TwitchUserDetail, timestamp: Date, chat: (message: string) => Promise<void>): Promise<boolean> {
+    public async tryAssignFirst(userDetail: TwitchUserDetail, timestamp: Date): Promise<boolean> {
         const someoneWasAlreadyFirst = this.firstChatterId !== undefined && this.firstChatterTimestamp !== undefined;
         const timestampIsEarlier = this.firstChatterTimestamp === undefined // This check sorts out race conditions where messages can arrive out of order
             ? true
@@ -202,7 +202,6 @@ export class SpudBotTwitch extends TwitchBotBase<TwitchUserDetail> {
         this.firstChatterId = userDetail.id;
         this.firstChatterTimestamp = timestamp;
         userDetail.numTimesFirst++;
-        // await chat(`Congrats, @${userDetail.username}, you're first today!`);
         return true;
     }
 
@@ -212,7 +211,7 @@ export class SpudBotTwitch extends TwitchBotBase<TwitchUserDetail> {
         }
         
         const userDetail = await this.getUserDetailForUserId(event.user_id);
-        await this.tryAssignFirst(userDetail, new Date(event.redeemed_at), chatFunc);
+        await this.tryAssignFirst(userDetail, new Date(event.redeemed_at));
 
         if (event.reward.title === "Hi, I'm Lurking!") {
             chatFunc(`${event.user_name}, enjoy your lurk elites72Heart`);
