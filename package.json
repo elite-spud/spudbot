@@ -15,22 +15,25 @@
         "start": "node --enable-source-maps ./lib/main.js",
         "start-debug": "npm run build && npm run start"
     },
+    "engines": {
+        "node": ">=24.21.0"
+    },
     "dependencies": {
-        "googleapis": "^137.1.0",
-        "google-auth-library": "^9.10.0",
+        "google-auth-library": "^11.1.0",
+        "googleapis": "^181.0.0",
         "json2csv": "^5.0.3",
         "keytar": "^7.9.0",
-        "open": "^8.3.0",
+        "open": "^11.0.4",
         "ws": "^8.15.0"
     },
     "devDependencies": {
         "@types/json2csv": "^5.0.3",
-        "@types/node": "^20.19.6",
+        "@types/node": "^22.20.3",
         "@types/ws": "^8.5.10",
         "@typescript-eslint/eslint-plugin": "^4.7.0",
         "@typescript-eslint/parser": "^4.7.0",
-        "google-auth-library": "^9.10.0",
         "eslint": "^7.13.0",
+        "google-auth-library": "^11.1.0",
         "rimraf": "^3.0.2",
         "typescript": "^5.1.3"
     }
