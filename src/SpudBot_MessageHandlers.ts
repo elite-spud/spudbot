@@ -57,7 +57,7 @@ export class SpudBot_MessageHandlers {
             this.getHandler_UpdatePresentUsers(),
             this.getHandler_CreateGameRequestRewards(),
             this.getHandler_GameRequestModular(),
-            // this.getHandler_BidwarModular(),
+            this.getHandler_BidwarModular(),
             this.getHandler_Shoutout(),
         ];
         return handlers;
@@ -472,7 +472,7 @@ export class SpudBot_MessageHandlers {
             if (!input.messageContainsGigantifiedEmote) {
                 return;
             }
-            if (!input.userIsBroadcaster) {
+            if (input.userIsBroadcaster) { // broadcasters do not spend bits for powerups
                 return;
             }
             const powerupGigantifyBitsCost = await this._spudBot.getPowerupGigantifyBitsCost();
@@ -768,11 +768,11 @@ export class SpudBot_MessageHandlers {
             const regex = /([^\s"]+|"[^"]*")+/g;
             const tokens = input.message.match(regex) ?? [];
 
-            const contributeHelpMessage = `!bidwar contribute "<gameName>" <amount>`;
             if (tokens.length <= 1) {
-                return;
+                return; // Defer to configured command
             }
 
+            const contributeHelpMessage = `!bidwar contribute "<gameName>" <amount>`;
             if (tokens[1] === "help") {
                 const helpMessage = input.userIsBroadcaster
                     ? `!bidwar [contribute, remove, add, addFunds]`
@@ -792,6 +792,10 @@ export class SpudBot_MessageHandlers {
             const messageSenderUserId = userDetail.id;
 
             if (tokens[1] === "contribute") {
+                if (!input.userIsBroadcaster) {
+                    input.chat(`only the broadcaster can use this command`);
+                    return;
+                }
                 const args = tokens.slice(2);
                 if (args.length === 0) {
                     input.chat(contributeHelpMessage);
