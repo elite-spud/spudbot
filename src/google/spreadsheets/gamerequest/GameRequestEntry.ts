@@ -226,7 +226,7 @@ export class GameRequestIteration {
         }
 
         const numContributors = this.contributorIds.length;
-        return 0.9 + (0.1 * numContributors);
+        return 1.0 + (0.1 * (numContributors - 1));
     }
 
     public get effectivePoints(): number {
