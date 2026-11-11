@@ -145,10 +145,21 @@
             },
             {
                 "name": "!lickython",
-                "expiresAt": "2024-10-28T02:00:00",
+                "strict": true,
+                "expiresAt": "2026-10-26T02:00:00",
                 "autoPostIfTitleContainsAny": ["!lickython"],
                 "responses": [
-                    "On Sunday, October 27th I'll be running Luigi's Mansion AND F-Zero GX as part of the charity marathon, LickyThon! This is the 4th iteration of this marathon, and it'll be benefitting the Children's Hospital of Philadelphia. It's also an in-person event, so I'll be sitting on a couch with a bunch of other cool people while I run both games! Check out the schedule here: https://horaro.org/lickython4/schedule and tune into the stream over at https://www.twitch.tv/lickarcade"
+                    "On Saturday + Sunday, October 24 & 25th, I'll be attending @LickArcade's annual in-person charity event hosted in his garage arcade, LickyThon! This is the 6th iteration of this marathon, and it'll be benefitting the Children's Hospital of Philadelphia, which is the same hospital we've used for some of our youngest daughter's medical care. Additionally, I'll be bringing @AKC_12 & @Rfifan along for the ride! Follow https://www.twitch.tv/lickarcade for more details!"
+                ]
+            },
+            {
+                "name": "!translifeline",
+                "aliases": ["!lifeline", "!raidtrain", "!RaidTrain", "!train", "!tiltify", "!donate"],
+                "strict": true,
+                "expiresAt": "2026-11-01T02:00:00",
+                "autoPostIfTitleContainsAny": ["!translifeline", "!raidtrain", "!lifeline", "!tiltify"],
+                "responses": [
+                    "This evening, I'm raising money in support of Trans Lifeline, a non-profit which provides emotional and financial support for trans people in crisis. Most notably, they provide access to a peer-support hotline for trans residents across the U.S. and Canada. If you'd like to donate to their cause, you can do so via my Tiltify campaign https://tiltify.com/@elite-spud/spuds-fundraiser-for-trans-heart-october-2026"
                 ]
             },
             {
@@ -356,6 +367,7 @@
             {
                 "name": "!trans",
                 "aliases": ["!gender"],
+                "strict": true,
                 "responses": [
                     "Non-binary transfeminine. They/She pronouns. Sapphic. Hormone therapy since Dec 2020. Bottom surgery in 2022."
                 ]
@@ -363,6 +375,7 @@
               {
                 "name": "!nonbinary",
                 "aliases": ["!nb", "!non-binary", "!trans", "!gender"],
+                "strict": true,
                 "responses": [
                     "Hi! I'm non-binary, which is a term that means a lot of different things to a lot of people. For me, it means that I identify more strongly with the general concept of being a human person than anything else. Despite presenting more femininely, I prefer to think of myself in a more neutral way, which is why I enjoy being addressed with both they/them & she/her pronouns, as it reinforces how I see myself! If you have any other questions about what it's like to be NB, please don't hesitate to ask!"
                 ]
@@ -396,6 +409,22 @@
                 "name": "!potato",
                 "responses": [
                     "potahto"
+                ]
+            },
+            {
+                "name": "!SUPER",
+                "aliases": ["SUPER"],
+                "strict": true,
+                "responses": [
+                    "HOT"
+                ]
+            },
+            {
+                "name": "!ULTRA",
+                "aliases": ["ULTRA"],
+                "strict": true,
+                "responses": [
+                    "KILL"
                 ]
             },
             {
