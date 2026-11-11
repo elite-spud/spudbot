@@ -37,8 +37,8 @@ export class GameRequest_Spreadsheet extends GameRequestController implements Sh
         const inProgressEntries = this.entries.filter(n => n.currentIteration.phase === GameRequestEntry_IterationPhase.InProgress);
         const completedEntries  = this.entries.filter(n => n.currentIteration.phase === GameRequestEntry_IterationPhase.Completed);
 
-        const sortByPercentageFundedDesc = (a: GameRequestEntry, b: GameRequestEntry) => {
-            return b.currentIteration.percentageFunded - a.currentIteration.percentageFunded;
+        const sortByPercentageFundedEffectiveDesc = (a: GameRequestEntry, b: GameRequestEntry) => {
+            return b.currentIteration.percentageFundedEffective - a.currentIteration.percentageFundedEffective;
         };
         const sortByDateSelectedAsc = (a: GameRequestEntry, b: GameRequestEntry) => {
             return a.currentIteration.dateSelected!.getTime() - b.currentIteration.dateSelected!.getTime();
@@ -48,11 +48,11 @@ export class GameRequest_Spreadsheet extends GameRequestController implements Sh
         };
 
         const unfundedHeaderRows = headersToRowData(GameRequestEntryGoogleUnfunded.headers);
-        const unfundedEntryRows = unfundedEntries.sort(sortByPercentageFundedDesc).map(n => new GameRequestEntryGoogleUnfunded(n).toRowData());
+        const unfundedEntryRows = unfundedEntries.sort(sortByPercentageFundedEffectiveDesc).map(n => new GameRequestEntryGoogleUnfunded(n).toRowData());
         const unfundedFooterRows = GameRequestEntryGoogleUnfunded.footers;
 
         const fundedHeaderRows = headersToRowData(GameRequestEntryGoogleFunded.headers);
-        const fundedEntryRows = fundedEntries.sort(sortByPercentageFundedDesc).map(n => new GameRequestEntryGoogleFunded(n).toRowData());
+        const fundedEntryRows = fundedEntries.sort(sortByPercentageFundedEffectiveDesc).map(n => new GameRequestEntryGoogleFunded(n).toRowData());
         const fundedFooterRows = GameRequestEntryGoogleFunded.footers;
 
         const selectedHeaderRows = headersToRowData(GameRequestEntryGoogleSelected.headers);

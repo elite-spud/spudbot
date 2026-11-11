@@ -35,6 +35,7 @@ export class SpudBotTwitch extends TwitchBotBase<TwitchUserDetail> {
             twitchApi: await this._twitchApi,
             connection: this._config.connection.google,
             overfundingEnabled: true,
+            overfundingRequiresConfirmation: false,
         }
         const googleApi = new GoogleAPI(googleApiConfig);
         await googleApi.startup();

@@ -35,6 +35,7 @@ export interface GoogleApiConfig {
     connection: GoogleApiConnectionConfig,
     twitchApi: TwitchApi,
     overfundingEnabled?: boolean,
+    overfundingRequiresConfirmation?: boolean;
 }
 
 export interface FundGameRequestOutcome {
@@ -60,11 +61,10 @@ export class GoogleAPI {
     public static readonly gameRequestInputSubSheet = this.gameRequestSubSheet;
     public static readonly gameRequestOutputSubSheet = this.gameRequestSubSheet;
 
-    protected _gameRequestOverfundingEnabled: boolean = false;
-    public get gameRequestOverfundingEnabled(): boolean {
-        return this._gameRequestOverfundingEnabled;
-    }
-    protected readonly _config: GoogleApiConfig
+    public gameRequestOverfundingEnabled: boolean = true;
+    public gameRequestOverfundingRequiresConfirmation: boolean = true;
+
+    protected readonly _config: GoogleApiConfig;
     public readonly _googleSheets = new Future<sheets_v4.Sheets>();
 
     protected _taskQueue: TaskQueue = new TaskQueue();
@@ -73,7 +73,10 @@ export class GoogleAPI {
     public constructor(config: GoogleApiConfig) { // TODO: make a singleton?
         this._config = config;
         if (config.overfundingEnabled !== undefined) {
-            this.setOverfundEnabled(config.overfundingEnabled);
+            this.gameRequestOverfundingEnabled = config.overfundingEnabled;
+        }
+        if (config.overfundingRequiresConfirmation !== undefined) {
+            this.gameRequestOverfundingRequiresConfirmation = config.overfundingRequiresConfirmation;
         }
     }
 
@@ -90,10 +93,6 @@ export class GoogleAPI {
         });
 
         this._googleSheets.resolve(sheets);
-    }
-
-    public setOverfundEnabled(enable: boolean) {
-        this._gameRequestOverfundingEnabled = enable;
     }
 
     public async handleGameRequestRefresh(chat: (message: string) => Promise<void>): Promise<void> {
@@ -256,6 +255,7 @@ export class GoogleAPI {
                     type: FundGameRequestOutcomeType.Fulfilled,
                     entry: existingEntry,
                 });
+                return;
             }
 
             console.log("First-time Overfunding detected!");
@@ -270,11 +270,22 @@ export class GoogleAPI {
                 return;
             }
 
+            if (this.gameRequestOverfundingRequiresConfirmation) {
+                console.log("Overfunding requires confirmation");
+                future.resolve({
+                    type: FundGameRequestOutcomeType.PendingConfirmation_OverfundNeedsApproval,
+                    overfundedByAmount: overfundedByAmount,
+                    entry: existingEntry,
+                    complete: completeFunding,
+                });
+                return;
+            }
+
+            await completeFunding();
             future.resolve({
-                type: FundGameRequestOutcomeType.PendingConfirmation_OverfundNeedsApproval,
+                type: FundGameRequestOutcomeType.Fulfilled,
                 overfundedByAmount: overfundedByAmount,
                 entry: existingEntry,
-                complete: completeFunding,
             });
             return;
         }

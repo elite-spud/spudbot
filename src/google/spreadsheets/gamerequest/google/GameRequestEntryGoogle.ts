@@ -13,7 +13,7 @@ export abstract class GameRequestEntryGoogle {
         this._entry = entry;
     }
 
-    public static readonly columnHeader: SpreadsheetRow = ["Game Name", "Hours Played", "Points Contributed", "% Funded", "Wait Time Multiplier", "Effective % Funded", "Date Requested", "Date Funded", "Date Selected", "Date Started", "Date Completed", "Requested By"];
+    public static readonly columnHeader: SpreadsheetRow = ["Game Name", "Hours Played", "Points Contributed", "% Funded", "Diversity Multiplier", "Effective % Funded", "Date Requested", "Date Funded", "Date Selected", "Date Started", "Date Completed", "Requested By"];
     public static footers: sheets_v4.Schema$RowData[] = [getBorderRowBelow(12)];
 
 
@@ -25,7 +25,7 @@ export abstract class GameRequestEntryGoogle {
                 this.getCell_PointsContributed(),
                 this.getCell_PercentageFunded(),
                 this._entry.currentIteration.isFunded
-                    ? this.getCell_WaitTimeMultiplier(3, 4)
+                    ? this.getCell_DiversityMultiplier()
                     : this.getCell_PointsRequiredToFund(),
                 this.getCell_percentageFundedEffective(),
                 this.getCell_DateRequested(),
@@ -142,6 +142,13 @@ export abstract class GameRequestEntryGoogle {
         };
     }
 
+    public getCell_DiversityMultiplier(): sheets_v4.Schema$CellData {
+        return {
+            userEnteredValue: { numberValue: this._entry.currentIteration.diversityMultiplier },
+            userEnteredFormat: decimalNumberFormat,
+        };
+    }
+
     public getCell_WaitTimeMultiplier(dateFundedCellOffset: number, dateSelectedCellOffset: number): sheets_v4.Schema$CellData {
         const waitTimeMultiplierFormula = this._entry.currentIteration.isSelected
             ? getWaitTimeMultiplierFormulaForSpreadsheet(dateFundedCellOffset, dateSelectedCellOffset)
@@ -208,7 +215,7 @@ export abstract class GameRequestEntryGoogle {
 
     protected getContributionsString(): string {
         return this._entry.iterations.map(i =>
-            i.contributions.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()).map(c =>
+            i.getContributions().sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()).map(c =>
                 `${c.timestamp.toISOString()} • ${c.points} • ${c.name} • ${c.id}`).join("\n")).join("\n\n");
     }
 

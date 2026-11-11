@@ -84,7 +84,7 @@ export class GameRequestIteration {
     public readonly requestorId: string;
     public readonly requestorName: string;
     public readonly estimatedGameLengthHours: number;
-    public readonly contributions: GameRequestContribution[];
+    public readonly contributionsById: Map<string, GameRequestContribution[]>;
     /** overrides the calculated funding requirement if supplied */
     public readonly pointsRequiredToFundOverride?: number;
     protected _dateFunded?: Date;
@@ -110,13 +110,24 @@ export class GameRequestIteration {
         this.requestorId = args.requestorId;
         this.requestorName = args.requestorName;
         this.estimatedGameLengthHours = args.estimatedGameLengthHours;
-        this.contributions = args.contributions;
+        this.contributionsById = this._buildContributionsById(args.contributions);
         this.pointsRequiredToFundOverride = args.pointsRequiredToFundOverride;
         this._dateFunded = args.dateFunded;
         this._dateSelected = args.dateSelected;
         this._dateStarted = args.dateStarted;
         this._dateCompleted = args.dateCompleted;
         this._hoursPlayed = args.hoursPlayed;
+    }
+
+    protected _buildContributionsById(contributions: GameRequestContribution[]): Map<string, GameRequestContribution[]> {
+        const contributionsById = new Map<string, GameRequestContribution[]>();
+        for (const contribution of contributions) {
+            const contributionsForId = contributionsById.get(contribution.id) ?? [];
+            contributionsForId.push(contribution);
+            contributionsById.set(contribution.id, contributionsForId);
+        }
+
+        return contributionsById;
     }
 
     public get dateFunded(): Date | undefined { return this._dateFunded; }
@@ -149,8 +160,18 @@ export class GameRequestIteration {
         return this.pointsRequiredToFund - this.pointsContributed;
     }
 
+    public getContributions(): GameRequestContribution[] {
+        const contributions: GameRequestContribution[] = [];
+        for (const contributionId of this.contributionsById.keys()) {
+            const contributionsForId = this.contributionsById.get(contributionId)!;
+            contributions.push(...contributionsForId);
+        }
+
+        return contributions;
+    }
+
     public get pointsContributed(): number {
-        return this.contributions.reduce<number>((prev, current, _index) => {
+        return this.getContributions().reduce<number>((prev, current, _index) => {
             return prev + current.points;
         }, 0);
     }
@@ -171,7 +192,9 @@ export class GameRequestIteration {
         return this.phase >= GameRequestEntry_IterationPhase.Completed;
     }
 
-    public get waitTimeMultiplier(): number {
+    /** Currently unused 
+     * @ts-ignore */
+    private get _waitTimeMultiplier(): number {
         if (this.phase <= GameRequestEntry_IterationPhase.Unfunded) {
             return 1;
         }
@@ -193,8 +216,21 @@ export class GameRequestIteration {
         throw new Error(`Unable to calculate wait time multiplier.`);
     }
 
+    public get contributorIds(): string[] {
+        return Array.from(this.contributionsById.keys());
+    }
+
+    public get diversityMultiplier(): number {
+        if (this.phase <= GameRequestEntry_IterationPhase.Unfunded) {
+            return 1;
+        }
+
+        const numContributors = this.contributorIds.length;
+        return 0.9 + (0.1 * numContributors);
+    }
+
     public get effectivePoints(): number {
-        return this.pointsContributed * this.waitTimeMultiplier;
+        return this.pointsContributed * this.diversityMultiplier;
     }
 
     public get percentageFunded(): number {
@@ -228,7 +264,10 @@ export class GameRequestIteration {
         }
 
         const contribution = { name: username, id: userId, points: points, timestamp: timestamp };
-        this.contributions.push(contribution);
+
+        const contributionsForId = this.contributionsById.get(userId) ?? [];
+        contributionsForId.push(contribution);
+        this.contributionsById.set(userId, contributionsForId);
         if (this.percentageFunded >= 1.0) {
             this._dateFunded = timestamp;
         }
