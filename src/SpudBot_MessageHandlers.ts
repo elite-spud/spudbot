@@ -123,9 +123,11 @@ export class SpudBot_MessageHandlers {
     protected getHandler_Foremost(): MessageHandler_InputRequired<IMessageHandlerInput_Twitch> {
         const handleFunc = async (input: IMessageHandlerInput_Twitch) => {
             const cachedUserDetails = this._spudBot.getAllCachedUserDetails();
-            const userDetailsByNumTimesFirstDesc = Object.values(cachedUserDetails).filter(n => n.numTimesFirst > 0).sort((a, b) => { return b.numTimesFirst - a.numTimesFirst });
+            const usersWithAFirst = Object.values(cachedUserDetails).filter(n => n.numTimesFirst > 0);
+            const userDetailsByNumTimesFirstDesc = usersWithAFirst.sort((a, b) => { return b.numTimesFirst - a.numTimesFirst });
+            const totalFirsts = usersWithAFirst.reduce<number>((prev, current, _index) => { return prev + current.numTimesFirst }, 0);
 
-            let message = "";
+            let message = `(${totalFirsts} recorded firsts)`;
             for (let i = 0; i < userDetailsByNumTimesFirstDesc.length; i++) {
                 const userDetail = userDetailsByNumTimesFirstDesc[i];
                 const userString = `${i === 0 ? "" : ", "} ${userDetail.username}: ${userDetail.numTimesFirst}`;
